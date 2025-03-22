@@ -1,0 +1,430 @@
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<html>
+
+<!--(==============================================================)-->
+<!--(Document created with RoboEditor. )============================-->
+<!--(==============================================================)-->
+
+<head>
+
+<title>Create Frequency Study with Solid Mesh Example (VBA)</title>
+
+<!--(Meta)==========================================================-->
+
+<meta http-equiv=content-type content="text/html; charset=windows-1252">
+<meta name=MS-HKWD content="VBA examples,frequency study">
+<meta name=generator content="RoboHELP by eHelp Corporation - www.ehelp.com">
+<meta name=generator-major-version content=0.1>
+<meta name=generator-minor-version content=1>
+<meta name=filetype content=kadov>
+<meta name=filetype-version content=1>
+<meta name=page-count content=1>
+<meta name=layout-height content=2994>
+<meta name=layout-width content=1069>
+
+
+<!--(Links)=========================================================-->
+
+<link rel="StyleSheet" href="ApiHelp.css">
+
+
+
+</head>
+
+<!--(Body)==========================================================-->
+
+
+<body>
+
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation 
+ API Help</span></h1>
+
+<h1>Create Frequency Study with Solid Mesh Example (VBA)</h1>
+
+<p>This example shows how to create a frequency study with solid mesh.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Ensure that the specified model exists.<br>
+' 4. Ensure that the specified material library exists.<br>
+' 5. Open the Immediate window.<br>
+'<br>
+' Postconditions:<br>
+' 1.&nbsp;Opens the assembly.<br>
+' 2.&nbsp;Specifies the default frequency study results plots.<br>
+' 3.&nbsp;Creates a frequency study.<br>
+' 4.&nbsp;Applies the same material to all bodies.<br>
+' 5.&nbsp;Creates a mesh with default global size and tolerance parameters.<br>
+' 6.&nbsp;Sets the number of frequencies.<br>
+' 7.&nbsp;Runs the analysis.<br>
+' 8.&nbsp;Gets the result frequencies and mass participation factors.<br>
+' 9. Inspect the results plots and the Immediate window.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save any changes.<br>
+' -----------------------------------------------------------------</p>
+
+<p class=APICODE>Option Explicit</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=APICODE>Sub main()</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ swApp As SldWorks.SldWorks</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ COSMOSWORKS As Object</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ COSMOSObject As CosmosWorksLib.CwAddincallback</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ ActDoc As CosmosWorksLib.CWModelDoc</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ StudyMngr As CosmosWorksLib.CWStudyManager</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ Study As CosmosWorksLib.CWStudy</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ SolidMgr As CosmosWorksLib.CWSolidManager</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ SolidComponent As CosmosWorksLib.CWSolidComponent</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ SolidBody As CosmosWorksLib.CWSolidBody</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ CwMesh As CosmosWorksLib.CwMesh</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ CWResult As CosmosWorksLib.CWResults</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ FrequencyOptions As CosmosWorksLib.CWFrequencyStudyOptions</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ CWMat As CosmosWorksLib.CWMaterial</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ longstatus As Long, longwarnings As Long</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ errCode As Long, errorCode As Long, pValue As Long</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ lStatus As Long</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ CompCount As Integer</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ BodyCount As Integer</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ j As Integer</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ i As Integer</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ bApp As Boolean</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ Freq As Variant</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ MassPart As Variant</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ el As Double, tl As Double</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Connect to SolidWork software</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ swApp Is Nothing Then Set swApp = Application.SldWorks</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get SOLIDWORKS Simulation object</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ COSMOSObject = swApp.<span style="font-weight: bold;">GetAddInObject</span>(&quot;SldWorks.Simulation&quot;)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ COSMOSObject Is Nothing Then ErrorMsg swApp, &quot;COSMOSObject object not 
+found&quot;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ COSMOSWORKS = COSMOSObject.<span style="font-weight: bold;">COSMOSWORKS</span></p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ COSMOSWORKS Is Nothing Then ErrorMsg swApp, &quot;COSMOSWORKS object not found&quot;</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get active document</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->swApp.<span 
+ style="font-weight: bold;">OpenDoc6</span> &quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2019\samples\Simulation Examples\shaft.sldasm&quot;, swDocumentTypes_e.swDocASSEMBLY, 
+ swOpenDocOptions_Silent, &quot;&quot;, longstatus, longwarnings</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ ActDoc = COSMOSWORKS.<span style="font-weight: bold;">ActiveDoc</span>()</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ ActDoc Is Nothing Then ErrorMsg swApp, &quot;No active document&quot;</p>
+
+<p class=APICODE><br>
+&nbsp;&nbsp;&nbsp; ' Add default frequency study results plots of resultant 
+amplitudes for all mode shapes<br>
+&nbsp;&nbsp;&nbsp; errCode = ActDoc.<b>AddDefaultFrequencyOrBucklingStudyPlot</b>(True, 
+0, True, swsFrequencyBucklingDisplacement_URES)<br>
+&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Create new frequency study</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ StudyMngr = ActDoc.<span style="font-weight: bold;">StudyManager</span>()</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ StudyMngr Is Nothing Then ErrorMsg swApp, &quot;No CWStudyManager object&quot;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ Study = StudyMngr.<span style="font-weight: bold;">CreateNewStudy3</span>(&quot;Frequency&quot;, 
+ swsAnalysisStudyTypeFrequency, swsMeshTypeSolid, errCode)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ Study Is Nothing Then ErrorMsg swApp, &quot;Study not created&quot;</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get number of solid components</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ SolidMgr = Study.<span style="font-weight: bold;">SolidManager</span></p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ SolidMgr Is Nothing Then ErrorMsg swApp, &quot;No CWSolidManager object&quot;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->CompCount 
+ = SolidMgr.<span style="font-weight: bold;">ComponentCount</span></p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Apply SOLIDWORKS material to rest of components</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ SolidBody = Nothing</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ SolidComponent = Nothing</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->For 
+ j = 0 To (CompCount - 1)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ SolidComponent = SolidMgr.<span style="font-weight: bold;">GetComponentAt</span>(j, 
+ errorCode)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->BodyCount 
+ = SolidComponent.<span style="font-weight: bold;">SolidBodyCount</span></p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->For 
+ i = 0 To (BodyCount - 1)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ SolidBody = SolidComponent.<span style="font-weight: bold;">GetSolidBodyAt</span>(i, 
+ errCode)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No solid body&quot;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->bApp 
+ = SolidBody.<span style="font-weight: bold;">SetLibraryMaterial</span>(&quot;c:\Program 
+ Files\SOLIDWORKS Corp\SOLIDWORKS\lang\english\sldmaterials\solidworks 
+ materials.sldmat&quot;, &quot;Ductile Iron (SN)&quot;)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ bApp = False Then ErrorMsg swApp, &quot;No material applied&quot;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ SolidBody = Nothing</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Next 
+ i</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Next 
+ j</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Set meshing</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ CwMesh = Study.<span style="font-weight: bold;">Mesh</span></p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ CwMesh Is Nothing Then ErrorMsg swApp, &quot;No mesh object&quot;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->CwMesh.<span 
+ style="font-weight: bold;">Quality</span> = 1</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Call 
+ CwMesh.<span style="font-weight: bold;">GetDefaultElementSizeAndTolerance</span>(0, 
+ el, tl)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->errCode 
+ = Study.<span style="font-weight: bold;">CreateMesh</span>(0, el, tl)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;Mesh failed&quot;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Set frequency study options<br>
+&nbsp;&nbsp;&nbsp; Set FrequencyOptions = Study.<b>FrequencyStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; If FrequencyOptions Is Nothing Then ErrorMsg swApp, &quot;No 
+CWFrequencyStudyOptions object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; FrequencyOptions.<b>Options</b> = 
+swsFrequencyStudyOptionNumberFrequencies<br>
+&nbsp;&nbsp;&nbsp; FrequencyOptions.<b>NoOfFrequencies</b> = 8<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Study: &quot; &amp; Study.<b>Name</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Option as defined in 
+swsFrequencyStudyOption_e: &quot; &amp; FrequencyOptions.<b>Options</b><br>
+&nbsp;&nbsp;&nbsp; If FrequencyOptions.Options = 1 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Upper-bound 
+frequency: &quot; &amp; FrequencyOptions.<b>UpperBoundFrequency</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf FrequencyOptions.<b>Options</b> = 0 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of 
+frequencies: &quot; &amp; FrequencyOptions.<b>NoOfFrequencies</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Calculate 
+frequencies around a specified frequency? (1=yes, 0=no): &quot; &amp; FrequencyOptions.<b>UseLowerBoundFrequency</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If FrequencyOptions.<b>UseLowerBoundFrequency</b> 
+= 1 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+Lower bound frequency: &quot; &amp; FrequencyOptions.<b>LowerBoundFrequency</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Result folder: &quot; &amp; 
+FrequencyOptions.<b>ResultFolder</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Solver type as defined in swsSolverType_e: 
+&quot; &amp; FrequencyOptions.<b>SolverType</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Use soft spring to stabilize the model? 
+(1=yes, 0=no): &quot; &amp; FrequencyOptions.<b>UseSoftSpring</b><br>
+&nbsp;&nbsp;&nbsp; Dim zeroStrainTemp As Double<br>
+&nbsp;&nbsp;&nbsp; Dim tempUnit As Long<br>
+&nbsp;&nbsp;&nbsp; FrequencyOptions.<b>GetZeroStrainTemperature</b> 
+zeroStrainTemp, tempUnit<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Flow/Thermal Effects:&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Temperature source as defined 
+in swsThermalOption_e: &quot; &amp; FrequencyOptions.<b>ThermalResults</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Temperature source:&quot;<br>
+&nbsp;&nbsp;&nbsp; If FrequencyOptions.<b>ThermalResults</b> = 1 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Thermal study: &quot; &amp; FrequencyOptions.<b>ThermalStudyName</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Time step of transient thermal study: &quot; &amp; FrequencyOptions.<b>TimeStep</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf FrequencyOptions.<b>ThermalResults</b> = 2 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+SOLIDWORKS Flow Simulation results file: &quot; &amp; FrequencyOptions.<b>FlowTemperatureFile</b><br>
+&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Model&quot;<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Reference temperature at zero 
+strain: &quot; &amp; zeroStrainTemp</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Import 
+fluid pressure loads from SOLIDWORKS Flow Simulation? (1=yes, 0=no): &quot; &amp; 
+FrequencyOptions.<b>CheckFlowPressure</b><br>
+&nbsp;&nbsp;&nbsp; If FrequencyOptions.<b>CheckFlowPressure</b> Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+SOLIDWORKS Flow Simulation results file: &quot; &amp; FrequencyOptions.<b>FlowPressureFile</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Use reference pressure offset from Flow Simulation? (1=yes, 0=no): &quot; &amp; 
+FrequencyOptions.<b>ReferencePressureOption</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If Not FrequencyOptions.<b>ReferencePressureOption</b> 
+Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Reference pressure offset: &quot; &amp; FrequencyOptions.<b>DefinedReferencePressure</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Run as legacy study and import only the normal component of the pressure load? 
+(1=yes, 0=no): &quot; &amp; FrequencyOptions.<b>CheckRunAsLegacy</b><br>
+&nbsp;&nbsp;&nbsp; End If</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Run analysis</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->errCode 
+ = Study.<span style="font-weight: bold;">RunAnalysis</span></p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;Analysis failed&quot;</p>
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get results: frequencies and mass participation factors</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ CWResult = Study.<span style="font-weight: bold;">Results</span></p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ CWResult Is Nothing Then ErrorMsg swApp, &quot;No result object&quot;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Freq 
+ = CWResult.<span style="font-weight: bold;">GetResonantFrequencies</span>(errCode)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->MassPart 
+ = CWResult.<span style="font-weight: bold;">GetMassParticipation</span>(errCode)</p>
+
+<p class=APICODE>End Sub</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE>' Error function</p>
+
+<p class=APICODE>Function ErrorMsg(swApp As SldWorks.SldWorks, Message As 
+String)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->swApp.<span 
+ style="font-weight: bold;">SendMsgToUser2</span> Message, 0, 0</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->swApp.<span 
+ style="font-weight: bold;">RecordLine</span> &quot;'*** WARNING - General&quot;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->swApp.<span 
+ style="font-weight: bold;">RecordLine</span> &quot;'*** &quot; &amp; Message</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->swApp.<span 
+ style="font-weight: bold;">RecordLine</span> &quot;&quot;</p>
+
+<p class=APICODE>End Function</p>
+
+</body>
+
+</html>

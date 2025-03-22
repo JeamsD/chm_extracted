@@ -1,0 +1,539 @@
+<html>
+
+<head>
+<title>Install Add-in Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# add-ins, install">
+<meta name=MS-HKWD content="C# add-ins, files">
+<meta name=MS-HKWD content="C# add-ins, information">
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Install Add-in Example (C#)</h1>
+<p><a name="top"></a>This example shows how to install an add-in, obtain 
+information about it, and uninstall it.</p>
+<p><b>NOTE</b>: If using the primary interop assembly 
+provided with SOLIDWORKS PDM Professional, see
+<a href="Using_NET_Framework_in_Applications.htm">Using .NET Framework 4.0 in 
+Stand-alone Applications</a>.</p>
+<p><img border="0" src="LoadAddin.gif" width="333" height="352"></p>
+
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:green;">
+//----------------------------------------------------------------------------</span><br>
+<span style="color:green;">//&nbsp;Preconditions:</span><br>
+<span style="color:green;">//&nbsp;&nbsp;1.&nbsp;Start&nbsp;Microsoft&nbsp;Visual&nbsp;Studio&nbsp;2010.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Click&nbsp;<b>File&nbsp;&gt;&nbsp;New&nbsp;&gt;&nbsp;Project&nbsp;&gt;&nbsp;Visual&nbsp;C#&nbsp;&gt;&nbsp;Windows&nbsp;Forms&nbsp;Application</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Type&nbsp;<b>AddinMgr_CSharp</b>&nbsp;in&nbsp;<b>Name</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;<b>Browse</b>&nbsp;and&nbsp;navigate&nbsp;to&nbsp;the&nbsp;folder&nbsp;where&nbsp;to&nbsp;create&nbsp;the&nbsp;project.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click&nbsp;<b>OK</b>.&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e.&nbsp;Click&nbsp;<b>Show&nbsp;All&nbsp;Files</b>&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer&nbsp;toolbar&nbsp;and&nbsp;expand&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Form1.cs</b>&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer.</span><br>
+<span style="color:green;">
+//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f.&nbsp;Create&nbsp;a&nbsp;form&nbsp;similar&nbsp;to&nbsp;the&nbsp;form&nbsp;shown&nbsp;above&nbsp;and&nbsp;change:</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.&nbsp;Top&nbsp;label&nbsp;to&nbsp;<b>VaultsLabel</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.&nbsp;Combo&nbsp;box&nbsp;to&nbsp;<b>VaultsComboBox</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.&nbsp;<b>Browse&nbsp;for&nbsp;add-in</b>&nbsp;button&nbsp;to&nbsp;<b>BrowseButton</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.&nbsp;List&nbsp;box&nbsp;to&nbsp;<b>AddinListBox</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5.&nbsp;<b>Install&nbsp;add-in</b>&nbsp;button&nbsp;to&nbsp;<b>LoadAddin</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g.&nbsp;Replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>Form1.cs</b>&nbsp;with&nbsp;<a href="#Form1.cs">this&nbsp;code</a>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;h.&nbsp;Replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>Form1.Designer.cs</b>&nbsp;with&nbsp;<a href="#Form1.Designer.cs">this&nbsp;code</a>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;2.&nbsp;Add&nbsp;<b>EPDM.Interop.epdm.dll</b>&nbsp;as&nbsp;a&nbsp;reference&nbsp;(right-click&nbsp;the&nbsp;project</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer,&nbsp;click&nbsp;<b>Add&nbsp;Reference</b>,&nbsp;click&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Assemblies&nbsp;&gt;&nbsp;Framework</b>&nbsp;in&nbsp;the&nbsp;left-side&nbsp;panel,&nbsp;browse&nbsp;to&nbsp;the&nbsp;top&nbsp;folder&nbsp;of&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;your&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;installation,&nbsp;locate&nbsp;and&nbsp;click&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>EPDM.Interop.epdm.dll</b>,&nbsp;click&nbsp;<b>Open</b>,&nbsp;and&nbsp;click&nbsp;<b>Add</b>).</span><br>
+<span style="color:green;">//&nbsp;&nbsp;3.&nbsp;Add&nbsp;<b>Microsoft.VisualBasic</b>&nbsp;as&nbsp;a&nbsp;reference&nbsp;(click&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>COM</b>&nbsp;in&nbsp;the&nbsp;left-side&nbsp;panel,&nbsp;click&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Microsoft.VisualBasic</b>,&nbsp;click&nbsp;<b>Add</b>,&nbsp;and&nbsp;click&nbsp;<b>Close</b>).</span><br>
+<span style="color:green;">//&nbsp;&nbsp;4.&nbsp;Right-click&nbsp;<b>EPDM.Interop.epdm</b>&nbsp;in&nbsp;References,&nbsp;click&nbsp;<b>Properties</b>,&nbsp;and&nbsp;set&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Embed&nbsp;Interop&nbsp;Types</b>&nbsp;to&nbsp;<b>False</b>&nbsp;to&nbsp;handle&nbsp;methods&nbsp;that&nbsp;pass&nbsp;arrays&nbsp;of&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;structures.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;5.&nbsp;Click&nbsp;<b>Debug&nbsp;&gt;&nbsp;Start&nbsp;Debugging</b>&nbsp;or&nbsp;press&nbsp;F5.</span><br>
+<span style="color:green;">//</span><br>
+<span style="color:green;">//&nbsp;Postconditions:&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;1.&nbsp;The&nbsp;Install&nbsp;add-in&nbsp;dialog&nbsp;box&nbsp;displays.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Select&nbsp;a&nbsp;vault&nbsp;view.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Click&nbsp;<b>Browse&nbsp;for&nbsp;add-in</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;In&nbsp;the&nbsp;Browse&nbsp;for&nbsp;add-ins&nbsp;dialog:</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.&nbsp;Navigate&nbsp;to&nbsp;your add-in directory 
+and&nbsp;click <i>addin_name</i><b>.dll</b>&nbsp;<br>
+//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; and&nbsp;<b>EPDM.Interop.epdm.dll</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.&nbsp;Click&nbsp;Open.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click&nbsp;<b>Install&nbsp;add-in</b>.<br>
+//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; A message box containing 
+information about each add-in installed in<br>
+//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; the selected vault displays.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e.&nbsp;Click&nbsp;<b>OK</b>&nbsp;to&nbsp;close&nbsp;each&nbsp;message&nbsp;box.<br>
+//&nbsp;&nbsp;&nbsp;&nbsp; f. Click <b>Remove add-in</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;2.&nbsp;Close&nbsp;the&nbsp;Install&nbsp;add-in&nbsp;dialog&nbsp;box.</span><br>
+<span style="color:green;">
+//----------------------------------------------------------------------------</span><br>
+&nbsp;</p>
+<p style="font-family: Courier New; font-size: 13; color: #008000; background: white" class="APICODE">
+<a name="Form1.cs"></a>//Form1.cs</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:blue;">using</span>&nbsp;Microsoft.VisualBasic;<br>
+<span style="color:blue;">using</span>&nbsp;System;<br>
+<span style="color:blue;">using</span>&nbsp;System.Collections;<br>
+<span style="color:blue;">using</span>&nbsp;System.Collections.Generic;<br>
+<span style="color:blue;">using</span>&nbsp;System.Data;<br>
+<span style="color:blue;">using</span>&nbsp;System.Diagnostics;<br>
+<span style="color:blue;">using</span>&nbsp;System.IO;<br>
+<span style="color:blue;">using</span>&nbsp;System.Xml.Serialization;<br>
+<span style="color:blue;">using</span>&nbsp;System.Windows.Forms;<br>
+<span style="color:blue;">using</span>&nbsp;System.ComponentModel;<br>
+<span style="color:blue;">using</span>&nbsp;EPDM.Interop.epdm;<br>
+&nbsp;<br>
+<span style="color:blue;">namespace</span>&nbsp;AddinMgr_CSharp<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">partial</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Form1</span>&nbsp;:&nbsp;<span style="color:#2b91af;">Form</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;Form1()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InitializeComponent();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:#2b91af;">IEdmVault5</span>&nbsp;vault1&nbsp;=&nbsp;<span style="color:blue;">null</span>;</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; string</span>&nbsp;addinName&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span>;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;Form1_Load(System.<span style="color:#2b91af;">Object</span>&nbsp;sender,&nbsp;System.<span style="color:#2b91af;">EventArgs</span>&nbsp;e)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmVault5</span>&nbsp;vault1&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmVault5</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmVault8</span>&nbsp;vault&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmVault8</span>)vault1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">EdmViewInfo</span>[]&nbsp;Views&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault.<b>GetVaultViews</b>(<span style="color:blue;">out</span>&nbsp;Views,&nbsp;<span style="color:blue;">false</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Items.Clear();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">foreach</span>&nbsp;(<span style="color:#2b91af;">EdmViewInfo</span>&nbsp;View&nbsp;<span style="color:blue;">in</span>&nbsp;Views)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Items.Add(View.<b>mbsVaultName</b>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(VaultsComboBox.Items.Count&nbsp;&gt;&nbsp;0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Text&nbsp;=&nbsp;(<span style="color:blue;">string</span>)VaultsComboBox.Items[0];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;BrowseButton_Click(System.<span style="color:#2b91af;">Object</span>&nbsp;sender,&nbsp;System.<span style="color:#2b91af;">EventArgs</span>&nbsp;e)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AddinListBox.Items.Clear();<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(vault1&nbsp;==&nbsp;<span style="color:blue;">null</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmVault5</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(!vault1.<b>IsLoggedIn</b>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Set&nbsp;the&nbsp;initial&nbsp;directory&nbsp;in&nbsp;the&nbsp;</span><font size="2"><span style="color:green;">Browse 
+for add-ins</span></font><span style="color:green;">&nbsp;dialog</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AddinOpenFileDialog.InitialDirectory&nbsp;=&nbsp;vault1.<b>RootFolderPath</b>;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Show&nbsp;the&nbsp;</span><font size="2"><span style="color:green;">Browse 
+for add-ins</span></font><span style="color:green;">&nbsp;dialog</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.Windows.Forms.<span style="color:#2b91af;">DialogResult</span>&nbsp;DialogResult;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DialogResult&nbsp;=&nbsp;AddinOpenFileDialog.ShowDialog();<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//If&nbsp;the&nbsp;user&nbsp;did 
+not&nbsp;click&nbsp;Open,&nbsp;exit&nbsp;the&nbsp;subroutine</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(!(DialogResult&nbsp;==&nbsp;System.Windows.Forms.<span style="color:#2b91af;">DialogResult</span>.OK))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">return</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">foreach</span>&nbsp;(<span style="color:blue;">string</span>&nbsp;FileName&nbsp;<span style="color:blue;">in</span>&nbsp;AddinOpenFileDialog.FileNames)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AddinListBox.Items.Add(FileName);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;LoadAddin_Click(System.<span style="color:#2b91af;">Object</span>&nbsp;sender,&nbsp;System.<span style="color:#2b91af;">EventArgs</span>&nbsp;e)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmVault7</span>&nbsp;vault2&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(vault1&nbsp;==&nbsp;<span style="color:blue;">null</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmVault5</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault2&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmVault7</span>)vault1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(!vault1.<b>IsLoggedIn</b>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmAddInMgr8</span>&nbsp;AddinMgr&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmAddInMgr8</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AddinMgr&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmAddInMgr8</span>)vault1;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;fileList&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;fileidx&nbsp;=&nbsp;1;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Save&nbsp;the&nbsp;path&nbsp;and name&nbsp;of&nbsp;the&nbsp;add-in&nbsp;just&nbsp;installed</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;justInstalledPathName&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span>;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">foreach</span>&nbsp;(<span style="color:blue;">string</span>&nbsp;FileName&nbsp;<span style="color:blue;">in</span>&nbsp;AddinListBox.Items)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(!(FileName.Contains(<span style="color:#a31515;">&quot;Interop&quot;</span>)))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;justInstalledPathName&nbsp;=&nbsp;FileName;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(fileidx&nbsp;==&nbsp;1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fileList&nbsp;=&nbsp;FileName;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">else</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fileList&nbsp;=&nbsp;fileList&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;FileName;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fileidx&nbsp;=&nbsp;fileidx&nbsp;+&nbsp;1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AddinMgr.<b>AddAddIns</b>(fileList,&nbsp;(<span style="color:blue;">int</span>)<span style="color:#2b91af;">EdmAddAddInFlags</span>.EdmAddin_AddAllFilesToOneAddIn,&nbsp;<span style="color:blue;">null</span>);<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Get&nbsp;information&nbsp;about&nbsp;each 
+of&nbsp;the&nbsp;installed&nbsp;add-ins</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">EdmAddInInfo2</span>[]&nbsp;addIns&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AddinMgr.<b>GetInstalledAddIns</b>(<span style="color:blue;">out</span>&nbsp;addIns);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;s&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;idx&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idx&nbsp;=&nbsp;<span style="color:#2b91af;">Information</span>.LBound(addIns);<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">while</span>&nbsp;(idx&nbsp;&lt;=&nbsp;<span style="color:#2b91af;">Information</span>.UBound(addIns))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Add-in:&nbsp;&quot;</span>&nbsp;+&nbsp;addIns[idx].<b>mbsAddInName</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Class:&nbsp;&quot;</span>&nbsp;+&nbsp;addIns[idx].<b>mbsClassID</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;s&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Company:&nbsp;&quot;</span>&nbsp;+&nbsp;addIns[idx].<b>mbsCompany</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Description:&nbsp;&quot;</span>&nbsp;+&nbsp;addIns[idx].<b>mbsDescription</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;s&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Path:&nbsp;&quot;</span>&nbsp;+&nbsp;addIns[idx].<b>mbsModulePath</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Version:&nbsp;&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(addIns[idx].<b>mlAddInVersion</b>)&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;s&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Req&nbsp;ver:&nbsp;&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(addIns[idx].<b>mlRequiredVersionMajor</b>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;.&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(addIns[idx].<b>mlRequiredVersionMinor</b>);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Interaction</span>.MsgBox(s);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<span style="color:green;">//&nbsp;Save&nbsp;the&nbsp;name&nbsp;of&nbsp;the&nbsp;add-in&nbsp;just&nbsp;installed</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;addinName&nbsp;=&nbsp;addIns[idx].<b>mbsAddInName</b>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idx&nbsp;=&nbsp;idx&nbsp;+&nbsp;1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Get&nbsp;information&nbsp;about&nbsp;each&nbsp;of&nbsp;the&nbsp;add-ins&nbsp;installed&nbsp;for&nbsp;debugging</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">EdmAddInInfo2</span>[]&nbsp;debugAddIns&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmAddInInfo2</span>[10];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AddinMgr.<b>GetDebugAddIns</b>(<span style="color:blue;">ref</span>&nbsp;debugAddIns);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idx&nbsp;=&nbsp;<span style="color:#2b91af;">Information</span>.LBound(debugAddIns);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">while</span>&nbsp;(idx&nbsp;&lt;=&nbsp;<span style="color:#2b91af;">Information</span>.UBound(debugAddIns))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Debug&nbsp;add-in:&nbsp;&quot;</span>&nbsp;+&nbsp;debugAddIns[idx].<b>mbsAddInName</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Class:&nbsp;&quot;</span>&nbsp;+&nbsp;debugAddIns[idx].<b>mbsClassID</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;s&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Company:&nbsp;&quot;</span>&nbsp;+&nbsp;debugAddIns[idx].<b>mbsCompany</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Description:&nbsp;&quot;</span>&nbsp;+&nbsp;debugAddIns[idx].<b>mbsDescription</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;s&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Path:&nbsp;&quot;</span>&nbsp;+&nbsp;debugAddIns[idx].<b>mbsModulePath</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Version:&nbsp;&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(debugAddIns[idx].<b>mlAddInVersion</b>)&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;s&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Req&nbsp;ver:&nbsp;&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(debugAddIns[idx].<b>mlRequiredVersionMajor</b>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;.&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(debugAddIns[idx].<b>mlRequiredVersionMinor</b>);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Interaction</span>.MsgBox(s);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idx&nbsp;=&nbsp;idx&nbsp;+&nbsp;1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Get&nbsp;information&nbsp;about&nbsp;the&nbsp;add-in&nbsp;just&nbsp;installed</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">EdmAddInInfo2</span>&nbsp;poInfo&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmAddInInfo2</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AddinMgr.<b>GetAddInInfo2</b>(justInstalledPathName,&nbsp;<span style="color:blue;">null</span>,&nbsp;<span style="color:blue;">ref</span>&nbsp;poInfo);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Getting&nbsp;info&nbsp;for&nbsp;add-in:&nbsp;&quot;</span>&nbsp;+&nbsp;poInfo.<b>mbsAddInName</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Class:&nbsp;&quot;</span>&nbsp;+&nbsp;poInfo.<b>mbsClassID</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;s&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Company:&nbsp;&quot;</span>&nbsp;+&nbsp;poInfo.<b>mbsCompany</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Description:&nbsp;&quot;</span>&nbsp;+&nbsp;poInfo.<b>mbsDescription</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;s&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Path:&nbsp;&quot;</span>&nbsp;+&nbsp;poInfo.<b>mbsModulePath</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Version:&nbsp;&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(poInfo.<b>mlAddInVersion</b>)&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;s&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Req&nbsp;ver:&nbsp;&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(poInfo.<b>mlRequiredVersionMajor</b>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;.&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(poInfo.<b>mlRequiredVersionMinor</b>);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Interaction</span>.MsgBox(s);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Extract&nbsp;information&nbsp;about&nbsp;the&nbsp;add-in&nbsp;just&nbsp;installed</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">EdmAddInFileInfo</span>[]&nbsp;ppoFiles&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">EdmAddInMenuInfo</span>[]&nbsp;ppoCmds&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AddinMgr.<b>GetInstalledAddIn</b>(addinName,&nbsp;<span style="color:#a31515;">&quot;c:\\temp&quot;</span>,&nbsp;<span style="color:blue;">out</span>&nbsp;poInfo,&nbsp;<span style="color:blue;">out</span>&nbsp;ppoFiles,&nbsp;<span style="color:blue;">out</span>&nbsp;ppoCmds);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;msg&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Extracting&nbsp;info&nbsp;for&nbsp;add-in:&nbsp;&quot;</span>&nbsp;+&nbsp;poInfo.<b>mbsAddInName</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#a31515;">&quot;CLSID=&quot;</span>&nbsp;+&nbsp;poInfo.<b>mbsClassID</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Company=&quot;</span>&nbsp;+&nbsp;poInfo.<b>mbsCompany</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Module=&quot;</span>&nbsp;+&nbsp;poInfo.<b>mbsModulePath</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Version=&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(poInfo.<b>mlAddInVersion</b>)&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Requires&nbsp;version=&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(poInfo.<b>mlRequiredVersionMajor</b>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;.&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(poInfo.<b>mlRequiredVersionMinor</b>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Files:&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idx&nbsp;=&nbsp;<span style="color:#2b91af;">Information</span>.LBound(ppoFiles);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">while</span>&nbsp;(idx&nbsp;&lt;=&nbsp;<span style="color:#2b91af;">Information</span>.UBound(ppoFiles))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;ppoFiles[idx].<b>mbsFileName</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;Flags=&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(ppoFiles[idx].<b>mlEdmAddInFileInfoFlags</b>)&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idx&nbsp;=&nbsp;idx&nbsp;+&nbsp;1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Commands:&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idx&nbsp;=&nbsp;<span style="color:#2b91af;">Information</span>.LBound(ppoCmds);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">while</span>&nbsp;(idx&nbsp;&lt;=&nbsp;<span style="color:#2b91af;">Information</span>.UBound(ppoCmds))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#a31515;">&quot;'&quot;</span>&nbsp;+&nbsp;ppoCmds[idx].<b>mbsMenuStr</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;'&nbsp;Flags=&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(ppoCmds[idx].<b>mlEdmMenuFlags</b>)&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idx&nbsp;=&nbsp;idx&nbsp;+&nbsp;1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1.<b>MsgBox</b>(<span style="color:blue;">this</span>.Handle.ToInt32(),&nbsp;msg);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Get&nbsp;CAF&nbsp;information&nbsp;about&nbsp;the&nbsp;add-in&nbsp;just&nbsp;installed</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AddinMgr.<b>GetCAFInfo</b>(poInfo.<b>mbsModulePath</b>,&nbsp;<span style="color:#a31515;">&quot;c:\\temp&quot;</span>,&nbsp;<span style="color:blue;">out</span>&nbsp;poInfo,&nbsp;<span style="color:blue;">out</span>&nbsp;ppoFiles,&nbsp;<span style="color:blue;">out</span>&nbsp;ppoCmds);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Getting&nbsp;CAF&nbsp;info&nbsp;for&nbsp;add-in:&nbsp;&quot;</span>&nbsp;+&nbsp;poInfo.<b>mbsAddInName</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#a31515;">&quot;CLSID=&quot;</span>&nbsp;+&nbsp;poInfo.<b>mbsClassID</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Company=&quot;</span>&nbsp;+&nbsp;poInfo.<b>mbsCompany</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Module=&quot;</span>&nbsp;+&nbsp;poInfo.<b>mbsModulePath</b>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Version=&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(poInfo.<b>mlAddInVersion</b>)&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Requires&nbsp;version=&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(poInfo.<b>mlRequiredVersionMajor</b>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;.&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(poInfo.<b>mlRequiredVersionMinor</b>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Files:&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idx&nbsp;=&nbsp;<span style="color:#2b91af;">Information</span>.LBound(ppoFiles);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">while</span>&nbsp;(idx&nbsp;&lt;=&nbsp;<span style="color:#2b91af;">Information</span>.UBound(ppoFiles))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;ppoFiles[idx].<b>mbsFileName</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;Flags=&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(ppoFiles[idx].<b>mlEdmAddInFileInfoFlags</b>)&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idx&nbsp;=&nbsp;idx&nbsp;+&nbsp;1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;<span style="color:#a31515;">&quot;Commands:&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idx&nbsp;=&nbsp;<span style="color:#2b91af;">Information</span>.LBound(ppoCmds);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">while</span>&nbsp;(idx&nbsp;&lt;=&nbsp;<span style="color:#2b91af;">Information</span>.UBound(ppoCmds))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;<span style="color:#a31515;">&quot;'&quot;</span>&nbsp;+&nbsp;ppoCmds[idx].<b>mbsMenuStr</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;'&nbsp;flags=&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(ppoCmds[idx].<b>mlEdmMenuFlags</b>)&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idx&nbsp;=&nbsp;idx&nbsp;+&nbsp;1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1.<b>MsgBox</b>(<span style="color:blue;">this</span>.Handle.ToInt32(),&nbsp;msg);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">return</span>;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;button1_Click(<span style="color:blue;">object</span>&nbsp;sender,&nbsp;<span style="color:#2b91af;">EventArgs</span>&nbsp;e)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmAddInMgr9</span>&nbsp;AddinMgr&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmAddInMgr9</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AddinMgr&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmAddInMgr9</span>)vault1;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(vault1&nbsp;==&nbsp;<span style="color:blue;">null</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmVault5</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(!vault1.<b>IsLoggedIn</b>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AddinMgr.<b>RemoveAddIn</b>(addinName);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.button1.Enabled&nbsp;=&nbsp;<span style="color:blue;">false</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}</p>
+
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+&nbsp;</p>
+<p style="font-family: Courier New; color: black; background: white" align="center">
+<a href="#top">Back to top</a></p>
+<p style="font-family: Courier New; font-size: 13; color: #008000; background: white" class="APICODE">
+<a name="Form1.Designer.cs"></a>//Form1.Designer.cs</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:blue;">namespace</span>&nbsp;AddinMgr_CSharp<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">partial</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Form1</span><br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;Required&nbsp;designer&nbsp;variable.</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.ComponentModel.<span style="color:#2b91af;">IContainer</span>&nbsp;components&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;Clean&nbsp;up&nbsp;any&nbsp;resources&nbsp;being&nbsp;used.</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;param&nbsp;name=&quot;</span>disposing<span style="color:gray;">&quot;&gt;</span><span style="color:green;">true&nbsp;if&nbsp;managed&nbsp;resources&nbsp;should&nbsp;be&nbsp;disposed;&nbsp;otherwise,&nbsp;false.</span><span style="color:gray;">&lt;/param&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">void</span>&nbsp;Dispose(<span style="color:blue;">bool</span>&nbsp;disposing)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(disposing&nbsp;&amp;&amp;&nbsp;(components&nbsp;!=&nbsp;<span style="color:blue;">null</span>))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;components.Dispose();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">base</span>.Dispose(disposing);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">#region</span>&nbsp;Windows&nbsp;Form&nbsp;Designer&nbsp;generated&nbsp;code<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;Required&nbsp;method&nbsp;for&nbsp;Designer&nbsp;support&nbsp;-&nbsp;do&nbsp;not&nbsp;modify</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;the&nbsp;contents&nbsp;of&nbsp;this&nbsp;method&nbsp;with&nbsp;the&nbsp;code&nbsp;editor.</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;InitializeComponent()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ComboBox</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.BrowseButton&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddinListBox&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ListBox</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.LoadAddin&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddinOpenFileDialog&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">OpenFileDialog</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.button1&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.SuspendLayout();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;VaultsLabel</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.AutoSize&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(13,&nbsp;26);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;VaultsLabel&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(91,&nbsp;13);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.TabIndex&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Select&nbsp;vault&nbsp;view:&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;VaultsComboBox</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.FormattingEnabled&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(16,&nbsp;59);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;VaultsComboBox&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(121,&nbsp;21);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.TabIndex&nbsp;=&nbsp;1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;BrowseButton</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.BrowseButton.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(16,&nbsp;98);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.BrowseButton.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;BrowseButton&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.BrowseButton.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(271,&nbsp;23);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.BrowseButton.TabIndex&nbsp;=&nbsp;3;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.BrowseButton.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Browse&nbsp;for&nbsp;add-in...&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.BrowseButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.BrowseButton.Click&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(<span style="color:blue;">this</span>.BrowseButton_Click);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;AddinListBox</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddinListBox.FormattingEnabled&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddinListBox.HorizontalScrollbar&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddinListBox.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(16,&nbsp;151);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddinListBox.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;AddinListBox&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddinListBox.SelectionMode&nbsp;=&nbsp;System.Windows.Forms.<span style="color:#2b91af;">SelectionMode</span>.MultiSimple;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddinListBox.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(259,&nbsp;56);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddinListBox.TabIndex&nbsp;=&nbsp;4;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;LoadAddin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.LoadAddin.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(16,&nbsp;230);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.LoadAddin.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;LoadAddin&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.LoadAddin.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(259,&nbsp;23);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.LoadAddin.TabIndex&nbsp;=&nbsp;5;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.LoadAddin.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Install&nbsp;add-in&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.LoadAddin.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.LoadAddin.Click&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(<span style="color:blue;">this</span>.LoadAddin_Click);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;AddinOpenFileDialog</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddinOpenFileDialog.Multiselect&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddinOpenFileDialog.Title&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Browse&nbsp;for&nbsp;add-ins&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;button1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.button1.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(16,&nbsp;260);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.button1.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;button1&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.button1.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(259,&nbsp;23);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.button1.TabIndex&nbsp;=&nbsp;6;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.button1.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Remove&nbsp;add-in&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.button1.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.button1.Enabled&nbsp;=&nbsp;<span style="color:blue;">false</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.button1.Click&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(<span style="color:blue;">this</span>.button1_Click);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Form1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AutoScaleDimensions&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">SizeF</span>(6F,&nbsp;13F);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AutoScaleMode&nbsp;=&nbsp;System.Windows.Forms.<span style="color:#2b91af;">AutoScaleMode</span>.Font;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.ClientSize&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(317,&nbsp;308);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.button1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.LoadAddin);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.AddinListBox);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.BrowseButton);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.VaultsComboBox);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.VaultsLabel);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Form1&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Install&nbsp;add-in&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Load&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(<span style="color:blue;">this</span>.Form1_Load);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.ResumeLayout(<span style="color:blue;">false</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.PerformLayout();<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">#endregion</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">OpenFileDialog</span>&nbsp;AddinOpenFileDialog;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>&nbsp;VaultsLabel;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ComboBox</span>&nbsp;VaultsComboBox;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>&nbsp;BrowseButton;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ListBox</span>&nbsp;AddinListBox;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>&nbsp;LoadAddin;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>&nbsp;button1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+&nbsp;<br>
+&nbsp;</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+&nbsp;</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+&nbsp;</p>
+<p style="font-family: Courier New; color: black; background: white" align="center">
+<a href="#top">Back to top</a></p>
+
+</body>
+
+</html>

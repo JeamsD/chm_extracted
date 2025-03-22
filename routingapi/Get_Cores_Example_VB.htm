@@ -1,0 +1,180 @@
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<html>
+
+<!--(==============================================================)-->
+<!--(Document created with RoboEditor. )============================-->
+<!--(==============================================================)-->
+
+<head>
+
+<title>Get Cable Cores Example (VBA)</title>
+
+<!--(Meta)==========================================================-->
+
+<meta http-equiv=content-type content="text/html; charset=windows-1252">
+<meta name=generator content="RoboHELP by eHelp Corporation - www.ehelp.com">
+<meta name=generator-major-version content=0.1>
+<meta name=generator-minor-version content=1>
+<meta name=filetype content=kadov>
+<meta name=filetype-version content=1>
+<meta name=page-count content=1>
+<meta name=layout-height content=570>
+<meta name=layout-width content=858>
+
+
+<!--(Links)=========================================================-->
+
+<link rel="StyleSheet" href="ApiHelp.css">
+
+
+<META NAME="MS-HKWD" CONTENT="VBA examples,cores">
+<META NAME="MS-HKWD" CONTENT="VBA examples,wires">
+<META NAME="MS-HKWD" CONTENT="VBA examples,cables">
+
+</head>
+
+<!--(Body)==========================================================-->
+
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Routing API Help</span></h1>
+<h1>Get Cable Cores Example (VBA)</h1>
+
+<p>This example shows how to get the cores of cables.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Verify that the specified assembly exists.<br>
+<font size="2">' 2. In SOLIDWORKS, click <b>Tools &gt; Add-Ins &gt; SOLIDWORKS Routing</b>.<br>
+' 3. In <b>Tools &gt; Options &gt; System Options &gt; Routing &gt; Routing File Locations</b>,
+<br>
+'&nbsp;&nbsp;&nbsp; click L<b>aunch Routing Library Manager</b> and set the 
+locations of your <br>
+'&nbsp;&nbsp;&nbsp; SOLIDWORKS Routing files.<br>
+' 4. In the IDE, click <b>Tools &gt; References</b>,<b> </b>select<b> <br>
+'&nbsp;&nbsp;&nbsp; SOLIDWORKS</b> <i>&lt;version&gt;</i> <b>Routing Type Library</b>, 
+and click <b>OK</b>.</font><br>
+' 5. Open an Immediate window.<br>
+'<br>
+' Postconditions:<br>
+' 1. Opens the specified assembly.<br>
+' 2. Selects <b>Harness1^RoutingAssem1-1</b>.<br>
+' 3. Gets the cables in the electrical route.<br>
+' 4. Prints the number of wires and the properties of each wire in the cable.<br>
+' 5. Inspect the Immediate window.<br>
+'<br>
+' <span style="font-weight: bold;">NOTE</span>: Because 
+ the model is used elsewhere, do not save changes. <br>
+'----------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Dim swApp As SldWorks.SldWorks<br>
+Dim swModel As SldWorks.ModelDoc2<br>
+Dim swAssemblyDoc As SldWorks.AssemblyDoc<br>
+Dim rtRouteManager As SWRoutingLib.RouteManager<br>
+Dim rtElectricalRoute As SWRoutingLib.ElectricalRoute<br>
+Dim rtCable As SWRoutingLib.Cable<br>
+Dim rtCableProperty As SWRoutingLib.CableProperty<br>
+Dim aWireProperty As SWRoutingLib.WireProperty<br>
+Dim aWire As SWRoutingLib.Wire<br>
+Dim lNumCores As Long<br>
+Dim i As Long<br>
+Dim j As Long<br>
+Dim k As Long<br>
+Dim vCables As Variant<br>
+Dim vCores As Variant<br>
+Dim vCoreProperties As Variant<br>
+Dim boolstatus As Boolean<br>
+Dim longstatus As Long<br>
+Dim longwarnings As Long</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set swApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Set swModel = swApp.<b>OpenDoc6</b>(&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\api\RoutingAssem1.SLDASM&quot;, 2, 0, &quot;&quot;, longstatus, 
+longwarnings)<br>
+&nbsp;&nbsp;&nbsp; swApp.<b>ActivateDoc2</b> &quot;RoutingAssem1&quot;, False, longstatus<br>
+&nbsp;&nbsp;&nbsp; Set swAssemblyDoc = swModel<br>
+&nbsp;&nbsp;&nbsp; Set rtRouteManager = swAssemblyDoc.<b>GetRouteManager</b>()<br>
+&nbsp;&nbsp;&nbsp; boolstatus = swModel.<b>Extension</b>.<b>SelectByID2</b>(&quot;Harness1^RoutingAssem1-1@RoutingAssem1&quot;, 
+&quot;COMPONENT&quot;, 0, 0, 0, False, 0, Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; rtRouteManager.<b>EditRoute</b><br>
+&nbsp;&nbsp;&nbsp; Set rtElectricalRoute = rtRouteManager.<b>GetElectricalRoute</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; vCables = rtElectricalRoute.<b>GetCables</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If Not IsEmpty(vCables) Then</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; For i = 0 To 
+rtElectricalRoute.<b>GetCablesCount</b> - 1</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Set rtCable = vCables(i)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;Cable &quot; &amp; rtCable.<b>UserName</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+vCores = rtCable.<b>GetCores</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+If Not IsEmpty(vCores) Then</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+lNumCores = rtCable.<b>GetCoresCount</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp; Cutting length: &quot; &amp; rtCable.<b>GetCuttingLength</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Set rtCableProperty = rtCable.<b>GetCableProperty</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp; Diameter: &quot; &amp; rtCableProperty.<b>Diameter</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp; Name of cable library: &quot; &amp; rtCableProperty.<b>Name</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp; Number of wires: &quot; &amp; lNumCores<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+For k = 0 To UBound(vCores)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Set aWire = vCores(k)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp;&nbsp;&nbsp; &quot; &amp; aWire.<b>UserName</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Set aWireProperty = aWire.<b>GetWireProperty</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Library name: &quot; &amp; aWireProperty.<b>Name</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Next k<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+vCoreProperties = rtCableProperty.<b>GetCoreProperties</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+For j = 0 To rtCableProperty.<b>GetCorePropertyCount</b> - 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Set aWireProperty = vCoreProperties(j)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp;&nbsp;&nbsp; Wire library name: &quot; &amp; aWireProperty.<b>Name</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Color: &quot; &amp; aWireProperty.<b>Color</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Diameter: &quot; &amp; aWireProperty.<b>Diameter</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Part number: &quot; &amp; aWireProperty.<b>PartNumber</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Size: &quot; &amp; aWireProperty.<b>Size</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Next j</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+End If</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Next i</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; rtRouteManager.<b>ExitRoute</b><br>
+&nbsp;&nbsp;&nbsp; swAssemblyDoc.<b>EditAssembly</b></p>
+<p class="APICODE">End Sub</p>
+
+</body>
+
+</html>

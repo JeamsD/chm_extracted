@@ -1,0 +1,278 @@
+<html>
+
+<head>
+<title>Create and Edit Edge Weld Connector Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,edge weld connectors">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Create and Edit Edge Weld Connector Example (VBA)</h1>
+<p>This example shows how to create and edit an edge weld connector.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Open <i>public_documents</i><b>\samples\tutorial\api\tjoint.sldprt</b>.<br>
+'<br>
+' Postconditions: Creates and modifies <b>Edge Weld Connector-3</b>.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+' ---------------------------------------------------------------------------<br>
+Option Explicit</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim Part&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Dim errCode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim LoadAndRestraintMngr As 
+CosmosWorksLib.CWLoadsAndRestraintsManager<br>
+&nbsp;&nbsp;&nbsp; Dim theCurrentLoad&nbsp; As 
+CosmosWorksLib.CWEdgeWeldConnector<br>
+&nbsp;&nbsp;&nbsp; Dim theNewLoad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWEdgeWeldConnector<br>
+&nbsp;&nbsp;&nbsp; Dim var1 As Variant, var2 As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim var4 As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim pDisp1 As Object, pDisp2 As Object, pDisp4 As Object<br>
+&nbsp;&nbsp;&nbsp; Dim varArray9 As Variant, varArray2 As Variant, varArray As 
+Variant, var As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim FirstFace As Object, SecondFace As Object<br>
+&nbsp;&nbsp;&nbsp; Dim NWeakMaterial As Long<br>
+&nbsp;&nbsp;&nbsp; Dim DUltimateTensileStrength As Double<br>
+&nbsp;&nbsp;&nbsp; Dim NTensileStrengthUnit As Long<br>
+&nbsp;&nbsp;&nbsp; Dim DCorrelationFactor As Double<br>
+&nbsp;&nbsp;&nbsp; Dim DPartialSafetyFactor As Double<br>
+&nbsp;&nbsp;&nbsp; Dim BIsEstimatedWeldSize As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim nElectrodeMaterial As Long<br>
+&nbsp;&nbsp;&nbsp; Dim dWeldStrength As Double<br>
+&nbsp;&nbsp;&nbsp; Dim nWeldStrengthUnit As Long<br>
+&nbsp;&nbsp;&nbsp; Dim nFOSOption As Long<br>
+&nbsp;&nbsp;&nbsp; Dim dFOS As Double<br>
+&nbsp;&nbsp;&nbsp; Dim bEstimatedWeldSize As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim dEstimatedWeldSize As Double<br>
+&nbsp;&nbsp;&nbsp; Dim nEstimatedWeldSizeUnit As Long<br>
+&nbsp;&nbsp;&nbsp; Dim EdgeWeldType As Long<br>
+&nbsp;&nbsp;&nbsp; Dim WeldOrientation As Long<br>
+&nbsp;&nbsp;&nbsp; Dim InducedBendingMomentIncluded As Long<br>
+&nbsp;&nbsp;&nbsp; Dim CodeType As Long<br>
+&nbsp;&nbsp;&nbsp; Dim PIDCollection As New Collection<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = SwApp.<b>GetAddInObject</b>(&quot;CosmosWorks.CosmosWorks&quot;)<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 0<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(StudyMngr.<b>ActiveStudy</b>)<br>
+&nbsp;&nbsp;&nbsp; Set LoadAndRestraintMngr = Study.<b>LoadsAndRestraintsManager</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set PIDCollection = PIDInitializer()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>ActiveDoc</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; SelectByPID &quot;selection1&quot;, PIDCollection, 
+var1<br>
+&nbsp;&nbsp;&nbsp; SelectByPID &quot;selection2&quot;, PIDCollection, var2<br>
+&nbsp;&nbsp;&nbsp; SelectByPID &quot;selection4&quot;, PIDCollection, var4<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set pDisp1 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var1), 
+errCode) 'face<br>
+&nbsp;&nbsp;&nbsp; Set pDisp2 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var2), 
+errCode) 'face<br>
+&nbsp;&nbsp;&nbsp; Set pDisp4 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var4), 
+errCode) 'edge</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set theCurrentLoad = 
+LoadAndRestraintMngr.<b>GetEdgeWeldConnector</b>(5, errCode)<br>
+&nbsp;&nbsp;&nbsp; If theCurrentLoad Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+get edge weld connector&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; varArray9 = Array(pDisp4)<br>
+&nbsp;&nbsp;&nbsp; Set theNewLoad = LoadAndRestraintMngr.<b>AddEdgeWeldConnector</b>(pDisp1, 
+pDisp2, varArray9, 0, False, errCode)<br>
+&nbsp;&nbsp;&nbsp; If theNewLoad Is Nothing Then ErrorMsg SwApp, &quot;Failed to add 
+edge weld connector&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = theNewLoad.<b>SetEdgeWeldType</b>(3)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to set edge weld 
+type&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; EdgeWeldType = theNewLoad.<b>GetEdgeWeldType</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get edge weld 
+type&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set FirstFace = theNewLoad.<b>GetFirstFace</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get Face 
+Set1&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SecondFace = theNewLoad.<b>GetSecondFace</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get Face 
+Set2&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = theNewLoad.<b>ReplaceFacesThenAutoGenerateTouchingEdges</b>(0, 
+pDisp1, pDisp2)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to replace faces 
+and find touching edges&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; var = theNewLoad.<b>GetEdgeList</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get edge 
+list&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; varArray = Array(var(0))<br>
+&nbsp;&nbsp;&nbsp; errCode = theNewLoad.<b>ReplaceFacesAndEdges</b>(0, pDisp1, 
+pDisp2, varArray)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to replace faces 
+and edges&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; varArray2 = Array(var(1))<br>
+&nbsp;&nbsp;&nbsp; errCode = theNewLoad.<b>AddEdges</b>(0, varArray2)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to add edges&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = theNewLoad.<b>RemoveEdges</b>(0, 
+varArray)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to remove edges&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = theNewLoad.<b>SetEdgeWeldType</b>(3)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to set edge weld 
+type&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = theNewLoad.<b>SetWeldOrientation</b>(True)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to set whether 
+to show weld orientation&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; WeldOrientation = theNewLoad.<b>IsWeldOrientation</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get whether 
+to show weld orientation&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = theNewLoad.<b>SetInducedBendingMomentIncluded</b>(True)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to set whether 
+induced bending moment is included&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; InducedBendingMomentIncluded = theNewLoad.<b>IsInducedBendingMomentIncluded</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get whether 
+induced bending moment is included&quot;<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CodeType = theNewLoad.<b>GetCodeType</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get weld 
+code&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'American Standard weld sizing<br>
+&nbsp;&nbsp;&nbsp; errCode = theNewLoad.<b>SetCodeType</b>(0)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to set American 
+Standard weld code&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = theNewLoad.<b>SetWeldSizingSettingUS</b>(4, 
+100.1, 4, 1, 1, True, 98, 0)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to set American 
+Standard weld sizing&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = theNewLoad.<b>GetWeldSizingSettingUS</b>(nElectrodeMaterial, 
+dWeldStrength, nWeldStrengthUnit, nFOSOption, dFOS, bEstimatedWeldSize, 
+dEstimatedWeldSize, nEstimatedWeldSizeUnit)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get American 
+Standard weld sizing&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'European weld sizing<br>
+&nbsp;&nbsp;&nbsp; errCode = theNewLoad.<b>SetCodeType</b>(1)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to set european 
+weld code&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = theNewLoad.<b>SetWeldSizingSettingEuro</b>(1, 
+155.2, 4, 1, 1, True, 98, 0)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to set european 
+weld sizing&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = theNewLoad.<b>GetWeldSizingSettingEuro</b>(NWeakMaterial, 
+DUltimateTensileStrength, NTensileStrengthUnit, DCorrelationFactor, 
+DPartialSafetyFactor, BIsEstimatedWeldSize, dEstimatedWeldSize, 
+nEstimatedWeldSizeUnit)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get european 
+weld sizing&quot;</p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Sub SelectByPID(PIDName As String, PIDCollection As 
+Collection, varEntity As Variant)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SelObj As Object<br>
+&nbsp;&nbsp;&nbsp; Dim PID() As Byte<br>
+&nbsp;&nbsp;&nbsp; Dim PIDVariant As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim PIDString As String<br>
+&nbsp;&nbsp;&nbsp; Dim i As Integer<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get the string from the collection<br>
+&nbsp;&nbsp;&nbsp; PIDString = &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDString = PIDCollection.Item(PIDName)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Parse the string into an array<br>
+&nbsp;&nbsp;&nbsp; PIDVariant = Split(PIDString, &quot;,&quot;)<br>
+&nbsp;&nbsp;&nbsp; ReDim PID(UBound(PIDVariant))<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Change to a byte array<br>
+&nbsp;&nbsp;&nbsp; For i = 0 To (UBound(PIDVariant) - 1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PID(i) = PIDVariant(i)<br>
+&nbsp;&nbsp;&nbsp; Next i<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; varEntity = PID<br>
+&nbsp;&nbsp;&nbsp; Set SelObj = Nothing<br>
+End Sub</p>
+<p class="APICODE">Function PIDInitializer() As Collection<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim PIDCollection As New Collection<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim selection1 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection2 As String</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Faces<br>
+&nbsp;&nbsp;&nbsp; selection1 = 
+&quot;233,35,0,0,3,0,0,0,255,254,255,0,0,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,6,0,0,0,4,2,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,78,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,32,0,67,0,111,0,114,0,112,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,92,0,115,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,116,0,117,0,116,0,111,0,114,0,105,0,97,0,108,0,92,0,97,0,112,0,105,0,92,0,116,0,106,0,111,0,105,0,110,0,116,0,46,0,115,0,108,0,100,0,112,0,114,0,116,0,9,128,255,254,255,6,116,0,106,0,111,0,105,0,110,0,116,0,2,0,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; 
+&quot;0,239,130,43,72,255,254,255,0,255,254,255,0,0,176,178,110,16,0,0,0,0,0,0,0,0,0,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,176,178,110,16,45,0,0,0,80,132,43,72,1,0,0,0,255,255,1,0,16,0,109,111,84,111,112,69,100,103,101,73,100,82,101,112,95,99,0,0,5,128,8,0,45,0,0,0,80,132,43,72,1,0,0,0,12,128,0,0,5,128,8,0,45,0,0,0,80,132,43,72,1,0,0,0,0,0,255,255,1,0,19,0,109,111,66,111,116,116,111,109,69,100,103,101,73,100,82,101,112,95,99,0,0,5,128,8,0,45,0,0,0,80,132,43,72,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection2 = 
+&quot;233,35,0,0,3,0,0,0,255,254,255,0,0,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,4,2,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,78,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,32,0,67,0,111,0,114,0,112,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,92,0,115,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,116,0,117,0,116,0,111,0,114,0,105,0,97,0,108,0,92,0,97,0,112,0,105,0,92,0,116,0,106,0,111,0,105,0,110,0,116,0,46,0,115,0,108,0,100,0,112,0,114,0,116,0,9,128,255,254,255,6,116,0,106,0,111,0,105,0,110,0,116,0,2,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection2 = selection2 &amp; 
+&quot;0,0,239,130,43,72,255,254,255,0,255,254,255,0,0,176,178,110,16,0,0,0,0,0,0,0,0,0,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,176,178,110,16,26,0,0,0,36,131,43,72,1,0,0,0,255,255,1,0,16,0,109,111,84,111,112,69,100,103,101,73,100,82,101,112,95,99,0,0,5,128,8,0,26,0,0,0,36,131,43,72,1,0,0,0,0,0,255,255,1,0,19,0,109,111,66,111,116,116,111,109,69,100,103,101,73,100,82,101,112,95,99,0,0,5,128,8,0,26,0,0,0,36,131,43,72,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection2 = selection2 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Store constants in a collection.<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection1, &quot;selection1&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection2, &quot;selection2&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim selection4 As String</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Edge<br>
+&nbsp;&nbsp;&nbsp; selection4 = 
+&quot;233,35,0,0,3,0,0,0,255,254,255,0,0,0,0,0,255,255,1,0,11,0,109,111,69,100,103,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,4,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,78,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,32,0,67,0,111,0,114,0,112,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,92,0,115,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,116,0,117,0,116,0,111,0,114,0,105,0,97,0,108,0,92,0,97,0,112,0,105,0,92,0,116,0,106,0,111,0,105,0,110,0,116,0,46,0,115,0,108,0,100,0,112,0,114,0,116,0,9,128,255,254,255,6,116,0,106,0,111,0,105,0,110,0,116,0,2,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection4 = selection4 &amp; 
+&quot;0,0,239,130,43,72,255,254,255,0,255,254,255,0,0,176,178,110,16,0,0,0,0,0,0,0,0,0,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,176,178,110,16,26,0,0,0,36,131,43,72,1,0,0,0,0,0,255,255,1,0,21,0,109,111,76,101,102,116,84,114,105,109,69,100,103,101,73,100,82,101,112,95,99,0,0,5,128,8,0,46,0,0,0,139,132,43,72,3,128,0,0,5,128,8,0,45,0,0,0,80,132,43,72,1,0,0,0,1,0,0,0,12,128,0,0,5,128,8,0,46,0,0,0,139,132,43,72,3,128,0,0,5,128,8,0,45,0,0,0,80,132,43,72,1,0,0,0,1,0,0,0,12,128,0,0,5,128,8,0,46,0,0,0,139,132,43,72,3,128,0,0,5,128,8,0,45,0,0,0,80,132,43,72,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection4 = selection4 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Store constants in a collection.<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection4, &quot;selection4&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set PIDInitializer = PIDCollection</p>
+<p class="APICODE"><br>
+End Function</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

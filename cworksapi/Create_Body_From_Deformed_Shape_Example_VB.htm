@@ -1,0 +1,143 @@
+<html>
+
+<head>
+<title>Create Body From Deformed Shape Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,deformed shape">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Create Body From Deformed Shape Example (VBA)</h1>
+<p>This example shows how to save the deformed shape that results from 
+running a static study.</p>
+
+<p class="APICODE">
+'---------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Ensure that <b>c:\temp</b> exists.<br>
+' 4. Ensure that the specified model exists.<br>
+' 5. Open an Immediate window.<br>
+'<br>
+' Postconditions:<br>
+'&nbsp; 1. Opens the model document.<br>
+'&nbsp; 2. Adds a default elemental strain plot.<br>
+'&nbsp; 3. Gets the static study.<br>
+'&nbsp; 4. Meshes the model.<br>
+'&nbsp; 5. Sets the solver type.<br>
+'&nbsp; 6. Analyzes the study.<br>
+'&nbsp; 7. Creates the <b>Strain1</b> plot.<br>
+'&nbsp; 8. Saves only the SOLIDWORKS body from the deformed shape in <br>
+'&nbsp;&nbsp;&nbsp;&nbsp; <b>c:\temp\deformedBody.sldprt.</b><br>
+'&nbsp; 9. Gets the size of the deform coordinate array.<br>
+' 10. Gets the plot definition of <b>Strain1</b>.<br>
+' 11. Inspect the Immediate window and <b>c:\temp</b>.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+'---------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim Part&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Dim fileName&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+String<br>
+&nbsp;&nbsp;&nbsp; Dim errors&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim warnings&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+Long<br>
+&nbsp;&nbsp;&nbsp; Dim errCode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim StaticOptions&nbsp;&nbsp; As 
+CosmosWorksLib.CWStaticStudyOptions<br>
+&nbsp;&nbsp;&nbsp; Dim CWFeatObj&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; Dim res&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWResults</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Const MeshEleSize&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Double = 1.4769<br>
+&nbsp;&nbsp;&nbsp; Const MeshTol&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Double = 0.073847</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Exit Sub</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; fileName = &quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\api\tjoint.sldprt&quot;<br>
+&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>OpenDoc6</b>(fileName, swDocPART, 1, &quot;&quot;, 
+errors, warnings)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; errCode = ActDoc.<b>AddDefaultStaticStudyPlot</b>(swsStaticResultElementalStrain, 
+swsStaticElementalStrain_ENERGY)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(1)<br>
+&nbsp;&nbsp;&nbsp; Study.<b>ActivateConfiguration</b><br>
+&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 1</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Mesh<br>
+&nbsp;&nbsp;&nbsp; Set CWFeatObj = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; CWFeatObj.<b>MesherType</b> = 0<br>
+&nbsp;&nbsp;&nbsp; CWFeatObj.<b>Quality</b> = 0<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, MeshEleSize, MeshTol)<br>
+&nbsp;&nbsp;&nbsp; Set CWFeatObj = Nothing</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Set solver type to FFEPlus<br>
+&nbsp;&nbsp;&nbsp; Set StaticOptions = Study.<b>StaticStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; StaticOptions.<b>SolverType</b> = 2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set res = Study.<b>Results<br>
+<br>
+&nbsp;&nbsp;&nbsp; </b>'Save only the SOLIDWORKS body from the deformed shape<br>
+&nbsp;&nbsp;&nbsp; errCode = res.<b>CreateDeformedBody2</b>(swsCreateDeformedBodyAsPart, 
+swsCreateDeformedBodyAdvanced_OutputBodyOnly, 1, &quot;deformedBody&quot;, &quot;c:\temp&quot;)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Create deformed body result code as defined in 
+swsCreateDeformedBodyError_e: &quot; &amp; errCode<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Option to use when the deformed body fails to 
+sew into a solid object as defined in swsCreateDeformedBodyFailedSewOption_e: &quot; 
+&amp; res.<b>GetDeformedBodyFailedSewOption</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim vCoord As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim plotType As Long<br>
+&nbsp;&nbsp;&nbsp; Dim nComp As String<br>
+&nbsp;&nbsp;&nbsp; Dim bNodal As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim bDeformed As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim dScaleFactor As Double<br>
+&nbsp;&nbsp;&nbsp; vCoord = res.<b>GetDeformedCoord</b>(&quot;Strain1&quot;, errCode)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Deformed coordinate array size: &quot; &amp; 
+UBound(vCoord)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; errCode = res.<b>GetPlotDefinition</b>(&quot;Strain1&quot;, plotType, 
+nComp, bNodal, bDeformed, dScaleFactor)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Plot definition&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Name: Strain1&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Type as defined in swsPlotResultTypes_e: 
+&quot; &amp; plotType<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Component name: &quot; &amp; nComp<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Nodal? (True = nodal, False = elemental) 
+&quot; &amp; bNodal<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Deformed? &quot; &amp; bDeformed<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Scale factor: &quot; &amp; dScaleFactor</p>
+<p class="APICODE">End Sub</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

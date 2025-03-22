@@ -1,0 +1,678 @@
+<html>
+
+<head>
+<title>Create Fatigue Study Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples,fatigue study">
+<meta name=MS-HKWD content="VB.NET examples,fatigue study options">
+<meta name=MS-HKWD content="VB.NET examples,fatigue event">
+<meta name=MS-HKWD content="VB.NET examples,study results">
+<meta name=MS-HKWD content="VB.NET examples,fatigue study result options">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Create Fatigue Study Example (VB.NET)</h1>
+<p>This example shows how to create a fatigue study.</p>
+<p><span style="font-weight: bold;">NOTE:</span> To get persistent reference 
+ identifiers (PIDs) for model selections, you can use
+<a href="GettingStarted-swsimulationapi.html">pidcollector.exe</a> 
+ or IModelDocExtension::GetPersistReference3.</p>
+
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p class="APICODE"><span style="color:Green">
+	'----------------------------------------------------------------------------<br>
+	' Preconditions:<br>
+	</span>
+<span style="color:green;">'&nbsp;1.&nbsp;Add&nbsp;the&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;as&nbsp;an&nbsp;add-in</span>
+<span style="color:green;">(in&nbsp;SOLIDWORKS,&nbsp;click&nbsp;<b><br>
+	</b>'<b>&nbsp;&nbsp;&nbsp; Tools&nbsp;&gt;&nbsp;Add-ins&nbsp;&gt;&nbsp;SOLIDWORKS&nbsp;Simulation &gt; OK</b>).</span><br>
+<span style="color: #008000">'</span><span style="color:green;">&nbsp;2.&nbsp;Add&nbsp;the&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;primary&nbsp;interop&nbsp;assembly&nbsp;as&nbsp;a&nbsp;reference</span><br>
+<span style="color: #008000">'</span><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;(in&nbsp;the&nbsp;IDE,&nbsp;click&nbsp;<b>Project&nbsp;&gt;&nbsp;Add&nbsp;Reference&nbsp;&gt;&nbsp;.NET&nbsp;&gt;&nbsp;<br>
+</b>'<b>&nbsp;&nbsp;&nbsp; SolidWorks.Interop.cosworks&nbsp;&gt;&nbsp;OK</b>).<br>
+	</span><span style="color:Green">
+	'&nbsp;3. Open, rebuild, and fix as needed <i>public_documents</i><b>\samples\tutorial\api\<br>
+	</b>'<b>&nbsp;&nbsp;&nbsp; landing_gear.sldasm</b>.</span><span style="color:Green"><br>
+	</span><font color="#008000">' 4. Activate <b>Ready_Static</b>.</font><span style="color:Green"><br>
+	</span><font color="#008000">'&nbsp;5. Right-click <b>BearingLoads-1</b> 
+	and click <b>Edit Definition</b>.<br>
+	'&nbsp;6. Select load-bearing faces that are concentric with the Z-axis of 
+	the<br>
+	'&nbsp;&nbsp;&nbsp;&nbsp;selected coordinate system and click the green 
+	check mark.<br>
+	'&nbsp;7. Mesh the study.<br>
+	'&nbsp;8. Run the study.<br>
+	'&nbsp;9. Open an Immediate window.</font><span style="color:Green"><br>
+	'<br>
+	' Postconditions:<br>
+	</span><font color="#008000">' 1. A 
+	default fatigue study results plot is created.<br>
+	' 2. Two fatigue studies are created and analyzed:<br>
+	'&nbsp;&nbsp;&nbsp; * <b>Fatigue_StudyAPIConst</b> (constant amplitude fatigue 
+	study)<br>
+	'&nbsp;&nbsp;&nbsp; * <b>Fatigue_StudyAPIVariable</b> (variable amplitude fatigue 
+	study)<br>
+	' 3. Inspect the Immediate window for fatigue study options, fatigue events,<br>
+	'&nbsp;&nbsp;&nbsp; and fatigue study analysis results.<br>
+	' 4. Inspect the fatigue results plots.</font><span style="color:Green"><br>
+	'<br>
+	' NOTE: Because the model is used elsewhere,do not save changes.<br>
+	' 
+	---------------------------------------------------------------------------<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.sldworks<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.swconst<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.cosworks<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	System<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	System.Diagnostics<br>
+	<br>
+	</span><span style="color:Blue">Partial</span><span style="color:Black">
+	</span><span style="color:Blue">Class</span><span style="color:Black"> 
+	SolidWorksMacro<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	ErrorMsg(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	Message </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SwApp.<b>SendMsgToUser2</b>(Message, 0, 0)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SwApp.<b>RecordLine</b>(</span><span style="color:#a31515">&quot;'*** WARNING - 
+	General&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SwApp.<b>RecordLine</b>(</span><span style="color:#a31515">&quot;'*** &quot;</span><span style="color:Black"> 
+	&amp; Message)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SwApp.<b>RecordLine</b>(</span><span style="color:#a31515">&quot;&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub</span><p class="APICODE">
+	<span style="color:Blue"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Function</span><span style="color:Black"> 
+	SelectByPID(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	Part </span><span style="color:Blue">As</span><span style="color:Black"> 
+	ModelDoc2, </span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	PIDName </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black">,
+	</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	PIDCollection </span><span style="color:Blue">As</span><span style="color:Black"> 
+	Collection) </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	PID() </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Byte<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	PIDVariant </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	PIDString </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	i </span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">Integer<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	SelObj </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim errCode as Integer<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Get 
+	the string from the collection<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PIDString = </span>
+	<span style="color:#a31515">&quot;&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PIDString = 
+	PIDCollection.Item(PIDName)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Parse the string into an array<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PIDVariant = Split(PIDString,
+	</span><span style="color:#a31515">&quot;,&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ReDim</span><span style="color:Black"> 
+	PID(UBound(PIDVariant))<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Change to a byte array<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">For</span><span style="color:Black"> 
+	i = 0 </span><span style="color:Blue">To</span><span style="color:Black"> (UBound(PIDVariant) 
+	- 1)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PID(i) = PIDVariant(i)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Next</span><span style="color:Black"> 
+	i<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Select the entity<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SelObj = 
+	Part.Extension.<b>GetObjectByPersistReference3</b>((PID), errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SelectByPID = SelObj<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SelObj = </span><span style="color:Blue">Nothing<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><p class="APICODE">
+	<span style="color:Blue"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Function</span><span style="color:Black"> 
+	PIDInitializer() </span><span style="color:Blue">As</span><span style="color:Black"> 
+	Collection<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	PIDCollection </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">New</span><span style="color:Black"> 
+	Collection<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	selection1 </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Constants<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selection1 = </span>
+	<span style="color:#a31515">
+	&quot;255,18,0,0,3,0,0,0,255,254,255,27,85,0,112,0,112,0,114,0,115,0,119,0,97,0,121,0,95,0,108,0,110,0,107,0,45,0,49,0,64,0,108,0,97,0,110,0,100,0,105,0,110,0,103,0,95,0,103,0,101,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,57,0,0,0,255,255,1,0,13,0,109,111,86,101,114,116,101,120,82,101,102,95,99,255,255,255,255,255,255,255,255,3,0,0,0,0,2,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,104,67,0,58,0,92,0,68,0,111,0,99,0,117,0,109,0,101,0,110,0,116,0,115,0,32,0,97,0,110,0,100,0,32,0,83,0,101,0,116,0,116,0,105,0,110,0,103,0,115,0,92,0,97,0,116,0,114,0,105,0,118,0,101,0,100,0,105,0,92,0,77,0,121,0,32,0,68,0,111,0,99,0,117,0,109,0,101,0,110,0,116,0,115,0,92,0,99,&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selection1 = selection1 &amp; </span>
+	<span style="color:#a31515">
+	&quot;0,111,0,115,0,109,0,111,0,115,0,95,0,115,0,117,0,112,0,112,0,111,0,114,0,116,0,92,0,50,0,48,0,48,0,54,0,98,0,101,0,116,0,97,0,92,0,76,0,97,0,110,0,100,0,105,0,110,0,103,0,32,0,71,0,101,0,97,0,114,0,92,0,85,0,112,0,112,0,114,0,115,0,119,0,97,0,121,0,95,0,108,0,110,0,107,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,9,128,255,254,255,12,85,0,112,0,112,0,114,0,115,0,119,0,97,0,121,0,95,0,108,0,110,0,107,0,2,0,0,247,212,198,52,0,138,187,76,66,1,0,0,0,0,0,0,0,18,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,32,0,0,0,0,0,0,0,138,187,76,66,8,0,0,0,166,214,198,52,14,0,0,0,3,128,0,0,5,128,8,0,8,0,0,0,166,214,198,52,13,0,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,8,0,0,0,166,214,198,52,1,0,0,0,255,255,255,255,0,0,0,0,0,0,0,0&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selection1 = selection1 &amp; </span>
+	<span style="color:#a31515">&quot;,Type=1&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Store 
+	constants in a collection<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PIDCollection.Add(selection1,
+	</span><span style="color:#a31515">&quot;selection1&quot;</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PIDInitializer = PIDCollection<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><p class="APICODE">
+	<span style="color:Blue"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Function</span><span style="color:Black"> 
+	ProcErrCode(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	errCode </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Long</span><span style="color:Black">)
+	</span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">String<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Select</span><span style="color:Black">
+	</span><span style="color:Blue">Case</span><span style="color:Black"> 
+	errCode<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+	0<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ProcErrCode = </span><span style="color:#a31515">
+	&quot;Successful.&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+	1 </span><span style="color:Blue">To</span><span style="color:Black"> 21<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ProcErrCode = </span><span style="color:#a31515">&quot;Incorrect 
+	input conditions.&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+	22<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ProcErrCode = </span><span style="color:#a31515">
+	&quot;Authorization failed for this analysis type.&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+	23<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ProcErrCode = </span><span style="color:#a31515">&quot;Mesh not 
+	found. Create mesh first.&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+	24<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ProcErrCode = </span><span style="color:#a31515">&quot;Analysis 
+	failed.&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black">
+	</span><span style="color:Blue">Else<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ProcErrCode = </span>
+	<span style="color:#a31515">&quot;Unknown error condition.&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Select<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><p class="APICODE">
+	<span style="color:Blue"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	main()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	Part </span><span style="color:Blue">As</span><span style="color:Black"> 
+	ModelDoc2<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	COSMOSWORKS </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CosmosWorks<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	CWAddinCallBack </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CwAddincallback<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	ActDoc </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWModelDoc<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	StudyMngr </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWStudyManager<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	Study </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWStudy<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	Study2 </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWStudy<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	CWFeatObj </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWResults<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	FatigueOptions </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWFatigueStudyOptions<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	FatigueEvent </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWFatigueEvent<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	FatigueOptions2 </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWFatigueStudyOptions<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	FatigueEvent2 </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWFatigueEvent<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	PointsX(10) </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	PointsY(10) </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	PointsX_2(12) </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	PointsY_2(12) </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	errCode </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Long<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	Disp </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	VarStudyNames </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black"> =
+	</span><span style="color:Blue">Nothing<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	VarScales </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black"> =
+	</span><span style="color:Blue">Nothing<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	VarSteps </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black"> =
+	</span><span style="color:Blue">Nothing<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	AssocCounts </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Long<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	VarNewStudyNames </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black"> =
+	</span><span style="color:Blue">Nothing<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	VarNewScales </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black"> =
+	</span><span style="color:Blue">Nothing<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	VarNewSteps </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black"> =
+	</span><span style="color:Blue">Nothing<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	VarVertices </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black"> =
+	</span><span style="color:Blue">Nothing<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	PIDCollection </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">New</span><span style="color:Black"> 
+	Collection<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PIDCollection = PIDInitializer()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Part = SwApp.ActiveDoc</span><span style="color:Blue"><br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarVertices = SelectByPID(Part,
+	</span><span style="color:#a31515">&quot;selection1&quot;</span><span style="color:Black">, 
+	PIDCollection)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWAddinCallBack = SwApp.GetAddInObject(</span><span style="color:#a31515">&quot;</span><span style="color:#a31515">SldWorks.Simulation</span><span style="color:#a31515">&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	CWAddinCallBack </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(</span><span style="color:#a31515">&quot;CWAddinCallBack object not 
+	found.&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COSMOSWORKS = CWAddinCallBack.COSMOSWORKS<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	COSMOSWORKS </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(</span><span style="color:#a31515">&quot;COSMOSWORKS object not found.&quot;</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ActDoc = COSMOSWORKS.ActiveDoc()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	ActDoc </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(</span><span style="color:#a31515">&quot;Failed to get active document.&quot;</span><span style="color:Black">)<br>
+&nbsp;</span><div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+		<p class="APICODE"><span style="color:Green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		' Add default fatigue study results plot<br>
+		</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		errCode = ActDoc.<b>AddDefaultFatigueStudyPlot</b>(swsFatigueStudyResultType_e.swsFatigueStudy_DamagePlot)<br>
+&nbsp;</span></div>
+	<p class="APICODE">
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:Black">StudyMngr = ActDoc.StudyManager()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	StudyMngr </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(</span><span style="color:#a31515">&quot;Failed to get StudyManager 
+	object.&quot;</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Create constant amplitude fatigue 
+	study<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Creating 
+	constant amplitude fatigue study Fatigue_StudyAPIConst...&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Study = StudyMngr.<b>CreateNewStudy3</b>(</span><span style="color:#a31515">&quot;Fatigue_StudyAPIConst&quot;</span><span style="color:Black">, 
+	swsAnalysisStudyType_e.swsAnalysisStudyTypeFatigue, 0, errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	Study </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(</span><span style="color:#a31515">&quot;Failed to create new study.&quot;</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode = Study.<b>SetFatigueResultOptions</b>(1, </span>
+	<span style="color:Blue">Nothing</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FatigueOptions = Study.<b>FatigueStudyOptions</b><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	FatigueOptions </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(</span><span style="color:#a31515">&quot;Failed to get 
+	FatigueStudyOptions object.&quot;</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FatigueEvent = FatigueOptions.<b>AddFatigueEventForConstantAmplitude</b>(</span><span style="color:#a31515">&quot;Ready_Static&quot;</span><span style="color:Black">, 
+	-0.002, 1, errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FatigueEvent.<b>SuppressUnSuppress</b>() </span>
+	<span style="color:Green">'suppress event<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FatigueEvent.<b>SuppressUnSuppress</b>()
+	</span><span style="color:Green">'unsuppress event<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AssocCounts = FatigueEvent.<b>GetStudyAssociationData</b>(VarStudyNames, 
+	VarScales, VarSteps)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FatigueEvent.<b>FatigueEventBeginEdit</b>()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FatigueEvent.<b>Cycles2</b> = 500.0<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FatigueEvent.<b>LoadingRatio</b> = 8.9<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FatigueEvent.<b>LoadingType</b> = 2 </span>
+	<span style="color:Green">' Loading ratio<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarNewScales = 5.6<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarNewStudyNames = </span><span style="color:#a31515">&quot;Ready_Static&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarNewSteps = 9<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode = FatigueEvent.<b>SetStudyAssociationData</b>(1, (VarNewStudyNames), 
+	(VarNewScales), (VarNewSteps))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode = FatigueEvent.<b>FatigueEventEndEdit</b>()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	fatEv </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWFatigueEvent<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fatEv = FatigueOptions.<b>GetFatigueEvent</b>(0, errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Name of constant 
+	amplitude fatigue event is: &quot;</span><span style="color:Black"> &amp; fatEv.<b>Name</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Number of loading 
+	events in this fatigue study: &quot;</span><span style="color:Black"> &amp; 
+	FatigueOptions.<b>LoadingEventCount</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Result folder: &quot;</span><span style="color:Black"> 
+	&amp; FatigueOptions.<b>ResultFolder</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Shell face option 
+	as defined in swsShellFace_e: &quot;</span><span style="color:Black"> &amp; 
+	FatigueOptions.<b>ShellFace</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	bchecked </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Long<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	dcycles </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Double<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FatigueOptions.<b>GetInfiniteLifeSettings</b>(bchecked, 
+	dcycles)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Fatigue study 
+	infinite life settings checked? (1 = yes) &quot;</span><span style="color:Black"> 
+	&amp; bchecked)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Number of cycles 
+	to use: &quot;</span><span style="color:Black"> &amp; dcycles)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Event interaction 
+	type as defined in swsFatigueEventInteraction_e: &quot;</span><span style="color:Black"> 
+	&amp; FatigueOptions.<b>ConstantAmplitudeEventInteractionOption</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Computing 
+	alternating stress option as defined in swsFatigueAlternatingStressOption_e: 
+	&quot;</span><span style="color:Black"> &amp; FatigueOptions.<b>ComputingAlternatingStressOption</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Fatigue strength 
+	reduction factor: &quot;</span><span style="color:Black"> &amp; FatigueOptions.<b>FatigueStrengthReductionFactor</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Mean stress 
+	correction option as defined in swsFatigueMeanStressCorrectionType_e: &quot;</span><span style="color:Black"> 
+	&amp; FatigueOptions.<b>MeanStressCorrectionOption</b>)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode = Study.RunAnalysis<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	errCode &lt;&gt; 0 </span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(</span><span style="color:#a31515">&quot;Analysis failed with error code 
+	&quot;</span><span style="color:Black"> &amp; errCode &amp; </span>
+	<span style="color:#a31515">&quot; - &quot;</span><span style="color:Black"> &amp; 
+	ProcErrCode(errCode))<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Create variable amplitude fatigue 
+	study<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Creating variable 
+	amplitude fatigue study Fatigue_StudyAPIVariable...&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Study2 = StudyMngr.<b>CreateNewStudy3</b>(</span><span style="color:#a31515">&quot;Fatigue_StudyAPIVariable&quot;</span><span style="color:Black">, 
+	swsAnalysisStudyType_e.swsAnalysisStudyTypeFatigue, 1, errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	Study2 </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(</span><span style="color:#a31515">&quot;Failed to create new study.&quot;</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode = Study2.<b>SetFatigueResultOptions</b>(1, (VarVertices))<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FatigueOptions2 = Study2.<b>FatigueStudyOptions</b><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	FatigueOptions2 </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(</span><span style="color:#a31515">&quot;Failed to get 
+	FatigueStudyOptions Object.&quot;</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX(0) = 0<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX(1) = 1<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX(2) = 2<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX(3) = 3<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX(4) = 4<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX(5) = 5<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX(6) = 6.25714<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX(7) = 7<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX(8) = 8.3846<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX(9) = 9<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX(10) = 10<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY(0) = 0<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY(1) = 11<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY(2) = 21<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY(3) = 33<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY(4) = 44<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY(5) = 21<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY(6) = 66.25714<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY(7) = 77<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY(8) = 88.3846<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY(9) = 99<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY(10) = 109<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FatigueEvent2 = FatigueOptions2.<b>AddFatigueEventForVariableAmplitude</b>(</span><span style="color:#a31515">&quot;Ready_Static&quot;</span><span style="color:Black">, 
+	-0.002, 1, (PointsX), (PointsY), 0, 1.0#, errCode)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fatEv = FatigueOptions2.<b>GetFatigueEvent</b>(0, errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Name of variable 
+	amplitude fatigue event is &quot;</span><span style="color:Black"> &amp; fatEv.<b>Name</b>)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Number of repeats: 
+	&quot;</span><span style="color:Black"> &amp; FatigueEvent2.<b>NoOfRepeats</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Start times: &quot;</span><span style="color:Black"> 
+	&amp; FatigueEvent2.<b>StartTimes</b>)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FatigueEvent2.<b>FatigueEventBeginEdit</b>()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX_2(0) = 0<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX_2(1) = 1<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX_2(2) = 2<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX_2(3) = 3<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX_2(4) = 4<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX_2(5) = 5<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX_2(6) = 6.25714<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX_2(7) = 7<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX_2(8) = 8.3846<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX_2(9) = 9<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX_2(10) = 10<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX_2(11) = 11<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsX_2(12) = 20<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY_2(0) = 0<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY_2(1) = 11<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY_2(2) = 21<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY_2(3) = 33<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY_2(4) = 44<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY_2(5) = 21<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY_2(6) = 66.25714<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY_2(7) = 77<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY_2(8) = 88.3846<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY_2(9) = 99<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY_2(10) = 109<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY_2(11) = 66<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PointsY_2(12) = 12<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode = FatigueEvent2.<b>SetLoadHistoryCurve</b>((PointsX_2), 
+	(PointsY_2), 2, 1.8)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode = FatigueEvent2.<b>FatigueEventEndEdit</b>()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	lhCurve </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	ntype </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Long<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	dsamplingrate </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Double<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lhCurve = FatigueEvent2.<b>GetLoadHistoryCurve</b>(ntype, 
+	dsamplingrate)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Type of load 
+	history curve as defined in swsFatigueLoadHistoryCurveType_e: &quot;</span><span style="color:Black"> 
+	&amp; ntype)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Sampling rate in 
+	seconds: &quot;</span><span style="color:Black"> &amp; dsamplingrate)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Number of pairs of 
+	load history curve data: &quot;</span><span style="color:Black"> &amp; lhCurve(0))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Load history curve 
+	[time, amplitude] data:&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; lhCurve(1) &amp; </span><span style="color:#a31515">&quot;, &quot;</span><span style="color:Black"> 
+	&amp; lhCurve(2))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; lhCurve(3) &amp; </span><span style="color:#a31515">&quot;, &quot;</span><span style="color:Black"> 
+	&amp; lhCurve(4))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; lhCurve(5) &amp; </span><span style="color:#a31515">&quot;, &quot;</span><span style="color:Black"> 
+	&amp; lhCurve(6))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; lhCurve(7) &amp; </span><span style="color:#a31515">&quot;, &quot;</span><span style="color:Black"> 
+	&amp; lhCurve(8))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; lhCurve(9) &amp; </span><span style="color:#a31515">&quot;, &quot;</span><span style="color:Black"> 
+	&amp; lhCurve(10))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; lhCurve(11) &amp; </span><span style="color:#a31515">&quot;, &quot;</span><span style="color:Black"> 
+	&amp; lhCurve(12))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; lhCurve(13) &amp; </span><span style="color:#a31515">&quot;, &quot;</span><span style="color:Black"> 
+	&amp; lhCurve(14))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; lhCurve(15) &amp; </span><span style="color:#a31515">&quot;, &quot;</span><span style="color:Black"> 
+	&amp; lhCurve(16))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; lhCurve(17) &amp; </span><span style="color:#a31515">&quot;, &quot;</span><span style="color:Black"> 
+	&amp; lhCurve(18))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; lhCurve(19) &amp; </span><span style="color:#a31515">&quot;, &quot;</span><span style="color:Black"> 
+	&amp; lhCurve(20))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; lhCurve(21) &amp; </span><span style="color:#a31515">&quot;, &quot;</span><span style="color:Black"> 
+	&amp; lhCurve(22))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; lhCurve(23) &amp; </span><span style="color:#a31515">&quot;, &quot;</span><span style="color:Black"> 
+	&amp; lhCurve(24))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; lhCurve(25) &amp; </span><span style="color:#a31515">&quot;, &quot;</span><span style="color:Black"> 
+	&amp; lhCurve(26))<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Number of loading 
+	events in this fatigue study: &quot;</span><span style="color:Black"> &amp; 
+	FatigueOptions2.<b>LoadingEventCount</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Result folder: &quot;</span><span style="color:Black"> 
+	&amp; FatigueOptions2.<b>ResultFolder</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Shell face 
+	option as defined in swsShellFace_e: &quot;</span><span style="color:Black"> &amp; 
+	FatigueOptions2.<b>ShellFace</b>)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FatigueOptions2.<b>GetInfiniteLifeSettings</b>(bchecked, dcycles)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	nnoofbins </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Long<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	npercentfilterloadcycles </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Long<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FatigueOptions2.<b>GetVariableAmplitudeEventOptions</b>(nnoofbins, 
+	npercentfilterloadcycles)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Fatigue study 
+	infinite life settings checked? (1 = yes) &quot;</span><span style="color:Black"> 
+	&amp; bchecked)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Number of cycles 
+	to use: &quot;</span><span style="color:Black"> &amp; dcycles)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Number of equally 
+	spaced buckets in which to distribute the load: &quot;</span><span style="color:Black"> 
+	&amp; nnoofbins)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Filter load cycles 
+	below this percentage of maximum load: &quot;</span><span style="color:Black"> &amp; 
+	npercentfilterloadcycles)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Computing 
+	alternating stress option as defined in swsFatigueAlternatingStressOption_e: 
+	&quot;</span><span style="color:Black"> &amp; FatigueOptions2.<b>ComputingAlternatingStressOption</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Fatigue strength 
+	reduction factor: &quot;</span><span style="color:Black"> &amp; FatigueOptions2.<b>FatigueStrengthReductionFactor</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Mean stress 
+	correction option as defined in swsFatigueMeanStressCorrectionType_e: &quot;</span><span style="color:Black"> 
+	&amp; FatigueOptions2.<b>MeanStressCorrectionOption</b>)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode = Study2.RunAnalysis<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	errCode &lt;&gt; 0 </span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(</span><span style="color:#a31515">&quot;Analysis failed with error code 
+	&quot;</span><span style="color:Black"> &amp; errCode &amp; </span>
+	<span style="color:#a31515">&quot; - &quot;</span><span style="color:Black"> &amp; 
+	ProcErrCode(errCode))<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWFeatObj = Study2.Results<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	CWFeatObj </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(</span><span style="color:#a31515">&quot;Failed to get result object.&quot;</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Get Min/Max Fatigue<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Disp = CWFeatObj.<b>GetMinMaxFatigue</b>(0, 
+	errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Minimum fatigue is 
+	&quot;</span><span style="color:Black"> &amp; Disp(1) &amp; </span>
+	<span style="color:#a31515">&quot; at node &quot;</span><span style="color:Black"> &amp; 
+	Disp(0))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Maximum fatigue is 
+	&quot;</span><span style="color:Black"> &amp; Disp(3) &amp; </span>
+	<span style="color:#a31515">&quot; at node &quot;</span><span style="color:Black"> &amp; 
+	Disp(2))</span><p class="APICODE"><span style="color:Black"> <br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub<br>
+	</span><span style="color:Black">&nbsp;&nbsp; <br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Public</span><span style="color:Black"> 
+	swApp </span><span style="color:Blue">As</span><span style="color:Black"> 
+	SldWorks<br>
+	<br>
+	</span><span style="color:Blue">End</span><span style="color:Black"> </span>
+	<span style="color:Blue">Class</span>
+</div>
+<p class=APICODE>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

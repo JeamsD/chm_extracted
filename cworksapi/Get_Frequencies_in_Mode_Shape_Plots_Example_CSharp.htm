@@ -1,0 +1,117 @@
+<html>
+
+<head>
+<title>Get Frequencies in Mode Shape Plots Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,frequency study">
+<meta name=MS-HKWD content="C# examples,result plots">
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Get Frequencies in Mode Shape Plots Example (C#)</h1>
+<p>This example shows how to get frequencies for all mode shapes in amplitude 
+plots.</p>
+
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:green;">
+//----------------------------------------------------------------------------</span><br>
+<span style="color:green;">//&nbsp;Preconditions:</span><br>
+<span style="color: #008000">//</span><span style="color:green;">&nbsp;1.&nbsp;Add&nbsp;the&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;as&nbsp;an&nbsp;add-in (in&nbsp;SOLIDWORKS,&nbsp;click&nbsp;<b><br>
+</b>//<b>&nbsp;&nbsp;&nbsp; Tools&nbsp;&gt;&nbsp;Add-ins&nbsp;&gt;&nbsp;SOLIDWORKS&nbsp;Simulation 
+&gt; OK</b>).</span><br>
+<span style="color:green;">//&nbsp;2.&nbsp;Add&nbsp;the&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;primary&nbsp;interop&nbsp;assembly&nbsp;as&nbsp;a&nbsp;reference</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;(in&nbsp;the&nbsp;IDE,&nbsp;click&nbsp;<b>Project&nbsp;&gt;&nbsp;Add&nbsp;Reference&nbsp;&gt;&nbsp;.NET&nbsp;&gt;&nbsp;<br>
+</b>//<b>&nbsp;&nbsp;&nbsp; SolidWorks.Interop.cosworks&nbsp;&gt;&nbsp;OK</b>).</span><br>
+<span style="color:green;">//&nbsp;3.&nbsp;Ensure&nbsp;that&nbsp;the&nbsp;specified&nbsp;model&nbsp;exists.</span><br>
+<span style="color:green;">//</span><br>
+<span style="color:green;">//&nbsp;Postconditions:</span><br>
+<span style="color:green;">//&nbsp;1.&nbsp;Meshes&nbsp;the&nbsp;model.</span><br>
+<span style="color:green;">//&nbsp;2.&nbsp;Analyzes&nbsp;the&nbsp;study.</span><br>
+<span style="color:green;">
+//&nbsp;3.&nbsp;Gets&nbsp;the&nbsp;frequencies&nbsp;of&nbsp;all&nbsp;amplitude&nbsp;plot&nbsp;mode&nbsp;shapes.</span><br>
+<span style="color:green;">
+//&nbsp;4.&nbsp;Displays&nbsp;a&nbsp;message&nbsp;box&nbsp;with&nbsp;the&nbsp;frequency&nbsp;for&nbsp;mode&nbsp;shape&nbsp;2.</span><br>
+<span style="color:green;">//&nbsp;5.&nbsp;Click&nbsp;<b>OK</b>.</span><br>
+<span style="color:green;">//</span><br>
+<span style="color:green;">
+//&nbsp;NOTE:&nbsp;Because&nbsp;the&nbsp;model&nbsp;is&nbsp;used&nbsp;elsewhere,&nbsp;do&nbsp;not&nbsp;save&nbsp;changes.</span><br>
+<span style="color:green;">
+//&nbsp;---------------------------------------------------------------------------</span><br>
+<span style="color:blue;">using</span>&nbsp;Microsoft.VisualBasic;<br>
+<span style="color:blue;">using</span>&nbsp;System;<br>
+<span style="color:blue;">using</span>&nbsp;System.Collections;<br>
+<span style="color:blue;">using</span>&nbsp;System.Collections.Generic;<br>
+<span style="color:blue;">using</span>&nbsp;System.Data;<br>
+<span style="color:blue;">using</span>&nbsp;System.Diagnostics;<br>
+<span style="color:blue;">using</span>&nbsp;SolidWorks.Interop.sldworks;<br>
+<span style="color:blue;">using</span>&nbsp;SolidWorks.Interop.swconst;<br>
+<span style="color:blue;">using</span>&nbsp;SolidWorks.Interop.cosworks;<br>
+<span style="color:blue;">using</span>&nbsp;System.Runtime.InteropServices;<br>
+<span style="color:blue;">using</span>&nbsp;System.Windows.Forms;<br>
+<span style="color:blue;">namespace</span>&nbsp;GetFreqOrTime_CSharp.csproj<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">partial</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">SolidWorksMacro</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ModelDoc2&nbsp;Part;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CosmosWorks&nbsp;COSMOSWORKS;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CwAddincallback&nbsp;CWAddinCallBack;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWModelDoc&nbsp;ActDoc;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWStudyManager&nbsp;StudyMngr;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWStudy&nbsp;Study;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWResults&nbsp;CWResult;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWMesh&nbsp;mesh;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;errorCode;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;longstatus;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;longwarnings;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">object</span>[]&nbsp;TimeorFrequency;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;ModeShapeNumber;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">const</span>&nbsp;<span style="color:blue;">double</span>&nbsp;MeshEleSize&nbsp;=&nbsp;47.9;&nbsp;<span style="color:green;">//mm</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">const</span>&nbsp;<span style="color:blue;">double</span>&nbsp;MeshTol&nbsp;=&nbsp;2.39;&nbsp;<span style="color:green;">//mm</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;Main()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Part&nbsp;=&nbsp;swApp.<b>OpenDoc6</b>(<span style="color:#a31515;">&quot;C:\\Users\\Public\\Documents\\SOLIDWORKS\\SOLIDWORKS 2017\\Simulation Examples\\Dynamics\\ac_unit.sldasm&quot;</span>,&nbsp;(<span style="color:blue;">int</span>)swDocumentTypes_e.swDocASSEMBLY,&nbsp;1,&nbsp;<span style="color:#a31515;">&quot;&quot;</span>,&nbsp;<span style="color:blue;">ref</span>&nbsp;longstatus,&nbsp;<span style="color:blue;">ref</span>&nbsp;longwarnings);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWAddinCallBack&nbsp;=&nbsp;(CwAddincallback)swApp.<b>GetAddInObject</b>(<span style="color:#a31515;">&quot;CosmosWorks.CosmosWorks&quot;</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COSMOSWORKS&nbsp;=&nbsp;CWAddinCallBack.<b>CosmosWorks</b>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ActDoc&nbsp;=&nbsp;COSMOSWORKS.<b>ActiveDoc</b>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StudyMngr&nbsp;=&nbsp;ActDoc.<b>StudyManager</b>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StudyMngr.<b>ActiveStudy</b>&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Study&nbsp;=&nbsp;StudyMngr.<b>GetStudy</b>(0);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mesh&nbsp;=&nbsp;Study.<b>Mesh</b>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mesh.<b>MesherType</b>&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mesh.<b>Quality</b>&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errorCode&nbsp;=&nbsp;Study.<b>CreateMesh</b>(0,&nbsp;MeshEleSize,&nbsp;MeshTol);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errorCode&nbsp;=&nbsp;Study.<b>RunAnalysis</b>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWResult&nbsp;=&nbsp;Study.<b>Results</b>;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ModeShapeNumber&nbsp;=&nbsp;2;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TimeorFrequency&nbsp;=&nbsp;(<span style="color:blue;">object</span>[])CWResult.<b>GetTimeOrFrequencyAtEachStep</b>(0,&nbsp;<span style="color:blue;">out</span>&nbsp;errorCode);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MessageBox.Show(<span style="color:#a31515;">&quot;Frequency&nbsp;for&nbsp;mode&nbsp;shape&nbsp;2:&nbsp;&quot;</span>&nbsp;+&nbsp;TimeorFrequency[ModeShapeNumber&nbsp;-&nbsp;1]);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;The&nbsp;SldWorks&nbsp;swApp&nbsp;variable&nbsp;is&nbsp;pre-assigned&nbsp;for&nbsp;you.</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;SldWorks&nbsp;swApp;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+}<br>
+&nbsp;<br>
+&nbsp;</p>
+
+<p class=APICODE>&nbsp;</p>
+
+</body>
+
+</html>

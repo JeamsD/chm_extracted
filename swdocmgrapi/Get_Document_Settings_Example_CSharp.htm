@@ -1,0 +1,120 @@
+<html>
+
+<head>
+<title>Get Document Settings Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,document units">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Document Manager API 
+ Help</span></h1>
+<h1>Get Document Settings Example (C#)</h1>
+<p>This example shows how to get various settings for a document.</p>
+
+		<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+		<span style="color: #008000">//</span><span style="color:green;">---------------------------------------------------------------------------------------&nbsp;</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;Preconditions:</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;1.&nbsp;Read&nbsp;the&nbsp;SOLIDWORKS&nbsp;Document&nbsp;Manager&nbsp;API&nbsp;<b>Getting&nbsp;Started</b>&nbsp;</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;topic&nbsp;and&nbsp;ensure&nbsp;that&nbsp;the&nbsp;required&nbsp;DLLs&nbsp;are&nbsp;registered.</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;2.&nbsp;Copy&nbsp;and&nbsp;paste&nbsp;this&nbsp;code&nbsp;into&nbsp;a&nbsp;C#&nbsp;console&nbsp;application</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;Microsoft&nbsp;Visual&nbsp;Studio.</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;3.&nbsp;Add&nbsp;the&nbsp;<b>SolidWorks.Interop.swdocumentmgr.dll</b>&nbsp;reference&nbsp;to&nbsp;the&nbsp;project:</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Right-click&nbsp;the&nbsp;solution&nbsp;in&nbsp;Solution&nbsp;Explorer.</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Select&nbsp;<b>Add&nbsp;Reference</b>.&nbsp;</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;<b>Browse</b>.</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click
+		<i>install_dir</i><b>\api\redist\SolidWorks.Interop.swdocumentmgr.dll</b>.</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;e.&nbsp;Click&nbsp;<b>Add</b>.</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;f.&nbsp;Click&nbsp;<b>Close</b>.<br>
+		//&nbsp;4.&nbsp;Substitute <i>path_to_SOLIDWORKS_2015_model</i>&nbsp;with&nbsp;the path to a 
+		model that has been <br>
+		//&nbsp;&nbsp;&nbsp; saved&nbsp;in&nbsp;SOLIDWORKS&nbsp;2015&nbsp;or&nbsp;later.&nbsp;</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;5.&nbsp;Substitute&nbsp;<i>your_license_key</i>&nbsp;with&nbsp;your&nbsp;SOLIDWORKS&nbsp;Document&nbsp;Manager&nbsp;</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;license&nbsp;key.</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;6.&nbsp;Open&nbsp;the&nbsp;Immediate&nbsp;window.</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;Postconditions:&nbsp;Examine&nbsp;the&nbsp;Immediate&nbsp;window.</span><br>
+		<span style="color: #008000">//</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">&nbsp;NOTE:&nbsp;Because&nbsp;the&nbsp;model&nbsp;is&nbsp;used&nbsp;elsewhere,&nbsp;do&nbsp;not&nbsp;save&nbsp;any&nbsp;changes.</span><br>
+		<span style="color: #008000">//</span><span style="color:green;">---------------------------------------------------------------------------------------&nbsp;</span><br>
+&nbsp;<br>
+&nbsp;<br>
+		<span style="color:blue;">using</span>&nbsp;System;<br>
+		<span style="color:blue;">using</span>&nbsp;System.Collections.Generic;<br>
+		<span style="color:blue;">using</span>&nbsp;System.Text;<br>
+		<span style="color:blue;">using</span>&nbsp;System.Diagnostics;<br>
+		<span style="color:blue;">using</span>&nbsp;SolidWorks.Interop.swdocumentmgr;<br>
+&nbsp;<br>
+		<span style="color:blue;">namespace</span>&nbsp;GetExtRefs2_CSharp<br>
+		{<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Program</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:#2b91af;">SwDMClassFactory</span>&nbsp;dmClassFact;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:#2b91af;">SwDMApplication4</span>&nbsp;dmDocMgr;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:#2b91af;">SwDMDocument19</span>&nbsp;dmDoc;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:#2b91af;">SwDmDocumentType</span>&nbsp;dmDocType;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:#2b91af;">SwDmDocumentOpenError</span>&nbsp;status;<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">const</span>&nbsp;<span style="color:blue;">string</span>&nbsp;docPath&nbsp;=&nbsp;<span style="color:#a31515;">&quot;<i>path_to_SOLIDWORKS_2015_model</i>&quot;</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">const</span>&nbsp;<span style="color:blue;">string</span>&nbsp;licenseKey&nbsp;=&nbsp;<span style="color:#a31515;">&quot;<i>your_license_key</i>&quot;</span>;<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;Main()<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmClassFact&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">SwDMClassFactory</span>();<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDocMgr&nbsp;=&nbsp;(<span style="color:#2b91af;">SwDMApplication4</span>)dmClassFact.<b>GetApplication</b>(licenseKey);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDoc&nbsp;=&nbsp;(<span style="color:#2b91af;">SwDMDocument19</span>)dmDocMgr.<b>GetDocument</b>(docPath,&nbsp;dmDocType,&nbsp;<span style="color:blue;">true</span>,&nbsp;<span style="color:blue;">out</span>&nbsp;status);<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;((dmDoc&nbsp;!=&nbsp;<span style="color:blue;">null</span>))<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Angular&nbsp;units:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsAngular));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Angular&nbsp;decimal&nbsp;places:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsAngularDecimalPlaces));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Decimal&nbsp;rounding:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsDecimalRounding));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Dual&nbsp;linear&nbsp;units:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsDualLinear));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Dual&nbsp;linear&nbsp;decimal&nbsp;display:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsLinearDecimalDisplay));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Dual&nbsp;linear&nbsp;decimal&nbsp;places:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsLinearDecimalPlaces));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Dual&nbsp;linear&nbsp;fraction&nbsp;denominator:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsDualLinearFractionDenominator));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Energy&nbsp;decimal&nbsp;places:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsEnergyDecimalPlaces));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Energy&nbsp;units:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsEnergyUnits));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Force&nbsp;units:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsForce));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Force&nbsp;decimal&nbsp;places:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsForceDecimalPlaces));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Linear&nbsp;units:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsLinear));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Linear&nbsp;decimal&nbsp;display:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsLinearDecimalDisplay));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Linear&nbsp;decimal&nbsp;places:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsLinearDecimalPlaces);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Linear&nbsp;fraction&nbsp;denominator:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsLinearFractionDenominator));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Mass&nbsp;prop&nbsp;decimal&nbsp;places:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsMassPropDecimalPlaces));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Mass&nbsp;prop&nbsp;length:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsMassPropLength));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Mass&nbsp;prop&nbsp;mass:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsMassPropMass));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Mass&nbsp;prop&nbsp;volume:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsMassPropVolume));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Power&nbsp;decimal&nbsp;places:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsPowerDecimalPlaces));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Power&nbsp;units:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsPowerUnits));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Time&nbsp;decimal&nbsp;places:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsTimeDecimalPlaces));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Time&nbsp;units:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsTimeUnits));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Unit&nbsp;system:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingInteger</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsIntegerValue_e</span>.swDmUnitsUnitSystem));<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Dual&nbsp;linear&nbsp;feet&nbsp;and&nbsp;inches&nbsp;format?&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingToggle</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsToggle_e</span>.swDmUnitsDualLinearFeetAndInchesFormat));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Dual&nbsp;linear&nbsp;round&nbsp;to&nbsp;nearest&nbsp;fraction?&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingToggle</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsToggle_e</span>.swDmUnitsDualLinearRoundToNearestFraction));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Linear&nbsp;feet&nbsp;and&nbsp;inches&nbsp;format?&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingToggle</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsToggle_e</span>.swDmUnitsLinearFeetAndInchesFormat));<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Linear&nbsp;round&nbsp;to&nbsp;nearest&nbsp;fraction?&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>GetSwDmSettingToggle</b>((<span style="color:blue;">int</span>)<span style="color:#2b91af;">swDmDocumentUnitsToggle_e</span>.swDmUnitsLinearRoundToNearestFraction));<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">else</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Unable&nbsp;to&nbsp;open&nbsp;document.&nbsp;Check&nbsp;docPath&nbsp;variable.&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+		}</p>
+
+		<p class="APICODE"><span style="color:Green">
+		&nbsp;</div><p class=APICODE>&nbsp;</p>
+
+</body>
+
+</html>

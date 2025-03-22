@@ -1,0 +1,202 @@
+<html>
+
+<head>
+<title>Get Factor of Safety Values for Composites Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,study results">
+<meta name=MS-HKWD content="C# examples,factor of safety">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Get Factor of Safety Values for Composites Example (C#)</h1>
+<p>This example shows how to get Factor of Safety results for specified entities 
+having either composite or non-composite shells.</p>
+
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p class="APICODE"><span style="color:Green">
+	//----------------------------------------------------------------------------<br>
+	// Preconditions:<br>
+	</span><span style="color: #008000">//</span><span style="color:green;">&nbsp;1.&nbsp; Add&nbsp;the&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;as&nbsp;an&nbsp;add-in (in&nbsp;SOLIDWORKS,&nbsp;click&nbsp;<b><br>
+</b>//<b>&nbsp;&nbsp;&nbsp;&nbsp; Tools&nbsp;&gt;&nbsp;Add-ins&nbsp;&gt;&nbsp;SOLIDWORKS&nbsp;Simulation 
+&gt; OK</b>).</span><br>
+<span style="color:green;">//&nbsp;2.&nbsp; Add&nbsp;the&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;primary&nbsp;interop&nbsp;assembly&nbsp;as&nbsp;a&nbsp;reference</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp; (in&nbsp;the&nbsp;IDE,&nbsp;click&nbsp;<b>Project&nbsp;&gt;&nbsp;Add&nbsp;Reference&nbsp;&gt;&nbsp;.NET&nbsp;&gt;&nbsp;<br>
+</b>//<b>&nbsp;&nbsp;&nbsp;&nbsp; SolidWorks.Interop.cosworks&nbsp;&gt;&nbsp;OK</b>).</span><span style="color:Green"><br>
+	</span><span style="color:Green">
+	// 3.&nbsp; Open <i>public_documents</i><b>\samples\tutorial\api\tjoint.sldprt</b>.<br>
+	</span><font color="#008000">// 4.&nbsp; Click the Ready - 8 plies tab.<br>
+	// 5.&nbsp; Expand <b>tjoint</b> in the FeatureManager design tree.<br>
+	// 6.&nbsp; Right-click <b>SurfaceBody1</b> and click <b>Edit Definition</b>.<br>
+	// 7.&nbsp; Select <b>Thin</b> and click the green arrow.<br>
+	// 8.&nbsp; Right-click <b>SurfaceBody2</b> and click <b>Edit Definition</b>.<br>
+	// 9.&nbsp; Select <b>Thin</b> and click the green arrow.</font><span style="color:Green"><br>
+	// 10. Open an Immediate window.<br>
+	//<br>
+	// Postconditions: <br>
+	</span><font color="#008000">// 1. Analyzes two studies:<br>
+	//&nbsp;&nbsp;&nbsp; a. 8 plies with non-composite materials applied to surface 
+bodies.<br>
+	//&nbsp;&nbsp;&nbsp; b. 16 plies with composite materials applied to surface 
+bodies.<br>
+	// 2. Inspect the Immediate window for the minimum and maximum factors of safety.</font><span style="color:Green"><br>
+	//<br>
+	// NOTE: Because the model is used elsewhere, do not save changes.<br>
+	// 
+	---------------------------------------------------------------------------<br>
+	&nbsp;</span><p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+	<span style="color:blue;">using</span>&nbsp;Microsoft.VisualBasic;<br>
+	<span style="color:blue;">using</span>&nbsp;System;<br>
+	<span style="color:blue;">using</span>&nbsp;System.Collections;<br>
+	<span style="color:blue;">using</span>&nbsp;System.Collections.Generic;<br>
+	<span style="color:blue;">using</span>&nbsp;System.Data;<br>
+	<span style="color:blue;">using</span>&nbsp;System.Diagnostics;<br>
+	<span style="color:blue;">using</span>&nbsp;SolidWorks.Interop.sldworks;<br>
+	<span style="color:blue;">using</span>&nbsp;SolidWorks.Interop.swconst;<br>
+	<span style="color:blue;">using</span>&nbsp;SolidWorks.Interop.cosworks;<br>
+	<span style="color:blue;">using</span>&nbsp;System.Runtime.InteropServices;<br>
+	<span style="color:blue;">namespace</span>&nbsp;GetMinMaxFOS_CSharp.csproj<br>
+	{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">partial</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">SolidWorksMacro</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ModelDoc2&nbsp;Part;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CosmosWorks&nbsp;COSMOSWORKS;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CwAddincallback&nbsp;CWAddinCallBack;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWModelDoc&nbsp;ActDoc;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWStudyManager&nbsp;StudyMngr;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWStudy&nbsp;Study;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWResults&nbsp;CWResult;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWMesh&nbsp;CWMesh;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SelectionMgr&nbsp;SelMgr;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">bool</span>&nbsp;bIsCompositeOption;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">object</span>[]&nbsp;varArray1&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:blue;">object</span>[1];<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">object</span>&nbsp;Obj1;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;NonCompositeCriterion;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;CompositeFailureCriterion;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;ShellFace;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;PlyNum;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;ShellFaceOption;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;MinFOSVal;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;swFactorOfSafetyDist;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">object</span>[]&nbsp;FosVal;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">bool</span>&nbsp;boolstatus;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;errCode;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">double</span>&nbsp;el;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">double</span>&nbsp;tl;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;Main()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Part&nbsp;=&nbsp;(ModelDoc2)swApp.<b>ActiveDoc</b>;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SelMgr&nbsp;=&nbsp;(SelectionMgr)Part.<b>SelectionManager</b>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;boolstatus&nbsp;=&nbsp;Part.<b>Extension</b>.<b>SketchBoxSelect</b>(0.000000,&nbsp;0.000000,&nbsp;0.000000,&nbsp;0.000000,&nbsp;0.000000,&nbsp;0.000000);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;boolstatus&nbsp;=&nbsp;Part.<b>Extension</b>.<b>SelectByID2</b>(<span style="color:#a31515;">&quot;Surface-Trim1&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;SURFACEBODY&quot;</span>,&nbsp;-0.0533802776919856,&nbsp;0.00381973755003173,&nbsp;0.025111145036476,&nbsp;<span style="color:blue;">true</span>,&nbsp;0,&nbsp;<span style="color:blue;">null</span>,&nbsp;0);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Obj1&nbsp;=&nbsp;SelMgr.<b>GetSelectedObject6</b>(1,&nbsp;-1);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;varArray1[0]&nbsp;=&nbsp;Obj1;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWAddinCallBack&nbsp;=&nbsp;(CwAddincallback)swApp.<b>GetAddInObject</b>(<span style="color:#a31515;">&quot;SldWorks.Simulation&quot;</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COSMOSWORKS&nbsp;=&nbsp;CWAddinCallBack.<b>CosmosWorks</b>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ActDoc&nbsp;=&nbsp;COSMOSWORKS.<b>ActiveDoc</b>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StudyMngr&nbsp;=&nbsp;ActDoc.<b>StudyManager</b>;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bIsCompositeOption&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NonCompositeCriterion&nbsp;=&nbsp;(<span style="color:blue;">int</span>)swsFOS_NonCompositeCriterion_e.swsFOSNonCompositeCriterion_VonMisesHencky;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CompositeFailureCriterion&nbsp;=&nbsp;(<span style="color:blue;">int</span>)swsFOS_CompositeCriterion_e.swsFOSCompositeCriterion_Tsai_Hill;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PlyNum&nbsp;=&nbsp;0;&nbsp;<span style="color:green;">//&nbsp;Across&nbsp;all&nbsp;plies</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ShellFace&nbsp;=&nbsp;(<span style="color:blue;">int</span>)swsFOS_ShellFaceOption_e.swsFOS_ShellFaceOption_TopFace;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ShellFaceOption&nbsp;=&nbsp;(<span style="color:blue;">int</span>)swsFOS_NormalShellFaceOption_e.swsFOS_NormalShellFaceOption_Top;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MinFOSVal&nbsp;=&nbsp;1;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swFactorOfSafetyDist&nbsp;=&nbsp;(<span style="color:blue;">int</span>)swsFOS_DistributionOpt_e.swsFOS_DistributionOpt_AreaBelowFOS;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Analyze&nbsp;study&nbsp;1&nbsp;(non-composite&nbsp;shells)&nbsp;and&nbsp;process&nbsp;results</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;Analyzing&nbsp;Study&nbsp;1&nbsp;with&nbsp;8&nbsp;plies...&quot;</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StudyMngr.<b>ActiveStudy</b>&nbsp;=&nbsp;1;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Study&nbsp;=&nbsp;StudyMngr.<b>GetStudy</b>(1);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Create&nbsp;mesh</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWMesh&nbsp;=&nbsp;Study.<b>Mesh</b>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(CWMesh&nbsp;==&nbsp;<span style="color:blue;">null</span>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No&nbsp;mesh&nbsp;object.&quot;</span>,&nbsp;<span style="color:blue;">false</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWMesh.<b>Quality</b>&nbsp;=&nbsp;1;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWMesh.<b>GetDefaultElementSizeAndTolerance</b>(0,&nbsp;<span style="color:blue;">out</span>&nbsp;el,&nbsp;<span style="color:blue;">out</span>&nbsp;tl);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode&nbsp;=&nbsp;Study.<b>CreateMesh</b>(0,&nbsp;el,&nbsp;tl);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(errCode&nbsp;!=&nbsp;0)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;Mesh&nbsp;failed.&quot;</span>,&nbsp;<span style="color:blue;">true</span>);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Run&nbsp;analysis</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode&nbsp;=&nbsp;Study.<b>RunAnalysis</b>();<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(errCode&nbsp;!=&nbsp;0)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;Analysis&nbsp;failed.&quot;</span>,&nbsp;<span style="color:blue;">true</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWResult&nbsp;=&nbsp;Study.<b>Results</b>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(CWResult&nbsp;==&nbsp;<span style="color:blue;">null</span>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No&nbsp;result&nbsp;object.&quot;</span>,&nbsp;<span style="color:blue;">false</span>);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;For&nbsp;non-composite&nbsp;shells</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FosVal&nbsp;=&nbsp;(<span style="color:blue;">object</span>[])CWResult.<b>GetMinMaxFactorOfSafety2</b>(<span style="color:blue;">true</span>,&nbsp;<span style="color:blue;">null</span>,&nbsp;(<span style="color:blue;">int</span>)swsFOS_NonCompositeCriterion_e.swsFOSNonCompositeCriterion_Automatic,&nbsp;(<span style="color:blue;">int</span>)swsFOS_ShellFaceOption_e.swsFOS_ShellFaceOption_TopFace,&nbsp;<span style="color:blue;">0, out</span>&nbsp;errCode);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;Non-composite&nbsp;shell:&quot;</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Minimum&nbsp;FOS:&nbsp;&quot;</span>&nbsp;+&nbsp;FosVal[0].ToString());<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Maximum&nbsp;FOS:&nbsp;&quot;</span>&nbsp;+&nbsp;FosVal[1].ToString());<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;For&nbsp;non-composite&nbsp;shells&nbsp;and&nbsp;detail&nbsp;settings</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FosVal&nbsp;=&nbsp;(<span style="color:blue;">object</span>[])CWResult.<b>GetMinMaxFactorOfSafetyWithDetailSettings2</b>(<span style="color:blue;">true</span>,&nbsp;(varArray1),&nbsp;(<span style="color:blue;">int</span>)swsFOS_NonCompositeCriterion_e.swsFOSNonCompositeCriterion_VonMisesHencky,&nbsp;<span style="color:blue;">true</span>,&nbsp;1000,&nbsp;(<span style="color:blue;">int</span>)swsStrengthUnit_e.swsStrengthUnitPSI,&nbsp;(<span style="color:blue;">int</span>)swsFactorOfSafetyStressLimitOption_e.swsFactorOfSafetyStressLimitOption_YieldStrength,&nbsp;0,&nbsp;(<span style="color:blue;">int</span>)swsFactorOfSafetyStressLimitOption_e.swsFactorOfSafetyStressLimitOption_UltimateStrength,&nbsp;0,<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1,&nbsp;1,&nbsp;<span style="color:blue;">false</span>,&nbsp;ShellFaceOption,&nbsp;<span style="color:blue;">0, out</span>&nbsp;errCode);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;Non-composite&nbsp;shell&nbsp;and&nbsp;detail&nbsp;settings:&quot;</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Minimum&nbsp;FOS:&nbsp;&quot;</span>&nbsp;+&nbsp;FosVal[0].ToString());<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Maximum&nbsp;FOS:&nbsp;&quot;</span>&nbsp;+&nbsp;FosVal[1].ToString());<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Analyze&nbsp;study&nbsp;2&nbsp;(composite&nbsp;shells)&nbsp;and&nbsp;process&nbsp;results</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;&quot;</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;Analyzing&nbsp;Study&nbsp;2&nbsp;with&nbsp;16&nbsp;plies...&quot;</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StudyMngr.<b>ActiveStudy</b>&nbsp;=&nbsp;2;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Study&nbsp;=&nbsp;StudyMngr.<b>GetStudy</b>(2);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Create&nbsp;mesh</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWMesh&nbsp;=&nbsp;Study.<b>Mesh</b>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(CWMesh&nbsp;==&nbsp;<span style="color:blue;">null</span>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No&nbsp;mesh&nbsp;object.&quot;</span>,&nbsp;<span style="color:blue;">false</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWMesh.<b>Quality</b>&nbsp;=&nbsp;1;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWMesh.<b>GetDefaultElementSizeAndTolerance</b>(0,&nbsp;<span style="color:blue;">out</span>&nbsp;el,&nbsp;<span style="color:blue;">out</span>&nbsp;tl);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode&nbsp;=&nbsp;Study.<b>CreateMesh</b>(0,&nbsp;el,&nbsp;tl);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(errCode&nbsp;!=&nbsp;0)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;Mesh&nbsp;failed.&quot;</span>,&nbsp;<span style="color:blue;">true</span>);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Run&nbsp;analysis</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode&nbsp;=&nbsp;Study.<b>RunAnalysis</b>();<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(errCode&nbsp;!=&nbsp;0)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;Analysis&nbsp;failed.&quot;</span>,&nbsp;<span style="color:blue;">true</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWResult&nbsp;=&nbsp;Study.<b>Results</b>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(CWResult&nbsp;==&nbsp;<span style="color:blue;">null</span>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No&nbsp;result&nbsp;object.&quot;</span>,&nbsp;<span style="color:blue;">false</span>);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FosVal&nbsp;=&nbsp;(<span style="color:blue;">object</span>[])CWResult.<b>GetFactorOfSafetyForComposites</b>(bIsCompositeOption,&nbsp;(varArray1),&nbsp;NonCompositeCriterion,&nbsp;CompositeFailureCriterion,&nbsp;PlyNum,&nbsp;ShellFace,&nbsp;ShellFaceOption,&nbsp;swFactorOfSafetyDist,&nbsp;MinFOSVal,&nbsp;<span style="color:blue;">out</span>&nbsp;errCode);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;Composite&nbsp;shell:&quot;</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Minimum&nbsp;FOS:&nbsp;&quot;</span>&nbsp;+&nbsp;FosVal[0].ToString());<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Maximum&nbsp;FOS:&nbsp;&quot;</span>&nbsp;+&nbsp;FosVal[1].ToString());<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;ErrorMsg(SldWorks&nbsp;SwApp,&nbsp;<span style="color:blue;">string</span>&nbsp;Message,&nbsp;<span style="color:blue;">bool</span>&nbsp;EndTest)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SwApp.<b>SendMsgToUser2</b>(Message,&nbsp;0,&nbsp;0);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SwApp.<b>RecordLine</b>(<span style="color:#a31515;">&quot;'***&nbsp;WARNING&nbsp;-&nbsp;General&quot;</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SwApp.<b>RecordLine</b>(<span style="color:#a31515;">&quot;'***&nbsp;&quot;</span>&nbsp;+&nbsp;Message);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SwApp.<b>RecordLine</b>(<span style="color:#a31515;">&quot;&quot;</span>);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;SldWorks&nbsp;swApp;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+	}</div>
+<p class=APICODE>&nbsp;</p>
+
+</body>
+
+</html>

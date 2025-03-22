@@ -1,0 +1,275 @@
+<html>
+
+<head>
+<title>Add Component Contacts Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,component contacts">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Add Component Contacts Example (VBA)</h1>
+<p>This example shows how to add component contacts to a frequency study.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+'&nbsp;3. Ensure that the specified material library exists.<br>
+'&nbsp;4. Ensure that the specified model document exists.<br>
+'&nbsp;5. Open the Immediate window.<br>
+'<br>
+' Postconditions:<br>
+'&nbsp; 1. Opens the model.<br>
+'&nbsp; 2. Creates <b>Frequency 1</b> study.<br>
+'&nbsp; 3. Uses a soft spring to stabilize the model.<br>
+'&nbsp; 4. Adds <b>Component Contact-1</b> and <b>Component Contact-2</b> to the<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; <b>Component Contacts</b> folder in the Simulation 
+study tree.<br>
+'&nbsp; 5. Prints the component contacts' properties to the Immediate window.<br>
+'&nbsp; 6. Applies ductile iron to the model.<br>
+'&nbsp; 7. Meshes the model.<br>
+'&nbsp; 8. Analyzes <b>Frequency 1</b>.<br>
+'&nbsp; 9. Prints the resonant frequencies of each mode to the Immediate window.<br>
+' 10. Inspect the Immediate window, the Simulation study tree, and the<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; graphics area.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+'----------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">&nbsp;<br>
+Sub main()<br>
+</p>
+<p class="APICODE">&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks<br>
+&nbsp;&nbsp; Dim COSMOSWORKS As Object<br>
+&nbsp;&nbsp; Dim COSMOSObject As CosmosWorksLib.CwAddincallback<br>
+&nbsp;&nbsp; Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp; Dim Study As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp; Dim SolidMgr As CosmosWorksLib.CWSolidManager<br>
+&nbsp;&nbsp; Dim SolidComponent As CosmosWorksLib.CWSolidComponent<br>
+&nbsp;&nbsp; Dim SolidBody As CosmosWorksLib.CWSolidBody<br>
+&nbsp;&nbsp; Dim CwMesh As CosmosWorksLib.CwMesh<br>
+&nbsp;&nbsp; Dim CWResult As CosmosWorksLib.CWResults<br>
+&nbsp;&nbsp; Dim Part As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp; Dim ContactMgr As CosmosWorksLib.CWContactManager<br>
+&nbsp;&nbsp; Dim CWComponentContact As CosmosWorksLib.CWContactComponent<br>
+&nbsp;&nbsp; Dim pDisp3 As Object, pDisp4 As Object<br>
+&nbsp;&nbsp; Dim var20 As Variant, var21 As Variant<br>
+&nbsp;&nbsp; Dim Freq As Variant<br>
+&nbsp;&nbsp; Dim bApp As Boolean<br>
+&nbsp;&nbsp; Dim str3 As String, str4 As String<br>
+&nbsp;&nbsp; Dim longstatus As Long, longwarnings As Long<br>
+&nbsp;&nbsp; Dim errCode As Long<br>
+&nbsp;&nbsp; Dim el As Double, tl As Double<br>
+&nbsp;&nbsp; Dim i As Long</p>
+<p class="APICODE">&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp; SwApp.<b>OpenDoc6</b> &quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2019\samples\Simulation Examples\Contact\quartereyebar.sldasm&quot;, 
+swDocASSEMBLY, swOpenDocOptions_Silent, &quot;&quot;, longstatus, longwarnings</p>
+<p class="APICODE">&nbsp;&nbsp; Set Part = SwApp.<b>ActiveDoc</b>()<br>
+</p>
+<p class="APICODE">&nbsp;&nbsp; Set COSMOSObject = SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp; If COSMOSObject Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+Simulation add-in&quot;</p>
+<p class="APICODE">&nbsp;&nbsp; Set COSMOSWORKS = COSMOSObject.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+COSMOSWORKS&quot;<br>
+</p>
+<p class="APICODE">&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;Failed to get active 
+document&quot;</p>
+<p class="APICODE"><br>
+</p>
+<p class="APICODE">&nbsp;&nbsp; ' Create new frequency study<br>
+&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;Failed to get study 
+manager&quot;</p>
+<p class="APICODE">&nbsp;&nbsp; Set Study = StudyMngr.<b>CreateNewStudy3</b>(&quot;Frequency 
+1&quot;, swsAnalysisStudyTypeFrequency, 0, errCode)<br>
+&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;Failed to create 
+frequency study&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp; Dim StudyOptions As ICWFrequencyStudyOptions<br>
+&nbsp;&nbsp; Set StudyOptions = Study.<b>FrequencyStudyOptions</b><br>
+&nbsp;&nbsp; StudyOptions.<b>UseSoftSpring</b> = 1<br>
+&nbsp; <br>
+</p>
+<p class="APICODE">&nbsp;&nbsp; str3 = 
+&quot;64,31,0,0,4,0,0,0,255,254,255,29,81,0,117,0,97,0,114,0,116,0,101,0,114,0,69,0,121,0,101,0,66,0,97,0,114,0,45,0,49,0,64,0,113,0,117,0,97,0,114,0,116,0,101,0,114,0,101,0,121,0,101,0,98,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,9,0,0,0,3,0,0,0,103,0,0,0,102,0,0,0,101,0,0,0&quot;<br>
+&nbsp;&nbsp; StringtoArray str3, var20<br>
+&nbsp;&nbsp; Set pDisp3 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var20), 
+longstatus)<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp; str4 = 
+&quot;64,31,0,0,5,0,0,0,255,254,255,27,81,0,117,0,97,0,114,0,116,0,101,0,114,0,66,0,111,0,108,0,116,0,45,0,49,0,64,0,113,0,117,0,97,0,114,0,116,0,101,0,114,0,101,0,121,0,101,0,98,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,11,0,0,0&quot;<br>
+&nbsp;&nbsp; StringtoArray str4, var21<br>
+&nbsp;&nbsp; Set pDisp4 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var21), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp; Set ContactMgr = Study.<b>ContactManager</b><br>
+&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get contact 
+manager&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp; ContactMgr.<b>DeleteContactComponent</b> 
+(&quot;Global Contact&quot;)</p>
+<p class="APICODE">&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp; ' Add bonded component contacts<br>
+&nbsp;&nbsp; Set CWComponentContact = ContactMgr.<b>CreateContactComponent</b>(swsContactTypeBonded, 
+swsMeshCompatibilityCompatible, pDisp3, errCode)<br>
+&nbsp;&nbsp; Debug.Print CWComponentContact.<b>ContactName</b><br>
+&nbsp;&nbsp; Debug.Print &quot;&nbsp; Type as defined in swsContactType_e: &quot; &amp; 
+CWComponentContact.<b>ContactComponentType</b><br>
+&nbsp;&nbsp; Debug.Print &quot;&nbsp; Include friction? &quot; &amp; CWComponentContact.<b>IncludeFriction</b><br>
+&nbsp;&nbsp; If CWComponentContact.<b>IncludeFriction</b> = True Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Friction coefficient: &quot; &amp; 
+CWComponentContact.<b>FrictionValue</b><br>
+&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp; Debug.Print &quot;&nbsp; Global contact condition? (1=yes, 0=no) &quot; &amp; 
+CWComponentContact.<b>GlobalContact</b><br>
+&nbsp;&nbsp; Debug.Print &quot;&nbsp; Include non-touching faces? (1=yes, 0=no) &quot; &amp; 
+CWComponentContact.<b>IncludeClearance</b><br>
+&nbsp;&nbsp; If CWComponentContact.<b>IncludeClearance</b> = True Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Clearance value: &quot; &amp; 
+CWComponentContact.<b>ClearanceValue</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Clearance units: &quot; &amp; 
+CWComponentContact.<b>ClearanceUnit</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Automatically create contact 
+sets? &quot; &amp; CWComponentContact.<b>IncludeShellEdgeSolidOrShellFace</b><br>
+&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp; Debug.Print &quot;&nbsp; Mesh compatibility as defined in 
+swsMeshCompatibility_e: &quot; &amp; CWComponentContact.<b>Option</b><br>
+&nbsp;&nbsp; Debug.Print &quot;&nbsp; Suppression state as defined in 
+swsSuppressionState_e: &quot; &amp; CWComponentContact.<b>State<br>
+&nbsp;&nbsp; ' </b>If suppressed, unsuppress<b><br>
+&nbsp;&nbsp; </b>If CWComponentContact.<b>State</b> = 1 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; errCode = ContactMgr.<b>SuppressUnsuppressComponentContact</b>(CWComponentContact.<b>ContactName</b>, 
+0)<br>
+&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot;<br>
+&nbsp;&nbsp; <br>
+</p>
+<p class="APICODE">&nbsp;&nbsp; Set CWComponentContact = ContactMgr.<b>CreateContactComponent</b>(swsContactTypeBonded, 
+swsMeshCompatibilityCompatible, pDisp4, errCode)<br>
+&nbsp;&nbsp; Debug.Print CWComponentContact.<b>ContactName</b><br>
+&nbsp;&nbsp; Debug.Print &quot;&nbsp; Type as defined in swsContactType_e: &quot; &amp; 
+CWComponentContact.<b>ContactComponentType</b><br>
+&nbsp;&nbsp; Debug.Print &quot;&nbsp; Include friction? &quot; &amp; CWComponentContact.<b>IncludeFriction</b><br>
+&nbsp;&nbsp; If CWComponentContact.<b>IncludeFriction</b> = True Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Friction coefficient: &quot; &amp; 
+CWComponentContact.<b>FrictionValue</b><br>
+&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp; Debug.Print &quot;&nbsp; Global contact condition? (1=yes, 0=no) &quot; &amp; 
+CWComponentContact.<b>GlobalContact</b><br>
+&nbsp;&nbsp; Debug.Print &quot;&nbsp; Include non-touching faces? (1=yes, 0=no) &quot; &amp; 
+CWComponentContact.<b>IncludeClearance</b><br>
+&nbsp;&nbsp; If CWComponentContact.<b>IncludeClearance</b> = True Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Clearance value: &quot; &amp; 
+CWComponentContact.<b>ClearanceValue</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Clearance units: &quot; &amp; 
+CWComponentContact.<b>ClearanceUnit</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Automatically create contact 
+sets? &quot; &amp; CWComponentContact.<b>IncludeShellEdgeSolidOrShellFace</b><br>
+&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp; Debug.Print &quot;&nbsp; Mesh compatibility as defined in 
+swsMeshCompatibility_e: &quot; &amp; CWComponentContact.<b>Option</b><br>
+&nbsp;&nbsp; Debug.Print &quot;&nbsp; Suppression state as defined in 
+swsSuppressionState_e: &quot; &amp; CWComponentContact.<b>State<br>
+&nbsp;&nbsp;&nbsp;</b>If CWComponentContact.<b>State</b> = 1 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; errCode = ContactMgr.<b>SuppressUnsuppressComponentContact</b>(CWComponentContact.<b>ContactName</b>, 
+0)<br>
+&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot;</p>
+<p class="APICODE">&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp; ' Apply material to model<br>
+&nbsp;&nbsp; Set SolidMgr = Study.<b>SolidManager</b><br>
+&nbsp;&nbsp; If SolidMgr Is Nothing Then ErrorMsg SwApp, &quot;SolidMgr object 
+not there&quot;</p>
+<p class="APICODE">&nbsp;&nbsp; Set SolidComponent = SolidMgr.<b>GetComponentAt</b>(0, 
+errCode)<br>
+&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No solid component&quot;</p>
+<p class="APICODE">&nbsp;&nbsp; Set SolidBody = SolidComponent.<b>GetSolidBodyAt</b>(0, 
+errCode)<br>
+&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No solid body&quot;</p>
+<p class="APICODE">&nbsp;&nbsp; bApp = SolidBody.<b>SetLibraryMaterial</b>(&quot;c:\Program 
+Files\SOLIDWORKS Corp\SOLIDWORKS\lang\english\sldmaterials\solidworks 
+materials.sldmat&quot;, &quot;Ductile Iron&quot;)<br>
+&nbsp;&nbsp; If bApp = False Then ErrorMsg SwApp, &quot;No material applied&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp; Set SolidComponent = SolidMgr.<b>GetComponentAt</b>(1, 
+errCode)<br>
+&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No solid component&quot;</p>
+<p class="APICODE">&nbsp;&nbsp; Set SolidBody = SolidComponent.<b>GetSolidBodyAt</b>(0, 
+errCode)<br>
+&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No solid body&quot;</p>
+<p class="APICODE">&nbsp;&nbsp; bApp = SolidBody.<b>SetLibraryMaterial</b>(&quot;c:\Program 
+Files\SOLIDWORKS Corp\SOLIDWORKS\lang\english\sldmaterials\solidworks 
+materials.sldmat&quot;, &quot;Ductile Iron&quot;)<br>
+&nbsp;&nbsp; If bApp = False Then ErrorMsg SwApp, &quot;No material applied&quot;<br>
+&nbsp;<br>
+</p>
+<p class="APICODE">&nbsp;&nbsp; ' Mesh model<br>
+&nbsp;&nbsp; Set CwMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp; If CwMesh Is Nothing Then ErrorMsg SwApp, &quot;Failed to get mesh 
+object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp; CwMesh.<b>Quality</b> = 1<br>
+&nbsp;&nbsp; Call CwMesh.<b>GetDefaultElementSizeAndTolerance</b>(swsLinearUnitMillimeters, 
+el, tl)</p>
+<p class="APICODE">&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(swsLinearUnitMillimeters, 
+el, tl)<br>
+&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to create mesh&quot;</p>
+<p class="APICODE"><br>
+</p>
+<p class="APICODE">&nbsp;&nbsp; ' Run analysis<br>
+&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed&quot;</p>
+<p class="APICODE"><br>
+</p>
+<p class="APICODE">&nbsp;&nbsp; ' Get resonant frequencies for each mode<br>
+&nbsp;&nbsp; Set CWResult = Study.<b>Results</b><br>
+&nbsp;&nbsp; If CWResult Is Nothing Then ErrorMsg SwApp, &quot;Failed to get results 
+object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp; Freq = CWResult.<b>GetResonantFrequencies</b>(errCode)<br>
+&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get resonant 
+frequencies&quot;</p>
+<p class="APICODE">&nbsp;&nbsp; Debug.Print &quot;Resonant frequencies (mode number, 
+radians/second, cycles/second, period in seconds):&quot;<br>
+&nbsp;&nbsp; For i = 0 To UBound(Freq)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; Freq(i)<br>
+&nbsp;&nbsp; Next i<br>
+&nbsp;<br>
+</p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">&nbsp;<br>
+Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)</p>
+<p class="APICODE">&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+&nbsp;</p>
+<p class="APICODE">End Sub<br>
+</p>
+<p class="APICODE">Sub StringtoArray(inputSTR As String, varEntity As Variant)</p>
+<p class="APICODE">&nbsp;&nbsp; Dim PID() As Byte<br>
+&nbsp;&nbsp; Dim i As Integer</p>
+<p class="APICODE">&nbsp;&nbsp; varEntity = Split(inputSTR, &quot;,&quot;)<br>
+&nbsp;&nbsp; ReDim PID(UBound(varEntity))</p>
+<p class="APICODE">&nbsp;&nbsp; For i = 0 To (UBound(varEntity) - 1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PID(i) = varEntity(i)<br>
+&nbsp;&nbsp; Next i</p>
+<p class="APICODE">&nbsp;&nbsp; varEntity = PID</p>
+<p class="APICODE">End Sub</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

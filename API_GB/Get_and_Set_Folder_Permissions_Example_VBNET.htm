@@ -1,0 +1,553 @@
+<html>
+
+<head>
+<title>Get and Set Folder Permissions Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples, folder permissions">
+<meta name=MS-HKWD content="Stand-alone applications, VB.NET">
+<body>
+<h1><font size="1"><span style="font-weight: 400">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Get and Set Folder Permissions Example (VB.NET)</h1>
+<p>This example shows how to create an application that displays a form in which 
+a user can assign permissions to folders for users 
+and groups in a vault.</p>
+<p><b>NOTE</b>: If using the primary interop assembly 
+provided with SOLIDWORKS PDM Professional, see
+<a href="Using_NET_Framework_in_Applications.htm">Using .NET Framework 4.0 in 
+Stand-alone Applications</a>.</p>
+<p><img border="0" src="FolderPermissions.gif" width="573" height="494"></p>
+
+</font>
+<p class="APICODE"><font color="#008000">'----------------------------------------------------------------------------<br>'&nbsp;Preconditions:<br>'&nbsp; 1. Start Microsoft Visual Studio.<br>'&nbsp; 2. Click 
+<b>File &gt; New &gt; Project &gt; Visual Basic &gt; Windows Forms Application</b>.<br>'&nbsp; 3. Type the name of your project in <b>Name</b>.<br>
+'&nbsp; 4. Click <b>Browse</b> and navigate to the folder where to create the project.<br>'&nbsp; 
+5. Click <b>OK</b>. <br>'&nbsp; 6. Create a form similar to the form shown above 
+with the following controls: <br>'&nbsp;&nbsp;&nbsp;&nbsp; a. <b>Label1 </b>
+(label control with text, &quot;Select vault:&quot;)<br>'&nbsp;&nbsp;&nbsp;&nbsp; b. 
+<b>comboVault</b> (combo box)<br>'&nbsp;&nbsp;&nbsp;&nbsp; c. <b>buttonLogIn
+</b>(button with text, &quot;Log In&quot;)<br>'&nbsp;&nbsp;&nbsp;&nbsp; d. <b>
+Label2 </b>(label with text, &quot;Users&quot;)<b><br>
+</b>'&nbsp;&nbsp;&nbsp;&nbsp; e. <b>buttonRefresh </b>(button with text, 
+&quot;Refresh Permissions&quot;)<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; f. <b>listViewUsers </b>(list view control)<b><br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ColumnHeader1 </b>(ID)<b><br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ColumnHeader2 </b>(Name)<b><br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ColumnHeader3 </b>(Folder ID)<b><br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ColumnHeader7 </b>(Folder)<b><br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ColumnHeader8 </b>(Folder 
+Permissions)<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; g. <b>Label3 </b>(label with text, &quot;Groups&quot;)<b><br>
+'&nbsp;&nbsp;&nbsp;&nbsp; </b>h<b>. listViewGroups </b>(list view control)<b><br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ColumnHeader4 </b>(ID)<b><br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ColumnHeader5 </b>(Name)<b><br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ColumnHeader6 </b>(Folder ID)<b><br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ColumnHeader9 </b>(Folder)<b><br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ColumnHeader10 </b>(Folder 
+Permissions)<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; i. <b>listViewPermissions </b>(list view control)<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; j. <b>checkboxReverseOrder</b>&nbsp;(check box with text, &quot;Reverse Order&quot;)<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; k. <b>buttonApply</b>&nbsp;(button with text, 
+&quot;Apply Permissions&quot;)<b><br></b></font><font face="Courier New" color="#008000">'</font><font face="Courier New" color="#008000" size="2">&nbsp; 
+7. Replace the code in <b>Form1.vb</b> with 
+<a href="#form1vb">this code</a>.<br>
+'&nbsp; 8. Replace the code in <b>Form1.Designer.vb</b> with
+<a href="#designer">this code</a>.</font><font color="#008000"><br>'&nbsp; 9. Add
+<b>EPDM.Interop.epdm.dll</b> as a reference (right-click the project<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; name in the Solution Explorer, click <b>Add 
+Reference</b>,&nbsp;click <b>Assemblies &gt; Framework</b> in the<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; left-side panel, browse to the top folder of your 
+SOLIDWORKS PDM Professional installation,<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; locate and click <b>EPDM.Interop.epdm.dll</b>, click
+<b>Open</b>, click <b>Add</b>, and click <b>Close</b>).<br>
+' 10. Right-click <b>References &gt; EPDM.Interop.epdm, </b>click<b> Properties,</b> and set <b>
+<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; Embed Interop Types </b>to <b>False</b> to 
+handle methods <br>
+'&nbsp;&nbsp;&nbsp;&nbsp; that pass arrays of structures.<br>' 11. Click
+<b>Debug &gt; Start Debugging</b> or press F5.<br>
+'<br>
+' Postconditions: <br>
+' 1. In the Form1 dialog, select a vault and click <b>Log In</b>.<br>
+'&nbsp;&nbsp;&nbsp; Wait for the application to populate the Users and Groups 
+list boxes.<br>
+'&nbsp;2. Click permissions in the list box located left of the <b>Reverse 
+Order</b> check box.<br>
+' 3. Optionally select the <b>Reverse Order</b> check box.<br>
+' 4. Select the check boxes in front of the users and folders to which to assign 
+permissions.<br>
+' 5. Click <b>Apply Permissions</b>.<br>
+'&nbsp;&nbsp;&nbsp; Wait for the application to populate the <b>Users</b> list.<br>
+'&nbsp;&nbsp;&nbsp; The folder permissions are updated for the selected users.<br>
+' 6. Select the check boxes in front of the groups and folders to which to 
+assign permissions.<br>
+' 7. Click <b>Apply Permissions</b>.<br>
+'&nbsp;&nbsp;&nbsp; Wait for the application to populate the <b>Groups</b> list.<br>
+'&nbsp;&nbsp;&nbsp; The folder permissions are updated for the selected groups.<br>
+'----------------------------------------------------------------------------<br>
+<br>
+' Form1.vb </font>
+</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:blue;"><a name="form1vb"></a>Imports</span>&nbsp;EPDM.Interop.epdm<br>
+&nbsp;<br>
+<span style="color:blue;">Public</span>&nbsp;<span style="color:blue;">Class</span>&nbsp;<span style="color:#2b91af;">Form1</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;vault&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmVault8</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;folders&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">Dictionary</span>(<span style="color:blue;">Of</span>&nbsp;<span style="color:blue;">Integer</span>,&nbsp;<span style="color:blue;">String</span>)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;<span style="color:blue;">Enum</span>&nbsp;<span style="color:#2b91af;">MyEdmRightsFlags</span>&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_All&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_All<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_None&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_Read&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_Read<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_Lock&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_Lock<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_Delete&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_Delete<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_AddRename&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_Add<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_Share&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_Share<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_IncrementRevision&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_IncrementRevision<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_AddDeleteFolder&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_AddFolder<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_RecoverTrash&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_RecoverTrash<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_DestroyTrash&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_DestroyTrash<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_EditFolderCard&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_EditFolderCard<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_BomActivate&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_BomActivate<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_MaySeeComputedBOM&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_MaySeeComputedBOM<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_AssignGroupMembership&nbsp;=&nbsp;&amp;H1000<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRightAssignFilePermissions&nbsp;=&nbsp;&amp;H2000<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_PermitGroupAccess&nbsp;=&nbsp;&amp;H4000<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_ReadNamedBOM&nbsp;=&nbsp;&amp;H8000<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_ChangeCard&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_ChangeCard<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_ShowWorkingVersion&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_ShowWorkingVersion<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_Rollback&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_Rollback<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_ColdStoreRestore&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_ColdStoreRestore<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MyRight_EditVerFreeVarData&nbsp;=&nbsp;<span style="color:#2b91af;">EdmRightFlags</span>.EdmRight_EditVerFreeVarData<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Enum</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;Form1_Load(sender&nbsp;<span style="color:blue;">As</span>&nbsp;System.<span style="color:#2b91af;">Object</span>,&nbsp;e&nbsp;<span style="color:blue;">As</span>&nbsp;System.<span style="color:#2b91af;">EventArgs</span>)&nbsp;<span style="color:blue;">Handles</span>&nbsp;<span style="color:blue;">MyBase</span>.Load<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;<span style="color:#2b91af;">EdmVault5</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;aViews&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">Array</span>&nbsp;=&nbsp;<span style="color:blue;">Nothing</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault.<b>GetVaultViews</b>(aViews,&nbsp;<span style="color:blue;">False</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;aViews&nbsp;<span style="color:blue;">IsNot</span>&nbsp;<span style="color:blue;">Nothing</span>&nbsp;<span style="color:blue;">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">For</span>&nbsp;<span style="color:blue;">Each</span>&nbsp;View&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">EdmViewInfo</span>&nbsp;<span style="color:blue;">In</span>&nbsp;aViews<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;comboVault.Items.Add(View.mbsVaultName)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Next</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;comboVault.SelectedIndex&nbsp;=&nbsp;0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;RightLabels&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">Dictionary</span>(<span style="color:blue;">Of</span>&nbsp;<span style="color:#2b91af;">MyEdmRightsFlags</span>,&nbsp;<span style="color:blue;">String</span>)&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;<span style="color:#2b91af;">Dictionary</span>(<span style="color:blue;">Of</span>&nbsp;<span style="color:#2b91af;">MyEdmRightsFlags</span>,&nbsp;<span style="color:blue;">String</span>)&nbsp;<span style="color:blue;">From</span>&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_Read,&nbsp;<span style="color:#a31515;">&quot;Read&nbsp;file&nbsp;contents&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_Lock,&nbsp;<span style="color:#a31515;">&quot;Check&nbsp;out&nbsp;file&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_Delete,&nbsp;<span style="color:#a31515;">&quot;Delete&nbsp;file&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_AddRename,&nbsp;<span style="color:#a31515;">&quot;Add&nbsp;or&nbsp;rename&nbsp;file&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_Share,&nbsp;<span style="color:#a31515;">&quot;Share&nbsp;file&nbsp;to&nbsp;another&nbsp;folder&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_IncrementRevision,&nbsp;<span style="color:#a31515;">&quot;Increment&nbsp;revision&nbsp;of&nbsp;a&nbsp;file&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_AddDeleteFolder,&nbsp;<span style="color:#a31515;">&quot;Add&nbsp;or&nbsp;delete&nbsp;a&nbsp;folder&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_RecoverTrash,&nbsp;<span style="color:#a31515;">&quot;Recover&nbsp;files&nbsp;from&nbsp;recycle&nbsp;bin&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_DestroyTrash,&nbsp;<span style="color:#a31515;">&quot;Destroy&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_EditFolderCard,&nbsp;<span style="color:#a31515;">&quot;Edit&nbsp;folder&nbsp;card&nbsp;data&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_BomActivate,&nbsp;<span style="color:#a31515;">&quot;Activate&nbsp;computed&nbsp;BOM&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_MaySeeComputedBOM,&nbsp;<span style="color:#a31515;">&quot;See&nbsp;computed&nbsp;BOM&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_AssignGroupMembership,&nbsp;<span style="color:#a31515;">&quot;Assign&nbsp;group&nbsp;membership&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRightAssignFilePermissions,&nbsp;<span style="color:#a31515;">&quot;Assign&nbsp;file&nbsp;permissions&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_PermitGroupAccess,&nbsp;<span style="color:#a31515;">&quot;Permit&nbsp;or&nbsp;deny&nbsp;group-level&nbsp;access&nbsp;to&nbsp;files&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_ReadNamedBOM,&nbsp;<span style="color:#a31515;">&quot;Read&nbsp;named&nbsp;bill&nbsp;of&nbsp;materials&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_ChangeCard,&nbsp;<span style="color:#a31515;">&quot;Can&nbsp;update&nbsp;the&nbsp;design&nbsp;of&nbsp;cards&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_ShowWorkingVersion,&nbsp;<span style="color:#a31515;">&quot;Show&nbsp;working&nbsp;versions&nbsp;of&nbsp;files&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_Rollback,&nbsp;<span style="color:#a31515;">&quot;Roll 
+back&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_ColdStoreRestore,&nbsp;<span style="color:#a31515;">&quot;Restore&nbsp;file&nbsp;from&nbsp;cold&nbsp;storage&quot;</span>},&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#2b91af;">MyEdmRightsFlags</span>.MyRight_EditVerFreeVarData,&nbsp;<span style="color:#a31515;">&quot;Edit&nbsp;version-free&nbsp;variable&nbsp;data&quot;</span>}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">For</span>&nbsp;<span style="color:blue;">Each</span>&nbsp;flag&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">MyEdmRightsFlags</span>&nbsp;<span style="color:blue;">In</span>&nbsp;<span style="color:#2b91af;">[Enum]</span>.GetValues(<span style="color:blue;">GetType</span>(<span style="color:#2b91af;">MyEdmRightsFlags</span>))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;RightLabels.ContainsKey(flag)&nbsp;<span style="color:blue;">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;rightItem&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">ListViewItem</span>&nbsp;=&nbsp;listViewPermissions.Items.Add(RightLabels(flag))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rightItem.Tag&nbsp;=&nbsp;flag<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Next</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;buttonLogIn_Click(sender&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Object</span>,&nbsp;e&nbsp;<span style="color:blue;">As</span>&nbsp;System.<span style="color:#2b91af;">EventArgs</span>)&nbsp;<span style="color:blue;">Handles</span>&nbsp;buttonLogIn.Click<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault.<b>LoginAuto</b>(comboVault.Text,&nbsp;<span style="color:blue;">Me</span>.Handle)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;comboVault.Enabled&nbsp;=&nbsp;<span style="color:blue;">False</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buttonLogIn.Enabled&nbsp;=&nbsp;<span style="color:blue;">False</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buttonApply.Enabled&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buttonRefresh.Enabled&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;folders&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;<span style="color:#2b91af;">Dictionary</span>(<span style="color:blue;">Of</span>&nbsp;<span style="color:blue;">Integer</span>,&nbsp;<span style="color:blue;">String</span>)()<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;rootFolder&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmFolder7</span>&nbsp;=&nbsp;vault.<b>RootFolder</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BuildFolderDictionary(rootFolder)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ShowAllUserPermissions()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ShowAllGroupPermissions()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;BuildFolderDictionary(folder&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmFolder7</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;folders.Add(folder.<b>ID</b>,&nbsp;folder.<b>LocalPath</b>)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;posSubFolder&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmPos5</span>&nbsp;=&nbsp;folder.<b>GetFirstSubFolderPosition</b>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Do</span>&nbsp;<span style="color:blue;">Until</span>&nbsp;posSubFolder.<b>IsNull</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;subFolder&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmFolder7</span>&nbsp;=&nbsp;folder.<b>GetNextSubFolder</b>(posSubFolder)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BuildFolderDictionary(subFolder)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Loop</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;ShowAllUserPermissions()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;listViewUsers.Items.Clear()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;userMgr&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmUserMgr7</span>&nbsp;=&nbsp;vault<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;userPos&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmPos5</span>&nbsp;=&nbsp;userMgr.<b>GetFirstUserPosition</b>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Do</span>&nbsp;<span style="color:blue;">Until</span>&nbsp;userPos.IsNull<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;user&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmUser5</span>&nbsp;=&nbsp;userMgr.<b>GetNextUser</b>(userPos)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">For</span>&nbsp;<span style="color:blue;">Each</span>&nbsp;folderID&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span>&nbsp;<span style="color:blue;">In</span>&nbsp;folders.Keys<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;aPermissions&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">Array</span>&nbsp;=&nbsp;<span style="color:blue;">Nothing</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;userMgr.<b>GetFolderPermissions</b>(user.<b>ID</b>,&nbsp;user.<b>ObjectType</b>,&nbsp;folderID,&nbsp;<span style="color:#2b91af;">EdmGetPermFlag</span>.EdmGetPerm_OnlyExplicitlySet,&nbsp;aPermissions)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;aPermissions&nbsp;<span style="color:blue;">IsNot</span>&nbsp;<span style="color:blue;">Nothing</span>&nbsp;<span style="color:blue;">AndAlso</span>&nbsp;aPermissions.Length&nbsp;&gt;&nbsp;0&nbsp;<span style="color:blue;">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;itemUser&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">ListViewItem</span>&nbsp;=&nbsp;listViewUsers.Items.Add(user.<b>ID</b>.ToString())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itemUser.SubItems.Add(user.<b>Name</b>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itemUser.SubItems.Add(folderID)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itemUser.SubItems.Add(folders(folderID))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;folderPermission&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">EdmFolderPermission</span>&nbsp;=&nbsp;aPermissions.GetValue(0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itemUser.SubItems.Add(folderPermission.mlEdmRightFlag.ToString())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Next</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Loop</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;ShowAllGroupPermissions()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;listViewGroups.Items.Clear()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;userMgr&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmUserMgr7</span>&nbsp;=&nbsp;vault<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;groupPos&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmPos5</span>&nbsp;=&nbsp;userMgr.<b>GetFirstUserGroupPosition</b>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Do</span>&nbsp;<span style="color:blue;">Until</span>&nbsp;groupPos.IsNull<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;group&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmUserGroup5</span>&nbsp;=&nbsp;userMgr.<b>GetNextUserGroup</b>(groupPos)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">For</span>&nbsp;<span style="color:blue;">Each</span>&nbsp;folderID&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span>&nbsp;<span style="color:blue;">In</span>&nbsp;folders.Keys<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;aPermissions&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">Array</span>&nbsp;=&nbsp;<span style="color:blue;">Nothing</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;userMgr.<b>GetFolderPermissions</b>(group.<b>ID</b>,&nbsp;group.<b>ObjectType</b>,&nbsp;folderID,&nbsp;0,&nbsp;aPermissions)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;aPermissions&nbsp;<span style="color:blue;">IsNot</span>&nbsp;<span style="color:blue;">Nothing</span>&nbsp;<span style="color:blue;">AndAlso</span>&nbsp;aPermissions.Length&nbsp;&gt;&nbsp;0&nbsp;<span style="color:blue;">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;itemGroup&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">ListViewItem</span>&nbsp;=&nbsp;listViewGroups.Items.Add(group.ID.ToString())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itemGroup.SubItems.Add(group.<b>Name</b>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itemGroup.SubItems.Add(folderID)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itemGroup.SubItems.Add(folders(folderID))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;folderPermission&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">EdmFolderPermission</span>&nbsp;=&nbsp;aPermissions.GetValue(0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itemGroup.SubItems.Add(folderPermission.mlEdmRightFlag.ToString())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Next</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Loop</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;buttonApply_Click(sender&nbsp;<span style="color:blue;">As</span>&nbsp;System.<span style="color:#2b91af;">Object</span>,&nbsp;e&nbsp;<span style="color:blue;">As</span>&nbsp;System.<span style="color:#2b91af;">EventArgs</span>)&nbsp;<span style="color:blue;">Handles</span>&nbsp;buttonApply.Click<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;assignedRights&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span>&nbsp;=&nbsp;0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">For</span>&nbsp;<span style="color:blue;">Each</span>&nbsp;rightItem&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">ListViewItem</span>&nbsp;<span style="color:blue;">In</span>&nbsp;listViewPermissions.Items<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;rightItem.Checked&nbsp;<span style="color:blue;">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assignedRights&nbsp;=&nbsp;assignedRights&nbsp;<span style="color:blue;">Or</span>&nbsp;rightItem.Tag<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Next</span><br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;userMgr&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmUserMgr7</span>&nbsp;=&nbsp;vault<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;listPermissions&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">List</span>(<span style="color:blue;">Of</span>&nbsp;<span style="color:#2b91af;">EdmFolderPermission</span>)&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;<span style="color:#2b91af;">List</span>(<span style="color:blue;">Of</span>&nbsp;<span style="color:#2b91af;">EdmFolderPermission</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">For</span>&nbsp;<span style="color:blue;">Each</span>&nbsp;itemUser&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">ListViewItem</span>&nbsp;<span style="color:blue;">In</span>&nbsp;listViewUsers.Items<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;itemUser.Checked&nbsp;<span style="color:blue;">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;folderID&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span>&nbsp;=&nbsp;<span style="color:blue;">CInt</span>(itemUser.SubItems(2).Text)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;permission&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">EdmFolderPermission</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">With</span>&nbsp;permission<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.mlFolderID&nbsp;=&nbsp;folderID<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.mlOwnerID&nbsp;=&nbsp;<span style="color:blue;">CInt</span>(itemUser.SubItems(0).Text)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.meOwnerType&nbsp;=&nbsp;<span style="color:#2b91af;">EdmObjectType</span>.EdmObject_User<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.mlEdmRightFlag&nbsp;=&nbsp;assignedRights<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">With</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;listPermissions.Add(permission)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Next</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">For</span>&nbsp;<span style="color:blue;">Each</span>&nbsp;itemGroup&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">ListViewItem</span>&nbsp;<span style="color:blue;">In</span>&nbsp;listViewGroups.Items<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;itemGroup.Checked&nbsp;<span style="color:blue;">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;folderID&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span>&nbsp;=&nbsp;<span style="color:blue;">CInt</span>(itemGroup.SubItems(2).Text)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;permission&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">EdmFolderPermission</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">With</span>&nbsp;permission<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.mlFolderID&nbsp;=&nbsp;folderID<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.mlOwnerID&nbsp;=&nbsp;<span style="color:blue;">CInt</span>(itemGroup.SubItems(0).Text)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.meOwnerType&nbsp;=&nbsp;<span style="color:#2b91af;">EdmObjectType</span>.EdmObject_UserGroup<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.mlEdmRightFlag&nbsp;=&nbsp;assignedRights<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">With</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;listPermissions.Add(permission)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Next</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;checkboxReverseOrder.Checked&nbsp;<span style="color:blue;">Then</span>&nbsp;listPermissions.Reverse()<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;permissions()&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">EdmFolderPermission</span>&nbsp;=&nbsp;listPermissions.ToArray()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;userMgr.<b>SetFolderPermissions</b>(permissions)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ShowAllGroupPermissions()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ShowAllUserPermissions()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;buttonRefresh_Click(sender&nbsp;<span style="color:blue;">As</span>&nbsp;System.<span style="color:#2b91af;">Object</span>,&nbsp;e&nbsp;<span style="color:blue;">As</span>&nbsp;System.<span style="color:#2b91af;">EventArgs</span>)&nbsp;<span style="color:blue;">Handles</span>&nbsp;buttonRefresh.Click<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ShowAllGroupPermissions()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ShowAllUserPermissions()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Class<br>
+<br>
+</span><font color="#008000">' Form1.Designer.vb</font></p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<a name="designer"></a>&lt;<span style="color:blue;">Global</span>.Microsoft.VisualBasic.CompilerServices.<span style="color:#2b91af;">DesignerGenerated</span>()&gt;&nbsp;_<br>
+<span style="color:blue;">Partial</span>&nbsp;<span style="color:blue;">Class</span>&nbsp;<span style="color:#2b91af;">Form1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Inherits</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Form</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Form&nbsp;overrides&nbsp;dispose&nbsp;to&nbsp;clean&nbsp;up&nbsp;the&nbsp;component&nbsp;list.</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;System.Diagnostics.<span style="color:#2b91af;">DebuggerNonUserCode</span>()&gt;&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Protected</span>&nbsp;<span style="color:blue;">Overrides</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;Dispose(<span style="color:blue;">ByVal</span>&nbsp;disposing&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Boolean</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;disposing&nbsp;<span style="color:blue;">AndAlso</span>&nbsp;components&nbsp;<span style="color:blue;">IsNot</span>&nbsp;<span style="color:blue;">Nothing</span>&nbsp;<span style="color:blue;">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;components.Dispose()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Finally</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">MyBase</span>.Dispose(disposing)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Required&nbsp;by&nbsp;the&nbsp;Windows&nbsp;Form&nbsp;Designer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;components&nbsp;<span style="color:blue;">As</span>&nbsp;System.ComponentModel.<span style="color:#2b91af;">IContainer</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'NOTE:&nbsp;The&nbsp;following&nbsp;procedure&nbsp;is&nbsp;required&nbsp;by&nbsp;the&nbsp;Windows&nbsp;Form&nbsp;Designer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'It&nbsp;can&nbsp;be&nbsp;modified&nbsp;using&nbsp;the&nbsp;Windows&nbsp;Form&nbsp;Designer.&nbsp;&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Do&nbsp;not&nbsp;modify&nbsp;it&nbsp;using&nbsp;the&nbsp;code&nbsp;editor.</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;System.Diagnostics.<span style="color:#2b91af;">DebuggerStepThrough</span>()&gt;&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;InitializeComponent()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label1&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.comboVault&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ComboBox</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonLogIn&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label2&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewUsers&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ListView</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader1&nbsp;=&nbsp;<span style="color:blue;">CType</span>(<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>(),&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader2&nbsp;=&nbsp;<span style="color:blue;">CType</span>(<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>(),&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader3&nbsp;=&nbsp;<span style="color:blue;">CType</span>(<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>(),&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader7&nbsp;=&nbsp;<span style="color:blue;">CType</span>(<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>(),&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader8&nbsp;=&nbsp;<span style="color:blue;">CType</span>(<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>(),&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label3&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonApply&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonRefresh&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewGroups&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ListView</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader4&nbsp;=&nbsp;<span style="color:blue;">CType</span>(<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>(),&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader5&nbsp;=&nbsp;<span style="color:blue;">CType</span>(<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>(),&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader6&nbsp;=&nbsp;<span style="color:blue;">CType</span>(<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>(),&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader9&nbsp;=&nbsp;<span style="color:blue;">CType</span>(<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>(),&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader10&nbsp;=&nbsp;<span style="color:blue;">CType</span>(<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>(),&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewPermissions&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ListView</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.checkboxReverseOrder&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">CheckBox</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.SuspendLayout()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Label1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label1.AutoSize&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label1.Location&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(12,&nbsp;9)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label1.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Label1&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label1.Size&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(66,&nbsp;13)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label1.TabIndex&nbsp;=&nbsp;0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label1.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Select&nbsp;vault:&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'comboVault</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.comboVault.DropDownStyle&nbsp;=&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ComboBoxStyle</span>.DropDownList<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.comboVault.FormattingEnabled&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.comboVault.Location&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(84,&nbsp;6)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.comboVault.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;comboVault&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.comboVault.Size&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(357,&nbsp;21)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.comboVault.TabIndex&nbsp;=&nbsp;1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'buttonLogIn</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonLogIn.Location&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(447,&nbsp;6)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonLogIn.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;buttonLogIn&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonLogIn.Size&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(98,&nbsp;21)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonLogIn.TabIndex&nbsp;=&nbsp;2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonLogIn.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Log&nbsp;In&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonLogIn.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Label2</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label2.AutoSize&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label2.Location&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(12,&nbsp;51)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label2.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Label2&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label2.Size&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(34,&nbsp;13)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label2.TabIndex&nbsp;=&nbsp;3<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label2.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Users&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'listViewUsers</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewUsers.CheckBoxes&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewUsers.Columns.AddRange(<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>()&nbsp;{<span style="color:blue;">Me</span>.ColumnHeader1,&nbsp;<span style="color:blue;">Me</span>.ColumnHeader2,&nbsp;<span style="color:blue;">Me</span>.ColumnHeader3,&nbsp;<span style="color:blue;">Me</span>.ColumnHeader7,&nbsp;<span style="color:blue;">Me</span>.ColumnHeader8})<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewUsers.Location&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(12,&nbsp;67)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewUsers.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;listViewUsers&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewUsers.Size&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(533,&nbsp;107)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewUsers.TabIndex&nbsp;=&nbsp;4<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewUsers.UseCompatibleStateImageBehavior&nbsp;=&nbsp;<span style="color:blue;">False</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewUsers.View&nbsp;=&nbsp;System.Windows.Forms.<span style="color:#2b91af;">View</span>.Details<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'ColumnHeader1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader1.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;ID&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader1.Width&nbsp;=&nbsp;41<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'ColumnHeader2</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader2.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Name&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader2.Width&nbsp;=&nbsp;137<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'ColumnHeader3</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader3.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Folder&nbsp;ID&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'ColumnHeader7</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader7.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Folder&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader7.Width&nbsp;=&nbsp;152<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'ColumnHeader8</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader8.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Folder&nbsp;Permissions&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader8.Width&nbsp;=&nbsp;108<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Label3</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label3.AutoSize&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label3.Location&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(12,&nbsp;182)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label3.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Label3&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label3.Size&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(41,&nbsp;13)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label3.TabIndex&nbsp;=&nbsp;5<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label3.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Groups&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'buttonApply</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonApply.Enabled&nbsp;=&nbsp;<span style="color:blue;">False</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonApply.Location&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(428,&nbsp;420)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonApply.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;buttonApply&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonApply.Size&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(117,&nbsp;23)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonApply.TabIndex&nbsp;=&nbsp;7<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonApply.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Apply&nbsp;Permissions&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonApply.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'buttonRefresh</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonRefresh.Enabled&nbsp;=&nbsp;<span style="color:blue;">False</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonRefresh.Location&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(428,&nbsp;38)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonRefresh.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;buttonRefresh&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonRefresh.Size&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(117,&nbsp;23)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonRefresh.TabIndex&nbsp;=&nbsp;8<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonRefresh.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Refresh&nbsp;Permissions&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.buttonRefresh.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'listViewGroups</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewGroups.CheckBoxes&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewGroups.Columns.AddRange(<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span>()&nbsp;{<span style="color:blue;">Me</span>.ColumnHeader4,&nbsp;<span style="color:blue;">Me</span>.ColumnHeader5,&nbsp;<span style="color:blue;">Me</span>.ColumnHeader6,&nbsp;<span style="color:blue;">Me</span>.ColumnHeader9,&nbsp;<span style="color:blue;">Me</span>.ColumnHeader10})<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewGroups.Location&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(12,&nbsp;198)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewGroups.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;listViewGroups&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewGroups.Size&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(533,&nbsp;107)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewGroups.TabIndex&nbsp;=&nbsp;9<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewGroups.UseCompatibleStateImageBehavior&nbsp;=&nbsp;<span style="color:blue;">False</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewGroups.View&nbsp;=&nbsp;System.Windows.Forms.<span style="color:#2b91af;">View</span>.Details<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'ColumnHeader4</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader4.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;ID&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader4.Width&nbsp;=&nbsp;41<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'ColumnHeader5</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader5.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Name&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader5.Width&nbsp;=&nbsp;137<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'ColumnHeader6</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader6.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Folder&nbsp;ID&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'ColumnHeader9</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader9.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Folder&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader9.Width&nbsp;=&nbsp;152<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'ColumnHeader10</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader10.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Folder&nbsp;Permissions&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ColumnHeader10.Width&nbsp;=&nbsp;108<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'listViewPermissions</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewPermissions.CheckBoxes&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewPermissions.Location&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(12,&nbsp;328)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewPermissions.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;listViewPermissions&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewPermissions.Size&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(410,&nbsp;115)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewPermissions.TabIndex&nbsp;=&nbsp;10<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewPermissions.UseCompatibleStateImageBehavior&nbsp;=&nbsp;<span style="color:blue;">False</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.listViewPermissions.View&nbsp;=&nbsp;System.Windows.Forms.<span style="color:#2b91af;">View</span>.List<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'checkboxReverseOrder</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.checkboxReverseOrder.AutoSize&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.checkboxReverseOrder.Location&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(428,&nbsp;328)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.checkboxReverseOrder.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;checkboxReverseOrder&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.checkboxReverseOrder.Size&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(95,&nbsp;17)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.checkboxReverseOrder.TabIndex&nbsp;=&nbsp;11<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.checkboxReverseOrder.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Reverse&nbsp;Order&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.checkboxReverseOrder.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Form1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.AutoScaleDimensions&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">SizeF</span>(6.0!,&nbsp;13.0!)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.AutoScaleMode&nbsp;=&nbsp;System.Windows.Forms.<span style="color:#2b91af;">AutoScaleMode</span>.Font<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ClientSize&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(557,&nbsp;455)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Controls.Add(<span style="color:blue;">Me</span>.checkboxReverseOrder)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Controls.Add(<span style="color:blue;">Me</span>.listViewPermissions)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Controls.Add(<span style="color:blue;">Me</span>.listViewGroups)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Controls.Add(<span style="color:blue;">Me</span>.buttonRefresh)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Controls.Add(<span style="color:blue;">Me</span>.buttonApply)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Controls.Add(<span style="color:blue;">Me</span>.Label3)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Controls.Add(<span style="color:blue;">Me</span>.listViewUsers)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Controls.Add(<span style="color:blue;">Me</span>.Label2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Controls.Add(<span style="color:blue;">Me</span>.buttonLogIn)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Controls.Add(<span style="color:blue;">Me</span>.comboVault)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Controls.Add(<span style="color:blue;">Me</span>.Label1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Form1&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Folder 
+Permissions&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ResumeLayout(<span style="color:blue;">False</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.PerformLayout()<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;Label1&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;comboVault&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ComboBox</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;buttonLogIn&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;Label2&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;listViewUsers&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ListView</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;ColumnHeader1&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;ColumnHeader2&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;ColumnHeader3&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;Label3&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;buttonApply&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;buttonRefresh&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;ColumnHeader7&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;ColumnHeader8&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;listViewGroups&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ListView</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;ColumnHeader4&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;ColumnHeader5&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;ColumnHeader6&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;ColumnHeader9&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;ColumnHeader10&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ColumnHeader</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;listViewPermissions&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ListView</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;checkboxReverseOrder&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">CheckBox</span><br>
+&nbsp;<br>
+<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Class</span></p>
+
+</body>
+
+</html>

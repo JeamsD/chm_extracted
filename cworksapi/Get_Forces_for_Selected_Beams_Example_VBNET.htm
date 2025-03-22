@@ -1,0 +1,338 @@
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<html>
+
+<!--(==============================================================)-->
+<!--(Document created with RoboEditor. )============================-->
+<!--(==============================================================)-->
+
+<head>
+
+<title>Get Forces for Selected Beams (VB.NET)</title>
+
+<!--(Meta)==========================================================-->
+
+<meta http-equiv=content-type content="text/html; charset=windows-1252">
+<meta name=MS-HKWD content="VB.NET examples,forces">
+<meta name=generator content="RoboHELP by eHelp Corporation - www.ehelp.com">
+<meta name=generator-major-version content=0.1>
+<meta name=generator-minor-version content=1>
+<meta name=filetype content=kadov>
+<meta name=filetype-version content=1>
+<meta name=page-count content=1>
+<meta name=layout-height content=2862>
+<meta name=layout-width content=910>
+
+
+<!--(Links)=========================================================-->
+
+<link rel="StyleSheet" href="./ApiHelp.css">
+
+
+
+</head>
+
+<!--(Body)==========================================================-->
+
+
+<body>
+
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation 
+ API Help</span></h1>
+
+<h1>Get Forces for Selected Beams Example (VB.NET)</h1>
+
+<p>This example shows how to get the force load values for structural members.</p>
+
+<p class=APICODE>'---------------------------------------------------------------------------</p>
+
+<p class=APICODE>' Preconditions:</p>
+
+<p class=APICODE>'&nbsp;1.&nbsp;Add&nbsp;the&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;as&nbsp;an&nbsp;add-in (in&nbsp;SOLIDWORKS,&nbsp;click&nbsp;<p class=APICODE>'<b>&nbsp;&nbsp;&nbsp; Tools&nbsp;&gt;&nbsp;Add-ins&nbsp;&gt;&nbsp;SOLIDWORKS&nbsp;Simulation &gt; OK</b>).<br>
+<p class=APICODE>'&nbsp;2.&nbsp;Add&nbsp;the&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;primary&nbsp;interop&nbsp;assembly&nbsp;as&nbsp;a&nbsp;reference<br>
+<p class=APICODE>'&nbsp;&nbsp;&nbsp;&nbsp;(in&nbsp;the&nbsp;IDE,&nbsp;click&nbsp;<b>Project&nbsp;&gt;&nbsp;Add&nbsp;Reference&nbsp;&gt;&nbsp;.NET&nbsp;&gt;&nbsp;</b><p class=APICODE>'<b>&nbsp;&nbsp;&nbsp; SolidWorks.Interop.cosworks&nbsp;&gt;&nbsp;OK</b>). 
+ </p>
+
+<p class=APICODE>' 3. Open the Immediate window.</p>
+
+<p class=APICODE>' 4. Open a SOLIDWORKS model that has structural members 
+ and a</p>
+
+<p class=APICODE>' <!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Simulation 
+ static study with force loads</p>
+
+<p class=APICODE>' <!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->applied 
+ to the structural members.</p>
+
+<p class=APICODE>' 5. Select the Simulation study tab.</p>
+
+<p class=APICODE>' 6. Click the Run button on the Simulation CommandManager 
+ to</p>
+
+<p class=APICODE>' <!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->refresh 
+ the study results.</p>
+
+<p class=APICODE>' 7. In the Simulation Study tree, select the beams for 
+ which</p>
+
+<p class=APICODE>' <!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->you 
+ want to know their force loads.</p>
+
+<p class=APICODE>' 8. Run the macro.</p>
+
+<p class=APICODE>'</p>
+
+<p class=APICODE>' Postconditions: The selected beams' forces are printed 
+ to the</p>
+
+<p class=APICODE>' <!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->the 
+ Immediate window.</p>
+
+<p class=APICODE>'-------------------------------</p>
+
+<p class=APICODE>Imports SolidWorks.Interop.sldworks</p>
+
+<p class=APICODE>Imports SolidWorks.Interop.swconst</p>
+
+<p class=APICODE>Imports SolidWorks.Interop.cosworks</p>
+
+<p class=APICODE>Imports System</p>
+
+<p class=APICODE>Imports System.Diagnostics</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE>Partial Class SolidWorksMacro</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Sub 
+ main()</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ swModel As ModelDoc2</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ swSelMgr As SelectionMgr</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ COSMOSWORKS As COSMOSWORKS</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ COSMOSObject As CwAddincallback</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ ActDoc As CWModelDoc</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ StudyMngr As CWStudyManager</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ Study As CWStudy</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ BeamMgr As CWBeamManager</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ Results As CWResults</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ actStudy As Long</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ beamForce As Long</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ nbrSteps As Long</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ unit As Long</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ errCode As Long</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ selBeams() As Object</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ nbrSelectedBeams As Long</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ varArray As Object</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ arrBeamForces As Object</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ i As Long</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ k As Long</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Connect to SOLIDWORKS</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->swModel 
+ = swApp.<span style="font-weight: bold;">ActiveDoc</span></p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->swSelMgr 
+ = swModel.<span style="font-weight: bold;">SelectionManager</span></p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get the SOLIDWORKS Simulation object</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->COSMOSObject 
+ = swApp.<span style="font-weight: bold;">GetAddInObject</span>(&quot;SldWorks.Simulation&quot;)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ COSMOSObject Is Nothing Then ErrorMsg(swApp, &quot;COSMOSObject object not 
+found&quot;)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->COSMOSWORKS 
+ = COSMOSObject.<span style="font-weight: bold;">COSMOSWORKS</span></p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ COSMOSWORKS Is Nothing Then ErrorMsg(swApp, &quot;COSMOSWORKS object not 
+found&quot;)</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get the active document</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ActDoc 
+ = COSMOSWORKS.<span style="font-weight: bold;">ActiveDoc</span>()</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ ActDoc Is Nothing Then ErrorMsg(swApp, &quot;No active document&quot;)</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get the active study</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->StudyMngr 
+ = ActDoc.<span style="font-weight: bold;">StudyManager</span>()</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ StudyMngr Is Nothing Then ErrorMsg(swApp, &quot;No CWStudyManager object&quot;)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->actStudy 
+ = StudyMngr.<span style="font-weight: bold;">ActiveStudy</span></p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Study 
+ = StudyMngr.<span style="font-weight: bold;">GetStudy</span>(actStudy)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ Study Is Nothing Then ErrorMsg(swApp, &quot;Study not created&quot;)</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get the results</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Results 
+ = Study.<span style="font-weight: bold;">Results</span></p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get the selected beams' forces</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->BeamMgr 
+ = Study.<span style="font-weight: bold;">BeamManager</span></p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->beamForce 
+ = swsBeamForceType_e.swsBeamForceMomentDirection1</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->nbrSteps 
+ = 1</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->unit 
+ = swsUnit_e.swsUnitSI</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->nbrSelectedBeams 
+ = swSelMgr.<span style="font-weight: bold;">GetSelectedObjectCount2</span>(-1)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ReDim 
+ selBeams(nbrSelectedBeams)</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->For 
+ k = 0 To (nbrSelectedBeams - 1)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->selBeams(k) 
+ = swSelMgr.<span style="font-weight: bold;">GetSelectedObject6</span>(k 
+ + 1, -1)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Next 
+ k</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ReDim 
+ Preserve selBeams(nbrSelectedBeams - 1)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->varArray 
+ = selBeams</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->arrBeamForces 
+ = Results.<span style="font-weight: bold;">GetBeamForcesForEntities</span>(beamForce, 
+ nbrSteps, (varArray), unit, errCode)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->For 
+ i = 0 To UBound(arrBeamForces)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print(arrBeamForces(i))</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Next</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->End 
+ Sub</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->'Error 
+ routine</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Private 
+ Sub ErrorMsg(ByVal SwApp As Object, ByVal Message As String)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->SwApp.<span 
+ style="font-weight: bold;">SendMsgToUser2</span>(Message, 0, 0)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->SwApp.<span 
+ style="font-weight: bold;">RecordLine</span>(&quot;'*** WARNING - General&quot;)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->SwApp.<span 
+ style="font-weight: bold;">RecordLine</span>(&quot;'*** &quot; &amp; Message)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->SwApp.<span 
+ style="font-weight: bold;">RecordLine</span>(&quot;&quot;)</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->End 
+ Sub</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{<spaces>}}-->Public 
+ swApp As SldWorks</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p class=APICODE>End Class</p>
+
+</body>
+
+</html>

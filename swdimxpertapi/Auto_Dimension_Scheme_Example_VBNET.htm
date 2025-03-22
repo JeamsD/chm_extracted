@@ -1,0 +1,478 @@
+<html>
+
+<head>
+<title>Auto Dimension Scheme Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples,auto dimension scheme">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS API 
+ Help</span></h1>
+<h1>Auto Dimension Scheme Example (VB.NET)</h1>
+<p>This example shows how to create a DimXpert Auto Dimension Scheme, turn 
+tolerance status on and off,
+and delete tolerances.</p>
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+		<p class="APICODE"><span style="color:Green">
+		'---------------------------------------------------------------------------<br>
+		' Preconditions:<br>
+		'&nbsp; 1. Open<i> public_documents</i><b>\samples\tutorial\dimxpert\bracket_auto_plusminus.sldprt.</b><br>
+		'&nbsp; 2. (Optional) Multi-select three faces to specify primary, 
+		secondary, </span><span style="color: #008000"><br>
+		'&nbsp;&nbsp;&nbsp;
+		</span><span style="color:Green">
+		&nbsp;and tertiary datum.<br>
+		'&nbsp; 3. Open the Immediate window.<br>
+		'&nbsp; 4. Ensure that the latest SOLIDWORKS DimXpert interop assembly is 
+		referenced:<br>
+		'&nbsp;&nbsp;&nbsp;&nbsp; a. Right-click the project in Project Explorer.<br>
+		'&nbsp;&nbsp;&nbsp;&nbsp; b. Select <b>Add Reference</b>.<br>
+		'&nbsp;&nbsp;&nbsp;&nbsp; c. Click the Browse tab.<br>
+		'&nbsp;&nbsp;&nbsp;&nbsp; d. Find and select <i>install_dir</i><b>\api\redist\swdimxpert.dll</b>.<br>
+		'&nbsp; 5. Set two breakpoints on these lines:<br>
+		'&nbsp;&nbsp;&nbsp;&nbsp; * swDXPart.ShowToleranceStatus = False<br>
+		'&nbsp;&nbsp;&nbsp;&nbsp; * retval = swDXPart.DeleteAllTolerances<br>
+		'&nbsp; 6. Press F5.<br>
+		'&nbsp; 7. Observe on the DimXpertManager tab: Hole Pattern1, Hole 
+		Pattern2, </span><span style="color: #008000"><br>
+		'&nbsp;&nbsp;&nbsp;&nbsp;
+		</span><span style="color:Green">
+		Fillet1, Fillet Pattern1. Also observe that tolerance status is <br>
+		'&nbsp;&nbsp;&nbsp;&nbsp; turned on in the SOLIDWORKS viewer.<br>
+		'&nbsp; 8. </span><span style="color:Green">
+		Press </span>
+		<span style="color:Green">
+		F5 and observe that tolerance status is turned off.<br>
+		'&nbsp; 9. Compare the output in the Immediate window with the features 
+		displayed </span><span style="color: #008000"><br>
+		'&nbsp;&nbsp;&nbsp;&nbsp; </span>
+		<span style="color:Green">
+		on the DimXpertManager tab.<br>
+		'&nbsp;10. </span><span style="color:Green">
+		Press </span>
+		<span style="color:Green">
+		F5 and observe that all tolerance annotations have been <br>
+		'&nbsp;&nbsp;&nbsp;&nbsp; removed from 
+		the part.</span><span style="color: #008000"><br>
+		'</span><span style="color:Green"><br>
+		' Postconditions: None</span><span style="color: #008000"><br>
+		'</span><span style="color:Green"><br>
+		'&nbsp;NOTE: Because this part is used elsewhere, do not save changes.<br>
+		'---------------------------------------------------------------------------</span>
+	</div>
+	<p class="APICODE">
+	<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.sldworks<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.swconst<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.swdimxpert<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	System<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	System.Diagnostics<br>
+	<br>
+	</span><span style="color:Blue">Partial</span><span style="color:Black">
+	</span><span style="color:Blue">Class</span><span style="color:Black"> 
+	SolidWorksMacro<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swModel </span><span style="color:Blue">As</span><span style="color:Black"> 
+	ModelDoc2<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swModelDocExt </span><span style="color:Blue">As</span><span style="color:Black"> 
+	ModelDocExtension<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swSelMgr </span><span style="color:Blue">As</span><span style="color:Black"> 
+	SelectionMgr<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swConfig </span><span style="color:Blue">As</span><span style="color:Black"> 
+	Configuration<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swFeature </span><span style="color:Blue">As</span><span style="color:Black"> 
+	Feature<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swAnn </span><span style="color:Blue">As</span><span style="color:Black"> 
+	Feature<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swSchema </span><span style="color:Blue">As</span><span style="color:Black"> 
+	DimXpertManager<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swDXPart </span><span style="color:Blue">As</span><span style="color:Black"> 
+	DimXpertPart<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	schemeOption </span><span style="color:Blue">As</span><span style="color:Black"> 
+	DimXpertAutoDimSchemeOption<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	featureType </span><span style="color:Blue">As</span><span style="color:Black"> 
+	swDimXpertFeatureType_e<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	features </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	appliedFeatures </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	appliedAnnotations </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	appliedAnnotation </span><span style="color:Blue">As</span><span style="color:Black"> 
+	DimXpertAnnotation<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	feature </span><span style="color:Blue">As</span><span style="color:Black"> 
+	DimXpertFeature<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	appliedFeature </span><span style="color:Blue">As</span><span style="color:Black"> 
+	DimXpertFeature<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	msgStr </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	msgStr2 </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	msgStr3 </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	msgStr4 </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	n </span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">Long<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	o </span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">Long<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	p </span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">Long<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	boolstatus </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Boolean<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	main()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swModel = swApp.ActiveDoc<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swModelDocExt = swModel.Extension<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swSelMgr = swModel.SelectionManager<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Get the default DimXpert schema 
+	using IModelDocExtension.DimXpertManager()<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swSchema = 
+	swModelDocExt.DimXpertManager(</span><span style="color:#a31515">&quot;Default&quot;</span><span style="color:Black">,
+	</span><span style="color:Blue">True</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Get IDimXpertPart from the 
+	IDimXpertManager<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDXPart = swSchema.DimXpertPart<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Set Auto Dimension Scheme using 
+	default options<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;schemeOption = swDXPart.<b>GetAutoDimSchemeOption</b><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Default for 
+	ScopeAllFeature is: &quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(schemeOption.<b>ScopeAllFeature</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Default for 
+	FeatureFilters is: &quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(schemeOption.<b>FeatureFilters</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Default for PartType 
+	is: &quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(schemeOption.<b>PartType</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Default for 
+	PatternType is: &quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(schemeOption.<b>PatternType</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Default for 
+	PolarPatternHoleCount is: &quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(schemeOption.<b>PolarPatternHoleCount</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Default for 
+	ToleranceType is: &quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(schemeOption.<b>ToleranceType</b>)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	retval </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Boolean<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;retval = swDXPart.<b>AutoDimensionScheme</b>(schemeOption)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Turn tolerance status off<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDXPart.<b>ShowToleranceStatus</b> 
+	= </span><span style="color:Blue">False<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	featCount </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Long<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;featCount = 
+	swDXPart.GetFeatureCount<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr = </span><span style="color:#a31515">&quot;Total of &quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = featCount<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr = msgStr + msgStr2 + </span><span style="color:#a31515">&quot; 
+	features in &quot;</span><span style="color:Black"> + (swSchema.SchemaName)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(msgStr)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Get IDimXpert features through 
+	IDimXpertPart<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;features = swDXPart.GetFeatures<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr = (swSchema.SchemaName) + </span><span style="color:#a31515">
+	&quot; has the following features: &quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(msgStr)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">For</span><span style="color:Black"> 
+	n = 0 </span><span style="color:Blue">To</span><span style="color:Black"> 
+	UBound(features)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Use IDimXpertFeature to get 
+	feature data<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;feature = features(n)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	+ </span><span style="color:#a31515">&quot;Feature name: &quot;</span><span style="color:Black"> 
+	+ (feature.Name))<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;featureType = feature.Type<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Call</span><span style="color:Black"> 
+	GetPatternType(featureType, msgStr2)<br>
+	<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr = </span><span style="color:#a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp; Feature type &quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr3 = </span>
+	<span style="color:#a31515">&quot; is suppressed on the DimXpertManager tab? &quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr4 = feature.IsSuppressed()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(msgStr + msgStr2 + msgStr3 + msgStr4)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr = </span><span style="color:#a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp; &quot;</span><span style="color:Black"> 
+	+ </span><span style="color:#a31515">&quot;Swift model: &quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Use 
+	IFeature to get the Swift model corresponding to this geometric dimensioning 
+	and tolerancing data<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swFeature = 
+	feature.GetModelFeature()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black">
+	</span><span style="color:Blue">Not</span><span style="color:Black"> (swFeature
+	</span><span style="color:Blue">Is</span><span style="color:Black"> </span>
+	<span style="color:Blue">Nothing</span><span style="color:Black">) </span>
+	<span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = 
+	swFeature.GetTypeName2()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(msgStr + msgStr2)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">If<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr = </span>
+	<span style="color:#a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp; &quot;</span><span style="color:Black"> +
+	</span><span style="color:#a31515">&quot;Number of SOLIDWORKS face entities in 
+	this feature: &quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = feature.GetFaceCount<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(msgStr + msgStr2)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr = </span><span style="color:#a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp; &quot;</span><span style="color:Black"> 
+	+ </span><span style="color:#a31515">&quot;Number of applied features: &quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = 
+	feature.GetAppliedFeatureCount()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(msgStr + msgStr2)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;appliedFeatures = feature.GetAppliedFeatures()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black">
+	</span><span style="color:Blue">Not</span><span style="color:Black"> (IsNothing(appliedFeatures))
+	</span><span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">For</span><span style="color:Black"> 
+	o = 0 </span><span style="color:Blue">To</span><span style="color:Black"> 
+	UBound(appliedFeatures)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;appliedFeature = appliedFeatures(o)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	+ </span><span style="color:#a31515">&quot;Applied feature name: &quot;</span><span style="color:Black"> 
+	+ (appliedFeature.Name))<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Next<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">If<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr = </span>
+	<span style="color:#a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp; &quot;</span><span style="color:Black"> +
+	</span><span style="color:#a31515">&quot;Number of applied annotations: &quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = 
+	feature.GetAppliedAnnotationCount()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(msgStr + msgStr2)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;appliedAnnotations = feature.GetAppliedAnnotations()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black">
+	</span><span style="color:Blue">Not</span><span style="color:Black"> (IsNothing(appliedAnnotations))
+	</span><span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">For</span><span style="color:Black"> 
+	p = 0 </span><span style="color:Blue">To</span><span style="color:Black"> 
+	UBound(appliedAnnotations)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;appliedAnnotation = appliedAnnotations(p)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	+ </span><span style="color:#a31515">&quot;Applied annotation name: &quot;</span><span style="color:Black"> 
+	+ (appliedAnnotation.Name))<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Next<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">If<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp; 
+	&quot;</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Next<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+	Delete all tolerances<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;retval = swDXPart.<b>DeleteAllTolerances</b><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Public</span><span style="color:Black">
+	</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	GetPatternType(</span><span style="color:Blue">ByRef</span><span style="color:Black"> 
+	featureType, </span><span style="color:Blue">ByRef</span><span style="color:Black"> 
+	msgStr2)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_Plane) </span>
+	<span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;Plane&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_Cylinder) </span>
+	<span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;Cylinder&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_Cone) </span>
+	<span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;Cone&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_Extrude) </span>
+	<span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;Extrude&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_Fillet) </span>
+	<span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;Fillet&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_Chamfer) </span>
+	<span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;Chamfer&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_CompoundHole)
+	</span><span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;CompoundHole&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_CompoundWidth)
+	</span><span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;CompoundWidth&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_CompoundNotch)
+	</span><span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;CompoundNotch&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = 
+	swDimXpertFeatureType_e.swDimXpertFeature_CompoundClosedSlot3D) </span>
+	<span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;CompoundClosedSlot3D&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_IntersectPoint)
+	</span><span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;IntersectPoint&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_IntersectLine)
+	</span><span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;IntersectLine&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_IntersectCircle)
+	</span><span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;IntersectCircle&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_IntersectPlane)
+	</span><span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;IntersectPlane&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_Pattern) </span>
+	<span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;Pattern&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_Sphere) </span>
+	<span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;Sphere&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_BestfitPlane)
+	</span><span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;Bestfit plane&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(featureType = swDimXpertFeatureType_e.swDimXpertFeature_Surface) </span>
+	<span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msgStr2 = </span>
+	<span style="color:#a31515">&quot;Surface&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">If<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub<br>
+	<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Public</span><span style="color:Black"> 
+	swApp </span><span style="color:Blue">As</span><span style="color:Black"> 
+	SldWorks<br>
+	<br>
+	<br>
+	</span><span style="color:Blue">End</span><span style="color:Black"> </span>
+	<span style="color:Blue">Class</span>
+</div>
+
+</body>
+
+</html>

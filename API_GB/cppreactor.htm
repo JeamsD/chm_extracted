@@ -1,0 +1,155 @@
+<html>
+
+<head>
+<title>Creating Add-in Hooks (C++)</title>
+<meta name=MS-HKWD content="Add-ins, hooks">
+<meta name=MS-HKWD content="Hooks">
+<meta name=MS-HKWD content="C++, add-ins">
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+<style>
+<!--
+div.Section1
+	{page:Section1;}
+-->
+</style>
+</head>
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Creating Add-in Hooks (C++)</h1>
+<div class=Section1>
+
+<p><span lang=EN-US style='font-family:Verdana'>This
+topic shows how to implement 
+<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmAddIn5~GetAddInInfo.html"> IEdmAddIn5::GetAddInInfo</a>
+and <a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmAddIn5~OnCmd.html"> IEdmAddIn5::OnCmd</a> 
+in your add-in to have SOLIDWORKS PDM Professional notify your add-in
+whenever a file is added, checked out, or checked in.</span><span class=GramE><span lang=EN-US style="FONT-FAMILY: Verdana">  
+              
+
+</span></span></p>
+<ol>
+	<li class="kadov-P"><span style="font-family: Verdana">C</span><span lang=EN-US style='font-family:Verdana'>all
+	<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmCmdMgr5~AddHook.html">IEdmCmdMgr5::AddHook</a> from 
+	your add-in's GetAddInInfo method 
+	for each activity you want your add-in to know about. Implement 
+	IEdmAddIn5::GetAddInInfo in your add-in as follows:</span></li>
+
+<blockquote>
+	<P><SPAN class=SpellE><SPAN class=GramE>
+	<SPAN lang=EN-US style="FONT-SIZE: 10pt; FONT-FAMILY: Courier New; mso-ansi-language:EN-US">STDMETHOD(GetAddInInfo)(EdmAddInInfo * poInfo, IEdmVault5 * poVault, IEdmCmdMgr5 * poCmdMgr)<br>{<br>&nbsp;&nbsp;    
+	<font color=green>//The AFX_MANAGE_STATE macro is needed for MFC applications but should not
+	<br>&nbsp;&nbsp;    //be used for applications that are MFC-free</font><br>&nbsp;&nbsp;    AFX_MANAGE_STATE(AfxGetStaticModuleState());<br>
+	<br>&nbsp;&nbsp;		if (poInfo == NULL || poCmdMgr == NULL )<br>&nbsp;&nbsp;&nbsp;&nbsp;			return E_POINTER;<br>
+	<br>&nbsp;&nbsp;    <font color=green>//Return information to the Administrate Add-ins dialog box</font><br>&nbsp;&nbsp;    poInfo-&gt;mbsAddInName=  SysAllocString( L"My first add-in" );<br>&nbsp;&nbsp; poInfo-&gt;mbsCompany = SysAllocString( L"The name of my company" );<br>&nbsp;&nbsp;    poInfo-&gt;mbsDescription=  SysAllocString( L"This is a very nice add-in." );<br>&nbsp;&nbsp; poInfo-&gt;mlAddInVersion = 1;<br>
+	<br>&nbsp;&nbsp;    <font color=green>//SOLIDWORKS PDM Professional 5.2 is 
+	required to install this add-in</font><br>&nbsp;&nbsp; poInfo-&gt;mlRequiredVersionMajor = 5;<br>&nbsp;&nbsp;    poInfo-&gt;mlRequiredVersionMinor=  2;<br>
+	<br>&nbsp;&nbsp;    <font color=green>//Notify when a file has been added</font><br>&nbsp;&nbsp; poCmdMgr-&gt;AddHook( EdmCmd_PostAdd, NULL );<br>&nbsp;&nbsp;    
+	<font color=green>//Notify when a file has been checked out<br></font>&nbsp;&nbsp; poCmdMgr-&gt;AddHook( EdmCmd_PostLock, NULL );<br>&nbsp;&nbsp;    
+	<font color=green>//Notify when a file is about to be checked in<br></font>&nbsp;&nbsp; poCmdMgr-&gt;AddHook( EdmCmd_PreUnlock, NULL );<br>&nbsp;&nbsp;    
+	<font color=green>//Notify when a file has been checked in<br></font>&nbsp;&nbsp; poCmdMgr-&gt;AddHook( EdmCmd_PostUnlock, NULL );<br>
+	<br>&nbsp;&nbsp;		return S_OK;<br>}</SPAN></SPAN></SPAN></P>
+</blockquote>
+
+	<li class="kadov-P">
+	<P style="BACKGROUND: white"><span style="font-family: Verdana">Implement 
+	IEdmAddIn5::</span><span lang=EN-US style='font-family:Verdana'>OnCmd in 
+	your add-in as follows:</span></P></li>
+
+<blockquote>
+	<P style="BACKGROUND: white"><SPAN class=SpellE>
+	<SPAN lang=EN-US 
+style="FONT-SIZE: 10pt; FONT-FAMILY: Arial">
+	<SPAN lang=EN-US 
+      style="FONT-SIZE: 10pt; FONT-FAMILY: 'Courier New'; mso-ansi-language: EN-US">
+	<o:p>STDMETHOD(OnCmd)(EdmCmd * poCmd, SAFEARRAY * * ppoData)<br>{<br>&nbsp;&nbsp;    
+	<font color=green>//The AFX_MANAGE_STATE macro is needed for MFC applications but should not
+	<br>&nbsp;&nbsp;    //be used for applications that are MFC-free</font><br>&nbsp;&nbsp;    AFX_MANAGE_STATE(AfxGetStaticModuleState());<br>
+	<br>&nbsp;&nbsp;		if (poCmd == NULL ||ppoData == NULL)<br>&nbsp;&nbsp;&nbsp;&nbsp;			return E_POINTER;<br>
+	<br>&nbsp;&nbsp;<font color=green> //Check the type of hook that triggered 
+	this call</font><br>&nbsp;&nbsp;    CString oName;<br>&nbsp;&nbsp; switch(poCmd-&gt;meCmdType )<br>&nbsp;&nbsp;    {<br>&nbsp;&nbsp;&nbsp;&nbsp; case EdmCmd_PostAdd: oName =
+             "PostAdd"; break;<br>&nbsp;&nbsp;&nbsp;&nbsp;      case EdmCmd_PostLock:   oName = "PostLock"; break;<br>&nbsp;&nbsp;&nbsp;&nbsp;      case EdmCmd_PreUnlock:  oName = "PreUnlock"; break;<br>&nbsp;&nbsp;&nbsp;&nbsp;      case EdmCmd_PostUnlock: oName = "PostUnlock"; break;<br>&nbsp;&nbsp;&nbsp;&nbsp;      default: oName = "?"; break;<br>&nbsp;&nbsp;    }<br>
+	<br>&nbsp;&nbsp;<font color=green> //Obtain a pointer to the array data</font><br>&nbsp;&nbsp;    if( SafeArrayGetDim( *ppoData ) != 1 )<br>&nbsp;&nbsp;&nbsp;&nbsp;      return E_INVALIDARG;<br>
+	<br>&nbsp;&nbsp;    EdmCmdData *poElements = NULL;<br>&nbsp;&nbsp; HRESULT hRes =
+       SafeArrayAccessData( *ppoData, (void**)&amp;poElements );<br>&nbsp;&nbsp;    if( FAILED(hRes) )<br>&nbsp;&nbsp;&nbsp;&nbsp;      return hRes;<br>
+	<br>&nbsp;&nbsp;<font color=green> //Append the paths of all files to a string</font><br>&nbsp;&nbsp; CString oMessage =
+       "The following files were affected by a " + oName + " hook:\n";<br>&nbsp;&nbsp; int  iCount=(*ppoData)-&gt;rgsabound-&gt;cElements;<br>&nbsp;&nbsp; for( int i =
+      0;  i &lt;  iCount; ++i )<br>&nbsp;&nbsp;    {      <br>&nbsp;&nbsp;&nbsp;&nbsp;      oMessage +=  (LPCTSTR)bstr_t(poElements-&gt;mbsStrData1 );<br>&nbsp;&nbsp;&nbsp;&nbsp;      oMessage += "\n";<br>&nbsp;&nbsp;&nbsp;&nbsp;      ++poElements;<br>&nbsp;&nbsp;    }<br>
+	<br>&nbsp;&nbsp;<font color=green> //Release the array data and display a message to the user</font><br>&nbsp;&nbsp;    SafeArrayUnaccessData( *ppoData );<br>
+	<br>&nbsp;&nbsp; MessageBox((HWND)poCmd-&gt;mlParentWnd, oMessage, "SOLIDWORKS PDM Professional", MB_OK );
+	<br>&nbsp;&nbsp;		return S_OK;<br>}<br>
+&nbsp;</o:p></SPAN></SPAN></SPAN></P>
+
+<p style='background:white'><span lang=EN-US style='font-family:Verdana'>OnCmd 
+is called for each of the
+hooks registered in GetAddInInfo. You can tell which hook triggered the call by 
+inspecting the meCmdType
+member of the <a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmd.html">EdmCmd</a> structure 
+that is passed as poCmd in OnCmd. meCmdType contains an EdmCmdType constant that 
+indicates the triggering hook.<o:p></o:p></span></p>
+
+<p style='background:white'><span lang=EN-US style='font-family:Verdana'>The second argument to OnCmd
+is an array of <a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmdData.html">EdmCmdData</a> structures. There is
+one element in the array for each file that is affected by the call. The
+contents of the structure members&nbsp;vary depending on the type of hook that
+triggers the call. See EdmCmdData for a complete list
+of members and their descriptions.<o:p></o:p></span></p>
+
+
+</blockquote>
+</P>
+
+<p class=MsoNormal style="BACKGROUND: white"><span lang=EN-US style="FONT-SIZE:
+ 10pt; FONT-FAMILY: Arial"><o:p><SPAN lang=EN-US 
+style="FONT-SIZE: 10pt; FONT-FAMILY: Arial"><o:p></o:p></SPAN></o:p></span>&nbsp;</p>
+
+	<li class="kadov-P">
+	<P style="BACKGROUND: white">
+	<span style="background-position: 0 0"><font face="Verdana">B</font></span><font face="Verdana"><span lang=EN-US>uild 
+	the add-in DLL and</span></font><span lang=EN-US><font face="Verdana"> 
+	</font></span><span style="font-family: Verdana" lang="en-gb">a</span><span lang=EN-GB
+style='font-family:Verdana;mso-ansi-language:EN-GB'>dd it to the file vault 
+	using the</span><font face="Verdana"><span lang=EN-GB style='mso-ansi-language:EN-GB'>
+	</span></font>
+	<span lang=EN-GB style='font-family:Verdana;mso-ansi-language:EN-GB'>
+	<a href="AdminDlg.htm">Administration tool</a></span><span lang=EN-US><font face="Verdana">.</font></span></P>
+	</li>
+	<li class="kadov-P">
+	<P style="BACKGROUND: white">
+	<span style="background-position: 0 0"><font face="Verdana">T</font></span><span lang=EN-US><font face="Verdana">ry adding, checking out, and checking in 
+	vault files.</font><o:p></o:p></span></P></li>
+</ol>
+<P style="BACKGROUND: white"><SPAN lang=EN-US 
+style="FONT-FAMILY: Verdana"><o:p><STRONG>NOTE: </STRONG></o:p></SPAN>
+<span
+lang=EN-US style='font-family:Verdana'>OnCmd is not called during check-in if the
+file is not modified before it is checked in. During check-in of unmodified 
+files, SOLIDWORKS PDM Professional triggers an &quot;undo check-out&quot; event. To handle 
+this &quot;undo check-out&quot; event, add hooks for <a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmdType.html"> EdmCmdType.EdmCmd_PreUndoLock</a> and 
+<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmdType.html">EdmCmdType.EdmCmd_PostUndoLock</a> 
+to your add-in's GetAddInInfo.</span></P>
+
+</div>
+<h2 style="background-image: url(''); background-repeat: repeat; background-attachment: scroll">
+<span style="font-family: Verdana">See Also</span></h2>
+<p class="MsoNormal" style="background-image: url(''); background-repeat: repeat; background-attachment: scroll">
+<span class=GramE>
+<span lang=EN-US style="FONT-FAMILY: Verdana">  
+              
+<A href="cppaddin.htm">Creating Add-ins (C++)</A>            
+             
+
+</span></span></p>
+<p class="MsoNormal" style="background-image: url(''); background-repeat: repeat; background-attachment: scroll">
+<span class=GramE>
+<span lang=EN-US style="FONT-FAMILY: Verdana">  
+              
+<A href="vbreactor.htm">Creating Add-in Hooks (VB.NET)</A>            
+             
+
+</span></span></p>
+</body>
+</html>
+

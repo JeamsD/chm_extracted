@@ -1,0 +1,109 @@
+<html>
+
+<head>
+<title>Select Connector Using Highlight Search Tool Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples,Highlight Search">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Routing API 
+ Help</span></h1>
+<h1>Select Connector Using Highlight Search Tool Example (VB.NET)</h1>
+<p>This example shows how to select a connector using the SOLIDWORKS Routing 
+ Highlight Search tool.</p>
+
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:green;">
+'----------------------------------------------------------------------------</span><br>
+<span style="color:green;">'&nbsp;Preconditions:</span><br>
+<span style="color:green;">
+'&nbsp;1.&nbsp;Open&nbsp;an&nbsp;assembly&nbsp;document&nbsp;containing&nbsp;an&nbsp;electrical&nbsp;route&nbsp;and</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;<b>connector&nbsp;(3pin)&nbsp;female-1</b>.</span><br>
+<span style="color:green;">'&nbsp;2.&nbsp;In&nbsp;SOLIDWORKS,&nbsp;select&nbsp;<b>Tools&nbsp;&gt;&nbsp;Add-Ins&nbsp;&gt;&nbsp;SOLIDWORKS&nbsp;Routing</b>.</span><br>
+<span style="color:green;">
+'&nbsp;3.&nbsp;In&nbsp;<b>Tools&nbsp;&gt;&nbsp;Options&nbsp;&gt;&nbsp;System&nbsp;Options&nbsp;&gt;&nbsp;Routing&nbsp;&gt;&nbsp;Routing&nbsp;File&nbsp;Locations</b>,&nbsp;</span><br>
+<span style="color:green;">
+'&nbsp;&nbsp;&nbsp;&nbsp;click&nbsp;<b>Launch&nbsp;Routing&nbsp;Library&nbsp;Manager</b>&nbsp;and&nbsp;set&nbsp;the&nbsp;locations&nbsp;of&nbsp;your&nbsp;</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;SOLIDWORKS&nbsp;Routing&nbsp;files.</span><br>
+<span style="color:green;">'&nbsp;4.&nbsp;In&nbsp;the&nbsp;IDE,&nbsp;right-click&nbsp;the&nbsp;project,&nbsp;</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;click&nbsp;<b>Add&nbsp;Reference</b>,&nbsp;browse&nbsp;<i>install_dir</i><b>\api\redist</b>,&nbsp;select</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;<b>SolidWorks.Interop.SwRoutingLib.dll</b>,&nbsp;and&nbsp;click&nbsp;<b>OK</b>.</span><br>
+<span style="color:green;">'&nbsp;5.&nbsp;Open&nbsp;an&nbsp;Immediate&nbsp;window.</span><br>
+<span style="color:green;">'</span><br>
+<span style="color:green;">'&nbsp;Postconditions:</span><br>
+<span style="color:green;">'&nbsp;1.&nbsp;Finds&nbsp;the&nbsp;specified&nbsp;component.</span><br>
+<span style="color:green;">
+'&nbsp;2.&nbsp;Prints&nbsp;the&nbsp;number&nbsp;of&nbsp;instances&nbsp;of&nbsp;the&nbsp;specified&nbsp;component.</span><br>
+<span style="color:green;">'&nbsp;3.&nbsp;Selects&nbsp;the&nbsp;component&nbsp;in&nbsp;the&nbsp;FeatureManager&nbsp;design&nbsp;tree.</span><br>
+<span style="color:green;">
+'&nbsp;4.&nbsp;Prints&nbsp;the&nbsp;number&nbsp;of&nbsp;components&nbsp;attached&nbsp;to&nbsp;the&nbsp;selected&nbsp;component.</span><br>
+<span style="color:green;">
+'&nbsp;5.&nbsp;Colors&nbsp;the&nbsp;selected&nbsp;component&nbsp;gray&nbsp;in&nbsp;the&nbsp;graphics&nbsp;area.</span><br>
+<span style="color:green;">'&nbsp;6.&nbsp;Inspect&nbsp;the&nbsp;Immediate&nbsp;window,&nbsp;the&nbsp;FeatureManager&nbsp;design&nbsp;tree,</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;the&nbsp;graphics&nbsp;area.</span><br>
+<span style="color:green;">
+'----------------------------------------------------------------------------</span><br>
+<span style="color:blue;">Imports</span>&nbsp;SolidWorks.Interop.sldworks<br>
+<span style="color:blue;">Imports</span>&nbsp;SolidWorks.Interop.swconst<br>
+<span style="color:blue;">Imports</span>&nbsp;SolidWorks.Interop.SWRoutingLib<br>
+<span style="color:blue;">Imports</span>&nbsp;System.Runtime.InteropServices<br>
+<span style="color:blue;">Imports</span>&nbsp;System<br>
+<span style="color:blue;">Imports</span>&nbsp;System.Diagnostics<br>
+&nbsp;<br>
+&nbsp;<br>
+<span style="color:blue;">Partial</span>&nbsp;<span style="color:blue;">Class</span>&nbsp;<span style="color:#2b91af;">SolidWorksMacro</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;swModel&nbsp;<span style="color:blue;">As</span>&nbsp;ModelDoc2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;swAssemblyDoc&nbsp;<span style="color:blue;">As</span>&nbsp;AssemblyDoc<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;rtRouteMgr&nbsp;<span style="color:blue;">As</span>&nbsp;RouteManager<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;rtAdvancedRouteSelector&nbsp;<span style="color:blue;">As</span>&nbsp;AdvancedRouteSelector<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;nbrConnectors&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Long</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;selName&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Object</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;attachNames&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Object</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Sub</span>&nbsp;main()<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swModel&nbsp;=&nbsp;swApp.<b>ActiveDoc</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swAssemblyDoc&nbsp;=&nbsp;swModel<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'&nbsp;Get&nbsp;SOLIDWORKS&nbsp;RouteManager</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rtRouteMgr&nbsp;=&nbsp;swAssemblyDoc.<b>GetRouteManager</b>()<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'&nbsp;Access&nbsp;the&nbsp;Highlight&nbsp;Search&nbsp;tool</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rtAdvancedRouteSelector&nbsp;=&nbsp;rtRouteMgr.<b>GetAdvancedRouteSelector</b><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'&nbsp;Find&nbsp;the&nbsp;specified&nbsp;component&nbsp;and&nbsp;add&nbsp;it&nbsp;to&nbsp;the&nbsp;selection&nbsp;list</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nbrConnectors&nbsp;=&nbsp;rtAdvancedRouteSelector.<b>Find</b>(<span style="color:#a31515;">&quot;connector&nbsp;(3pin)&nbsp;female-1&quot;</span>,&nbsp;swRoutingSearchType_e.swRoutingComponentSearch,&nbsp;<span style="color:blue;">True</span>,&nbsp;<span style="color:blue;">False</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;Number&nbsp;of&nbsp;instances&nbsp;of&nbsp;the&nbsp;specified&nbsp;component&nbsp;in&nbsp;this&nbsp;assembly:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;nbrConnectors)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'&nbsp;Get&nbsp;the&nbsp;number&nbsp;of&nbsp;components&nbsp;attached&nbsp;to&nbsp;the&nbsp;selected&nbsp;component</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;Number&nbsp;of&nbsp;components&nbsp;attached&nbsp;to&nbsp;the&nbsp;specified&nbsp;connector:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;rtAdvancedRouteSelector.<b>getAttachedComponentsCount</b>(0))<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'&nbsp;Color&nbsp;the&nbsp;selection&nbsp;gray</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rtAdvancedRouteSelector.<b>SetSelectionColor</b>(<span style="color:blue;">True</span>,&nbsp;0)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'&nbsp;Select&nbsp;the&nbsp;component&nbsp;and&nbsp;return&nbsp;an&nbsp;array&nbsp;of&nbsp;its&nbsp;attached&nbsp;components</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attachNames&nbsp;=&nbsp;rtAdvancedRouteSelector.<b>Select</b>(0,&nbsp;<span style="color:blue;">False</span>,&nbsp;<span style="color:blue;">Nothing</span>,&nbsp;swAdvancedRouteSelectionOutput_e.swBoth,&nbsp;selName)<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'''&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'''&nbsp;The&nbsp;SldWorks&nbsp;swApp&nbsp;variable&nbsp;is&nbsp;pre-assigned&nbsp;for&nbsp;you.</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'''&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Public</span>&nbsp;swApp&nbsp;<span style="color:blue;">As</span>&nbsp;SldWorks<br>
+&nbsp;<br>
+&nbsp;<br>
+<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Class</span><br>
+&nbsp;</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

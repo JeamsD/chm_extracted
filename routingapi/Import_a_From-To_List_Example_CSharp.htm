@@ -1,0 +1,164 @@
+<html>
+
+<head>
+<title>Import a From-to List Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,import">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Routing 
+ API Help</span></h1>
+<h1>Import a From-to List Example (C#)</h1>
+<p>This example shows how to import a from-to connection list.</p>
+
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p class="APICODE"><span style="color:Green">
+	<font size="2">
+	//--------------------------------------------------------------------------<br>
+	// Preconditions: <br>
+	//&nbsp;1. Add SOLIDWORKS Routing as an add-in <br>
+	//&nbsp;&nbsp;&nbsp; (in SOLIDWORKS, select <b>Tools 
+	&gt; Add-Ins &gt; SOLIDWORKS Routing</b>). <br>
+	//&nbsp;2. Add <b>SolidWorks.Interop.SwRoutingLib.dll</b> as a reference <br>
+	</font>
+	</span><font size="2" color="#008000">//&nbsp;&nbsp;&nbsp;
+	</font><span style="color:Green">
+	<font size="2">(in the IDE 
+	right-click the project, <br>
+	</font>
+	</span><font size="2" color="#008000">//&nbsp;&nbsp;&nbsp;
+	</font><span style="color:Green">
+	<font size="2">select <b>Add Reference</b>, and browse <i>install_dir</i><b>\api\redist</b>).
+	<br>
+	//&nbsp;3. In <b>Tools &gt; Options &gt; System Options &gt; Routing &gt; Routing File 
+	Locations</b>, <br>
+	</font>
+	</span><font size="2" color="#008000">//&nbsp;&nbsp;&nbsp;
+	</font><span style="color:Green">
+	<font size="2">add locations of your SOLIDWORKS Routing files. <br>
+	//&nbsp;4. Open:<br>
+	</font></span><font size="2" color="#008000">//</font><span style="color:Green"><font size="2"> <i>&nbsp;&nbsp; public_documents</i><b>\samples\tutorial\routing\electrical\top_assy.sldasm</b>.
+	<br>
+	//&nbsp;5. Rename the namespace to match the name of your C# project.<br>
+	//&nbsp;6. Ensure that the specified files exist. <br>
+	//&nbsp;7. Open an Immediate Window. <br>
+	// <br>
+	// Postconditions: <br>
+	//&nbsp;1. Position the components in the harness by clicking the housing 
+	wall <br>
+	</font>
+	</span><font size="2" color="#008000">//&nbsp;&nbsp;&nbsp;
+	</font><span style="color:Green">
+	<font size="2">five (5) times. <br>
+	//&nbsp;2. Click <b>Yes</b> in the message box. <br>
+	//&nbsp;3. Click the green checkmark in Route Properties to accept the 
+	defaults. <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;Guidelines display in the electronic housing. <br>
+	//&nbsp;&nbsp;&nbsp; The Auto Route PropertyManager page displays. <br>
+	//&nbsp;4. Click the green checkmark to accept the defaults. <br>
+	//&nbsp;5. Stop editing the route. <br>
+	//&nbsp;6. Stop editing the assembly. <br>
+	//&nbsp;7. Harness_1-top_assy, containing the imported route, <br>
+	</font>
+	</span><font size="2" color="#008000">//&nbsp;&nbsp;&nbsp;
+	</font><span style="color:Green">
+	<font size="2">appears in the FeatureManager design tree.<br>
+	// <br>
+	// <b>NOTE</b>: Because the assembly is used elsewhere, <br>
+	</font>
+	</span><font size="2" color="#008000">// </font>
+	<span style="color:Green">
+	<font size="2">do not save any 
+	changes when you close it. <br>
+	//--------------------------------------------------------------------------<br>
+	<br>
+	</font>
+	</span><font size="2"><span style="color:Blue">using</span><span style="color:Black"> 
+	SolidWorks.Interop.sldworks;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	SolidWorks.Interop.swconst;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	SolidWorks.Interop.SWRoutingLib;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	System;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	System.Diagnostics;<br>
+	</span><span style="color:Blue">namespace</span><span style="color:Black"> 
+	ImportFromToList_CSharp.csproj<br>
+	{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">partial</span><span style="color:Black">
+	</span><span style="color:Blue">class</span><span style="color:Black">
+	</span><span style="color:#2b91af">SolidWorksMacro<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black">
+	</span><span style="color:Blue">void</span><span style="color:Black"> Main()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ModelDoc2</span><span style="color:Black"> 
+	swModel = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">ModelDoc2</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">AssemblyDoc</span><span style="color:Black"> 
+	swTopLevelAssembly = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">AssemblyDoc</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">RouteManager</span><span style="color:Black"> 
+	rtRouteManager = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">RouteManager</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> 
+	fromtoListFileName = </span><span style="color:Blue">null</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fromtoListFileName = </span><span style="color:#a31515">&quot;<i>public_documents</i>\\tutorial\\routing\\electrical\\from-to list.xlsx&quot;</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> 
+	compoLibFilename = </span><span style="color:Blue">null</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;compoLibFilename = </span><span style="color:#a31515">&quot;</span><span style="color: #a31515"><i>install_dir</i></span><span style="color:#a31515">\\data\\design 
+	library\\routing\\electrical\\components.xml&quot;</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> 
+	cableWireLibFilename = </span><span style="color:Blue">null</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cableWireLibFilename = </span><span style="color:#a31515">&quot;c:\\ProgramData\\SOLIDWORKS\\SOLIDWORKS 
+	20<i>nn</i>\\design 
+	library\\routing\\electrical\\cable.xml&quot;</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">bool</span><span style="color:Black"> 
+	useExistingAssembly = </span><span style="color:Blue">false</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;useExistingAssembly = </span><span style="color:Blue">false</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">bool</span><span style="color:Black"> 
+	overwriteData = </span><span style="color:Blue">false</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;overwriteData = </span><span style="color:Blue">true</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">bool</span><span style="color:Black"> 
+	searchAllSubAssemblies = </span><span style="color:Blue">false</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;searchAllSubAssemblies = </span><span style="color:Blue">true</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">bool</span><span style="color:Black"> 
+	boolstatus = </span><span style="color:Blue">false</span><span style="color:Black">;<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swModel = (</span><span style="color:#2b91af">ModelDoc2</span><span style="color:Black">)swApp.ActiveDoc;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swTopLevelAssembly = (</span><span style="color:#2b91af">AssemblyDoc</span><span style="color:Black">)swModel;<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// Get the RouteManager from 
+	the top-level assembly <br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rtRouteManager = (</span><span style="color:#2b91af">RouteManager</span><span style="color:Black">)swTopLevelAssembly.<b>GetRouteManager</b>();<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> 
+	(rtRouteManager == </span><span style="color:Blue">null</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;No 
+	RouteManager found in top-level document.&quot;</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">return</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;boolstatus = rtRouteManager.<b>ImportFromToList</b>(fromtoListFileName, 
+	compoLibFilename, cableWireLibFilename, useExistingAssembly, overwriteData, 
+	searchAllSubAssemblies);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black">
+	</span><span style="color:#2b91af">SldWorks</span><span style="color:Black"> 
+	swApp;<br>
+	<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	}</span>
+</font>
+</div>
+
+</body>
+
+</html>

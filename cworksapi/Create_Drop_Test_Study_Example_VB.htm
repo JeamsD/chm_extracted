@@ -1,0 +1,326 @@
+<html>
+
+<head>
+<title>Create Drop Test Study Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,drop test study">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Create Drop Test Study Example (VBA)</h1>
+<p>This example shows how to create a drop test study.</p>
+<p><span style="font-weight: bold;">NOTE:</span> To get persistent reference 
+ identifiers (PIDs) for model selections, you can use
+<a href="GettingStarted-swsimulationapi.html">pidcollector.exe</a> 
+ or IModelDocExtension::GetPersistReference3.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Open <i>public_documents</i><b>\samples\tutorial\api\KeyPad_1.sldasm</b>.<br>
+'<br>
+' Postconditions:<br>
+'&nbsp; 1.&nbsp;Creates a default drop test study results plot.<br>
+'&nbsp; 2.&nbsp;Creates drop test study, <b>Study 2</b>.<br>
+'&nbsp; 3.&nbsp;Applies<b> Nylon 101</b> SOLIDWORKS material to all components.<br>
+'&nbsp; 4.&nbsp;Meshes the model.<br>
+'&nbsp; 5.&nbsp;Sets drop height to 1000 mm.<br>
+'&nbsp; 6.&nbsp;Runs the analysis.<br>
+'&nbsp; 7.&nbsp;Validates the von Mises stress results.<br>
+'&nbsp; 8.&nbsp;When the macro stops:<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; a. Inspect the Immediate window for the 1000 mm drop test study's setup 
+<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; and result options.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; b. Inspect the default drop test study results plot.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; c. Press F5 to continue.<br>
+'&nbsp; 9.&nbsp;Changes drop height to 2000 mm.<br>
+' 10. Re-runs the analysis.<br>
+' 11. Inspect the results folder.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+' ---------------------------------------------------------------------------</p>
+
+<p class="APICODE">
+&nbsp;</p>
+<p class="APICODE">Dim SwApp As SldWorks.SldWorks<br>
+Dim Part As SldWorks.ModelDoc2<br>
+Dim COSMOSWORKS As CosmosWorksLib.COSMOSWORKS<br>
+Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+Dim Study As CosmosWorksLib.CWStudy<br>
+Dim CWMesh As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">Dim CWFeatObj As CosmosWorksLib.CWResults<br>
+Dim SolidMgr As CosmosWorksLib.CWSolidManager<br>
+Dim SolidComponent As CosmosWorksLib.CWSolidComponent<br>
+Dim Solidbody As CosmosWorksLib.CWSolidBody<br>
+Dim Setup As CosmosWorksLib.CWDropTestSetup<br>
+Dim ResultOptions As CosmosWorksLib.CWDropTestResultOptions<br>
+Dim StudyOptions As CosmosWorksLib.CWDropTestStudyOptions<br>
+Dim Selection As Object<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">Dim CosmosFolder As String<br>
+Dim sLibWithPathname As String, sMaterialName As String, sName As String<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">Dim errCode As Long<br>
+Dim VMS1000 As Double, VMS2000 As Double, Stress As Variant<br>
+Dim nStep As Long, CompCount As Long, j As Long, Height As Double<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">Dim bApp As Long<br>
+Dim PIDCollection As New Collection<br>
+Dim Tol As Double, A As Double, B As Double<br>
+<br>
+Option Explicit<br>
+Sub main()<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set PIDCollection = PIDInitializer()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Tol = 0.25&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'25% tolerance<br>
+&nbsp;&nbsp;&nbsp; VMS1000 = 7314431&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'maximum von Mises stress at step 25 for drop height = 1000 mm<br>
+&nbsp;&nbsp;&nbsp; VMS2000 = 10389063&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'maximum von Mises stress at step 25 for drop height = 2000 mm</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Exit Sub<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CosmosFolder = SwApp.<b>GetExecutablePath</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>ActiveDoc</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Add a default drop test study results 
+plot<br>
+&nbsp;&nbsp;&nbsp; bApp = ActDoc.<b>AddDefaultDropTestStudyPlot</b>(swsDropTestResultElementalStress, 
+swsStressComponentVON)</p>
+<p class="APICODE"><br>
+&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create a drop test study<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>CreateNewStudy3</b>(&quot;Study 2&quot;, 6, 0, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to create a drop 
+test study&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyOptions = Study.<b>DropTestStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Study results folder: &quot; &amp; StudyOptions.<b>ResultFolder</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Study displacement formulation (1 = large): &quot; &amp; 
+StudyOptions.<b>LargeDisplacement</b><br>
+&nbsp;&nbsp;&nbsp; Set ResultOptions = Study.<b>DropTestResultOptions</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Number of graph steps: &quot; &amp; ResultOptions.<b>NoOfGraphSteps</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Number of plots: &quot; &amp; ResultOptions.<b>NoOfPlots</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Save results from starting time (sec): &quot; &amp; 
+ResultOptions.<b>SaveResultsStartingTime</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Time to solve after impact (sec): &quot; &amp; 
+ResultOptions.<b>SolutionTimeAfterImpact</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create mesh<br>
+&nbsp;&nbsp;&nbsp; Set CWMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; CWMesh.<b>MesherType</b> = 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'standard mesh = 0, CB mesh = 1<br>
+&nbsp;&nbsp;&nbsp; CWMesh.<b>Quality</b> = 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'draft = 0, high quality = 1<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, 2, 0.05)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'create mesh, 0-1-2-3-4 : mm-cm-m-in-ft<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Apply material<br>
+&nbsp;&nbsp;&nbsp; sLibWithPathname = CosmosFolder &amp; &quot;\lang\english\sldmaterials\solidworks 
+materials.sldmat&quot;<br>
+&nbsp;&nbsp;&nbsp; sMaterialName = &quot;Nylon 101&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'Nylon 101 SOLIDWORKS material<br>
+&nbsp;&nbsp;&nbsp; Set SolidMgr = Study.<b>SolidManager</b><br>
+&nbsp;&nbsp;&nbsp; CompCount = SolidMgr.<b>ComponentCount</b><br>
+&nbsp;&nbsp;&nbsp; For j = 0 To (CompCount - 1)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'Apply material to all solid components<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set SolidComponent = SolidMgr.<b>GetComponentAt</b>(j, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; sName = SolidComponent.<b>ComponentName</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set Solidbody = SolidComponent.<b>GetSolidBodyAt</b>(0, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bApp = Solidbody.<b>SetLibraryMaterial</b>(sLibWithPathname, 
+sMaterialName)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set Solidbody = Nothing<br>
+&nbsp;&nbsp;&nbsp; Next j<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Assign drop test setup<br>
+&nbsp;&nbsp;&nbsp; Set Selection = SelectByPID(Part, &quot;selection1&quot;, PIDCollection)<br>
+&nbsp;&nbsp;&nbsp; Set Setup = Study.<b>AddDropTestSetup</b>(Selection, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to create 
+DropTestSetup object&quot;<br>
+&nbsp;&nbsp;&nbsp; If Setup Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+DropTestSetup object&quot;<br>
+&nbsp;&nbsp;&nbsp; Height = Setup.<b>DropHeight</b><br>
+&nbsp;&nbsp;&nbsp; If Height &lt;&gt; 1000 Then ErrorMsg SwApp, &quot;Failed to validate 
+drop height = 1000 mm from original Study 1&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Critical damping ratio: &quot; &amp; 
+Setup.<b>CriticalDampingRatio</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Drop height (mm): &quot; &amp; Setup.<b>DropHeight</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Drop height type (swsDropHeightType_e): &quot; &amp; 
+Setup.<b>DropHeightType</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Drop height units (swsLinearUnit_e): &quot; &amp; Setup.<b>DropHeightUnit</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Drop type (swsDropType_e): &quot; &amp; Setup.<b>DropType</b><b><br>
+&nbsp;&nbsp;&nbsp; </b>Debug.Print<b> </b>&quot;Reverse gravity direction? (1 = yes) &quot; &amp; 
+Setup.<b>FlipGravityDirection</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Reverse velocity direction? (1 = yes) &quot; &amp; Setup.<b>FlipVelocityDirection</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Coefficient of friction: &quot; &amp; Setup.<b>FrictionCoefficient</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Gravity magnitude: &quot; &amp; Setup.<b>Gravity</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Gravity units (swsAccelerationUnit_e): &quot; &amp; 
+Setup.<b>GravityUnit</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Mass density of impact layer: &quot; &amp; Setup.<b>MassDensity</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Stiffness per unit area normal to impact plane: 
+&quot; &amp; Setup.<b>NormalStiffness</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Units of stiffness (swsUnitSystem_e): &quot; &amp; Setup.<b>StiffnessUnit</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Stiffness per unit area parallel to the impact 
+plane: &quot; &amp; Setup.<b>TangentialStiffness</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Orientation of impact plane (swsDropTargetOrientationType_e): 
+&quot; &amp; Setup.<b>TargetOrientationType</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Stiffness type (swsDropTargetStiffnessType_e): &quot; 
+&amp; Setup.<b>TargetStiffnessType</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Thickness of the impact layer: &quot; &amp; Setup.<b>TargetThickness</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Units of thickness (swsLinearUnit_e): &quot; &amp; Setup.<b>ThicknessUnit</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Velocity at impact: &quot; &amp; Setup.<b>Velocity</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Units of velocity (swsVelocityUnit_e): &quot; &amp; 
+Setup.<b>VelocityUnit</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Run study for drop height = 1000 mm<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to run study 
+(drop height = 1000 mm)&quot;<br>
+&nbsp;&nbsp;&nbsp; Set CWFeatObj = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWFeatObj Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+Result Object (drop height = 1000 mm)&quot;<br>
+&nbsp;&nbsp;&nbsp; nStep = CWFeatObj.<b>GetMaximumAvailableSteps</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'nStep = last step of study<br>
+&nbsp;&nbsp;&nbsp; If nStep &lt;&gt; 25 Then ErrorMsg SwApp, &quot;Total number of steps in 
+result is incorrect (drop height = 1000 mm)&quot;<br>
+&nbsp;&nbsp;&nbsp; Stress = CWFeatObj.<b>GetMinMaxStress</b>(9, 0, nStep, 
+Nothing, 0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get 
+von Mises 
+stress result for drop height = 1000 mm&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; A = Stress(3)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; B = VMS1000<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If ResultsVer(A, B, Tol) = True Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;The von Mises stress 
+result for drop height = 1000 mm has % error = &quot; &amp; ResultsError(A, B, Tol)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Change drop height from 1000 mm to 2000 
+mm<br>
+&nbsp;&nbsp;&nbsp; Setup.<b>DropTestSetupBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; Setup.<b>DropType</b> = 0<br>
+&nbsp;&nbsp;&nbsp; Setup.<b>DropHeightType</b> = 0<br>
+&nbsp;&nbsp;&nbsp; Setup.<b>DropHeight</b> = 2000<br>
+&nbsp;&nbsp;&nbsp; Setup.<b>DropHeightUnit</b> = 0<br>
+&nbsp;&nbsp;&nbsp; errCode = Setup.<b>DropTestSetupEndEdit</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, 
+&quot;Failed to make change to drop height&quot;<br>
+&nbsp;&nbsp;&nbsp; Height = Setup.<b>DropHeight</b><br>
+&nbsp;&nbsp;&nbsp; If Height &lt;&gt; 2000 Then ErrorMsg SwApp, &quot;Failed to correctly 
+change drop height to 2000 mm&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Stop ' Inspect results for drop height = 
+1000 mm<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Run study for drop height = 2000 mm<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to run study 
+(drop height = 2000 mm)&quot;<br>
+&nbsp;&nbsp;&nbsp; Set CWFeatObj = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWFeatObj Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+Result Object (drop height = 2000 mm) &quot;<br>
+&nbsp;&nbsp;&nbsp; nStep = CWFeatObj.<b>GetMaximumAvailableSteps</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'nStep = last step of study<br>
+&nbsp;&nbsp;&nbsp; If nStep &lt;&gt; 25 Then ErrorMsg SwApp, &quot;Total number of steps in 
+result is incorrect (drop height = 2000 mm)&quot;<br>
+&nbsp;&nbsp;&nbsp; Stress = CWFeatObj.<b>GetMinMaxStress</b>(9, 0, nStep, 
+Nothing, 0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get 
+von Mises 
+stress result for drop height = 2000 mm&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; A = Stress(3)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; B = VMS2000<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If A &lt; VMS1000 Or A = VMS1000 Then 
+ErrorMsg SwApp, &quot;The von Mises stress for drop height = 2000 mm is less than or 
+equal to drop height = 1000 mm.&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If ResultsVer(A, B, Tol) = True Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;The von Mises stress 
+result for drop height = 2000 mm has % error = &quot; &amp; ResultsError(A, B, Tol)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Function ResultsVer(ActualResult As Variant, ReferenceResult 
+As Variant, Tolerance As Double) As Boolean<br>
+&nbsp;&nbsp;&nbsp; ResultsVer = (ActualResult &lt; (1 - Tolerance) * 
+ReferenceResult) Or (ActualResult &gt; (1 + Tolerance) * ReferenceResult)<br>
+End Function</p>
+<p class="APICODE">Function ResultsError(ActualResult As Variant, 
+ReferenceResult As Variant, Tolerence As Double) As Double<br>
+&nbsp;&nbsp;&nbsp; ResultsError = (ActualResult - ReferenceResult) / 
+ReferenceResult * 100<br>
+End Function</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+<p class="APICODE">Function SelectByPID(nPart As SldWorks.ModelDoc2, PIDName As 
+String, PIDCollection As Collection) As Object<br>
+&nbsp;&nbsp;&nbsp; Dim PID() As Byte<br>
+&nbsp;&nbsp;&nbsp; Dim PIDVariant As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim PIDString As String<br>
+&nbsp;&nbsp;&nbsp; Dim EntityType As Long<br>
+&nbsp;&nbsp;&nbsp; Dim i As Long<br>
+&nbsp;&nbsp;&nbsp; Dim SelObj As Object<br>
+<br>
+&nbsp;&nbsp;&nbsp; 'Get the string from the collection<br>
+&nbsp;&nbsp;&nbsp; PIDString = &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDString = PIDCollection.Item(PIDName)<br>
+&nbsp;&nbsp;&nbsp; 'Parse the string into an array<br>
+&nbsp;&nbsp;&nbsp; PIDVariant = Split(PIDString, &quot;,&quot;)<br>
+&nbsp;&nbsp;&nbsp; ReDim PID(UBound(PIDVariant))<br>
+&nbsp;&nbsp;&nbsp; 'Change to a byte array<br>
+&nbsp;&nbsp;&nbsp; For i = 0 To (UBound(PIDVariant) - 1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PID(i) = PIDVariant(i)<br>
+&nbsp;&nbsp;&nbsp; Next i<br>
+&nbsp;&nbsp;&nbsp; 'Select the entity<br>
+&nbsp;&nbsp;&nbsp; Set SelObj = nPart.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((PID), 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; Set SelectByPID = SelObj<br>
+&nbsp;&nbsp;&nbsp; Set SelObj = Nothing<br>
+End Function</p>
+<p class="APICODE">Function PIDInitializer() As Collection<br>
+Dim PIDCollection As New Collection</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim selection1 As String</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection1 = 
+&quot;230,35,0,0,3,0,0,0,255,254,255,17,112,0,97,0,100,0,95,0,49,0,45,0,49,0,64,0,107,0,101,0,121,0,32,0,112,0,97,0,100,0,95,0,49,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,51,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,6,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,55,92,0,92,0,112,0,117,0,110,0,45,0,113,0,97,0,115,0,118,0,114,0,45,0,112,0,108,0,112,0,92,0,81,0,97,0,95,0,100,0,111,0,99,0,117,0,109,0,101,0,110,0,116,0,115,0,92,0,77,0,111,0,98,0,105,0,108,0,101,0,72,0,97,0,110,0,100,0,115,0,101,0,116,0,92,0,80,0,97,0,100,0,95,0,49,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,9,128,255,254,255,5,80,0,97,0,100,0,95,0,49,0,2,0,0,0,86,29,67,255,254,2&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; 
+&quot;55,0,255,254,255,0,0,56,86,29,67,0,0,0,0,0,0,0,0,3,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,56,86,29,67,26,0,0,0,56,86,29,67,0,0,0,0,0,0,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,26,0,0,0,56,86,29,67,1,0,0,0,12,128,0,0,5,128,8,0,26,0,0,0,56,86,29,67,2,0,0,0,12,128,0,0,5,128,8,0,26,0,0,0,56,86,29,67,3,0,0,0,12,128,0,0,5,128,8,0,26,0,0,0,56,86,29,67,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Store constants in a collection<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection1, &quot;selection1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set PIDInitializer = PIDCollection<br>
+End Function</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

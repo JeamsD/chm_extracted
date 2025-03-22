@@ -1,0 +1,416 @@
+<html>
+
+<head>
+<title>Apply Loads to Beams Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples,beams">
+<meta name=MS-HKWD content="VB.NET examples,loads">
+<meta name=MS-HKWD content="VB.NET examples,forces">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Apply Loads to Beams Example (VB.NET)</h1>
+<p>This example shows how to apply the total force, or load, along the length of 
+a beam in various types of distributions.</p>
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p class="APICODE"><span style="color:Green">
+	'---------------------------------------------------------------------------<br>
+	' Preconditions:<br>
+	</span>
+<span style="color:green;">'&nbsp;1.&nbsp;Add&nbsp;the&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;as&nbsp;an&nbsp;add-in</span>
+<span style="color:green;">(in&nbsp;SOLIDWORKS,&nbsp;click&nbsp;<b><br>
+	</b>'<b>&nbsp;&nbsp;&nbsp; Tools&nbsp;&gt;&nbsp;Add-ins&nbsp;&gt;&nbsp;SOLIDWORKS&nbsp;Simulation 
+&gt; OK</b>).</span><br>
+<span style="color: #008000">'</span><span style="color:green;">&nbsp;2.&nbsp;Add&nbsp;the&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;primary&nbsp;interop&nbsp;assembly&nbsp;as&nbsp;a&nbsp;reference</span><br>
+<span style="color: #008000">'</span><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;(in&nbsp;the&nbsp;IDE,&nbsp;click&nbsp;<b>Project&nbsp;&gt;&nbsp;Add&nbsp;Reference&nbsp;&gt;&nbsp;.NET&nbsp;&gt;&nbsp;<br>
+</b>'<b>&nbsp;&nbsp;&nbsp; SolidWorks.Interop.cosworks&nbsp;&gt;&nbsp;OK</b>).<br>
+	' 3. Ensure the specified part exists.</span><span style="color:Green"><br>
+	' 4. Open the Immediate window.<br>
+	'<br>
+	' Postconditions:<br>
+	' 1. Loads are applied to the part, and their<br>
+	'&nbsp;&nbsp;&nbsp; distribution types are shown in the Immediate<br>
+	'&nbsp;&nbsp;&nbsp;&nbsp;window.<br>
+	' 2. To verify, examine the External Loads folder<br>
+	'&nbsp;&nbsp;&nbsp;&nbsp;in <b>Study 3</b> in the Simulation tree.<br>
+	'<br>
+	' NOTE: Because this part document is used elsewhere, do not save changes.<br>
+	'----------------------------------------------------------------------------<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.sldworks<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.swconst<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	System<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	System.Diagnostics<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.cosworks<br>
+	<br>
+	</span><span style="color:Blue">Partial</span><span style="color:Black">
+	</span><span style="color:Blue">Class</span><span style="color:Black"> 
+	SolidWorksMacro<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Public</span><span style="color:Black">
+	</span><span style="color:Blue">Sub</span><span style="color:Black"> Main()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swModel </span><span style="color:Blue">As</span><span style="color:Black"> 
+	ModelDoc2<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swModelDocExt </span><span style="color:Blue">As</span><span style="color:Black"> 
+	ModelDocExtension<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swSelMgr </span><span style="color:Blue">As</span><span style="color:Black"> 
+	SelectionMgr<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	COSMOSWORKS </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	COSMOSObject </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CwAddincallback<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swsActDoc </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWModelDoc<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swsStudyMngr </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWStudyManager<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swsStudy </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWStudy<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swsLBCMgr </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWLoadsAndRestraintsManager<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swsCWForce </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWForce<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	selBeam </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	selFace </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	data(5) </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Double<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	rowNum </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Integer<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	distValue(2) </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Double<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	forceValue(2) </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Double<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	errors </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Integer<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	warnings </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Integer<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	errCode </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Integer<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	forceType </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Const</span><span style="color:Black"> 
+	fileName </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black"> =
+	</span><span style="color:#a31515">&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\api\Loop.sldprt&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+	Open document<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swModel = swApp.<b>OpenDoc6</b>(fileName, 
+	swDocumentTypes_e.swDocPART, swOpenDocOptions_e.swOpenDocOptions_Silent,
+	</span><span style="color:#a31515">&quot;&quot;</span><span style="color:Black">, 
+	errors, warnings)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swModelDocExt = swModel.Extension<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Get the SOLIDWORKS Simulation 
+	object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COSMOSObject = swApp.<b>GetAddInObject</b>(</span><span style="color:#a31515">&quot;SldWorks.Simulation&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	COSMOSObject </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(swApp, </span><span style="color:#a31515">&quot;No CwAddincallback 
+	object&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COSMOSWORKS = COSMOSObject.<b>COSMOSWORKS</b><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	COSMOSWORKS </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(swApp, </span><span style="color:#a31515">&quot;No COSMOSWORKS 
+	object&quot;</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Open and get active document<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swsActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	swsActDoc </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(swApp, </span><span style="color:#a31515">&quot;No active document&quot;</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Create new static study<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swsStudyMngr = swsActDoc.<b>StudyManager</b>()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	swsStudyMngr </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(swApp, </span><span style="color:#a31515">&quot;No CWStudyManager 
+	object&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swsStudy = swsStudyMngr.<b>GetStudy</b>(2)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	swsStudy </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(swApp, </span><span style="color:#a31515">&quot;No CWStudy object&quot;</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swsLBCMgr = swsStudy.<b>LoadsAndRestraintsManager</b><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swSelMgr = swModel.<b>SelectionManager</b><br>
+	<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Select the beam and the face to 
+	which apply the force<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Call</span><span style="color:Black"> 
+	swModel.Extension.<b>SelectByID2</b>(</span><span style="color:#a31515">&quot;Structural 
+	Member1[3]&quot;</span><span style="color:Black">, </span>
+	<span style="color:#a31515">&quot;SOLIDBODY&quot;</span><span style="color:Black">, 
+	0.2669983091512, -0.4441139265177, -0.05999999999995, </span>
+	<span style="color:Blue">True</span><span style="color:Black">, 0, </span>
+	<span style="color:Blue">Nothing</span><span style="color:Black">, 0)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selBeam = swSelMgr.<b>GetSelectedObject6</b>(1, -1)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Call</span><span style="color:Black"> 
+	swModel.Extension.<b>SelectByID2</b>(</span><span style="color:#a31515">&quot;&quot;</span><span style="color:Black">,
+	</span><span style="color:#a31515">&quot;FACE&quot;</span><span style="color:Black">, 
+	-0.4332349164914, -0.1431037474702, -0.05999999999989, </span>
+	<span style="color:Blue">True</span><span style="color:Black">, 0, </span>
+	<span style="color:Blue">Nothing</span><span style="color:Black">, 0)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selFace = swSelMgr.<b>GetSelectedObject6</b>(2, -1)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	beamArray </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black">() = 
+	{selBeam}<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Create the force<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data(0) = 100.0#<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data(1) = 100.0#<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data(2) = 100.0#<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data(3) = 100.0#<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data(4) = 100.0#<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data(5) = 100.0#<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	forceArray </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black">() = 
+	{data(0), data(1), data(2), data(3), data(4), data(5)}<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rowNum = 3<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distValue(0) = 10.0#<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distValue(1) = 50.0#<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distValue(2) = 100.0#<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forceValue(0) = 100.0#<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forceValue(1) = 0.0#<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forceValue(2) = 50.0#<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Add force: Total Load - 
+	Triangular<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swsCWForce = swsLBCMgr.<b>AddForce3</b>(swsForceType_e.swsForceTypeForceOrMoment, 
+	swsSelectionType_e.swsSelectionBeams, 2, 
+	swsTableDrivenInterpolationType_e.swsLinear, 
+	swsTableDrivenDistOption_e.swsPercentage, rowNum, distValue, forceValue,
+	</span><span style="color:Blue">True</span><span style="color:Black">,
+	</span><span style="color:Blue">True</span><span style="color:Black">, 
+	swsBeamNonUniformLoadDef_e.swsTotalLoad, 
+	swsBeamNonUniformLoadType_e.swsTriangularLoad, 4, 100, (forceArray), </span>
+	<span style="color:Blue">False</span><span style="color:Black">, </span>
+	<span style="color:Blue">False</span><span style="color:Black">, (beamArray), 
+	selFace, </span><span style="color:Blue">True</span><span style="color:Black">, 
+	errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forceType = </span><span style="color:#a31515">&quot;Total Load - 
+	Triangular&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LoadError(swApp, forceType, errCode)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Add force: Total Load - 
+	Elliptical<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swsCWForce = swsLBCMgr.<b>AddForce3</b>(swsForceType_e.swsForceTypeForceOrMoment, 
+	swsSelectionType_e.swsSelectionBeams, 2, 
+	swsTableDrivenInterpolationType_e.swsLinear, 
+	swsTableDrivenDistOption_e.swsPercentage, rowNum, distValue, forceValue,
+	</span><span style="color:Blue">True</span><span style="color:Black">,
+	</span><span style="color:Blue">True</span><span style="color:Black">, 
+	swsBeamNonUniformLoadDef_e.swsTotalLoad, 
+	swsBeamNonUniformLoadType_e.swsEllipticalLoad, 4, 100, (forceArray), </span>
+	<span style="color:Blue">False</span><span style="color:Black">, </span>
+	<span style="color:Blue">False</span><span style="color:Black">, (beamArray), 
+	selFace, </span><span style="color:Blue">True</span><span style="color:Black">, 
+	errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forceType = </span><span style="color:#a31515">&quot;Total Load - 
+	Elliptical&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LoadError(swApp, forceType, errCode)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Add force: Total Load - Parabolic<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swsCWForce = swsLBCMgr.<b>AddForce3</b>(swsForceType_e.swsForceTypeForceOrMoment, 
+	swsSelectionType_e.swsSelectionBeams, 2, 
+	swsTableDrivenInterpolationType_e.swsLinear, 
+	swsTableDrivenDistOption_e.swsPercentage, rowNum, distValue, forceValue,
+	</span><span style="color:Blue">True</span><span style="color:Black">,
+	</span><span style="color:Blue">True</span><span style="color:Black">, 
+	swsBeamNonUniformLoadDef_e.swsTotalLoad, 
+	swsBeamNonUniformLoadType_e.swsParabolicLoad, 4, 100, (forceArray), </span>
+	<span style="color:Blue">False</span><span style="color:Black">, </span>
+	<span style="color:Blue">False</span><span style="color:Black">, (beamArray), 
+	selFace, </span><span style="color:Blue">True</span><span style="color:Black">, 
+	errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forceType = </span><span style="color:#a31515">&quot;Total Load - 
+	Parabolic&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LoadError(swApp, forceType, errCode)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Add force: Centered Load - 
+	Triangular<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swsCWForce = swsLBCMgr.<b>AddForce3</b>(swsForceType_e.swsForceTypeForceOrMoment, 
+	swsSelectionType_e.swsSelectionBeams, 2, 
+	swsTableDrivenInterpolationType_e.swsLinear, 
+	swsTableDrivenDistOption_e.swsPercentage, rowNum, distValue, forceValue,
+	</span><span style="color:Blue">True</span><span style="color:Black">,
+	</span><span style="color:Blue">True</span><span style="color:Black">, 
+	swsBeamNonUniformLoadDef_e.swsCentralLoad, 
+	swsBeamNonUniformLoadType_e.swsTriangularLoad, 4, 100, (forceArray), </span>
+	<span style="color:Blue">False</span><span style="color:Black">, </span>
+	<span style="color:Blue">False</span><span style="color:Black">, (beamArray), 
+	selFace, </span><span style="color:Blue">True</span><span style="color:Black">, 
+	errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forceType = </span><span style="color:#a31515">&quot;Centered Load - 
+	Triangular&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LoadError(swApp, forceType, errCode)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Add force: Centered Load - 
+	Elliptical<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swsCWForce = swsLBCMgr.<b>AddForce3</b>(swsForceType_e.swsForceTypeForceOrMoment, 
+	swsSelectionType_e.swsSelectionBeams, 2, 
+	swsTableDrivenInterpolationType_e.swsLinear, 
+	swsTableDrivenDistOption_e.swsPercentage, rowNum, distValue, forceValue,
+	</span><span style="color:Blue">True</span><span style="color:Black">,
+	</span><span style="color:Blue">True</span><span style="color:Black">, 
+	swsBeamNonUniformLoadDef_e.swsCentralLoad, 
+	swsBeamNonUniformLoadType_e.swsEllipticalLoad, 4, 100, (forceArray), </span>
+	<span style="color:Blue">False</span><span style="color:Black">, </span>
+	<span style="color:Blue">False</span><span style="color:Black">, (beamArray), 
+	selFace, </span><span style="color:Blue">True</span><span style="color:Black">, 
+	errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forceType = </span><span style="color:#a31515">&quot;Centered Load - 
+	Elliptical&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LoadError(swApp, forceType, errCode)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Add force: Centered Load - 
+	Parabolic<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swsCWForce = swsLBCMgr.<b>AddForce3</b>(swsForceType_e.swsForceTypeForceOrMoment, 
+	swsSelectionType_e.swsSelectionBeams, 2, 
+	swsTableDrivenInterpolationType_e.swsLinear, 
+	swsTableDrivenDistOption_e.swsPercentage, rowNum, distValue, forceValue,
+	</span><span style="color:Blue">True</span><span style="color:Black">,
+	</span><span style="color:Blue">True</span><span style="color:Black">, 
+	swsBeamNonUniformLoadDef_e.swsCentralLoad, 
+	swsBeamNonUniformLoadType_e.swsParabolicLoad, 4, 100, (forceArray), </span>
+	<span style="color:Blue">False</span><span style="color:Black">, </span>
+	<span style="color:Blue">False</span><span style="color:Black">, (beamArray), 
+	selFace, </span><span style="color:Blue">True</span><span style="color:Black">, 
+	errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forceType = </span><span style="color:#a31515">&quot;Centered Load - 
+	Parabolic&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LoadError(swApp, forceType, errCode)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	LoadError(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	swApp </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black">,
+	</span><span style="color:Blue">ByVal</span><span style="color:Black"> force
+	</span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">String</span><span style="color:Black">, </span>
+	<span style="color:Blue">ByVal</span><span style="color:Black"> errorCode
+	</span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">Long</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Select</span><span style="color:Black">
+	</span><span style="color:Blue">Case</span><span style="color:Black"> 
+	errorCode<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+	18<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp, </span><span style="color:#a31515">&quot;You 
+	cannot apply triangular and centered load distribution on multiple beams&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+	19<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp, </span><span style="color:#a31515">&quot;You 
+	cannot apply a zero intensity load&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+	20<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp, </span><span style="color:#a31515">&quot;Invalid 
+	selection&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+	21<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp, </span><span style="color:#a31515">&quot;The 
+	table-driven data is invalid&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+	22<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp, </span><span style="color:#a31515">&quot;In the 
+	table-driven distance data, the distance value from the previous row cannot 
+	be greater than the distance value in the next row&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black">
+	</span><span style="color:Blue">Is</span><span style="color:Black"> &lt;&gt; 0<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp, </span><span style="color:#a31515">&quot;No 
+	forces applied&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+	0<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(force)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Select<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	ErrorMsg(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	swApp </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black">,
+	</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	Message </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>SendMsgToUser2</b>(Message, 0, 0)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>RecordLine</b>(</span><span style="color:#a31515">&quot;'*** 
+	WARNING - General&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>RecordLine</b>(</span><span style="color:#a31515">&quot;'*** &quot;</span><span style="color:Black"> 
+	&amp; Message)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>RecordLine</b>(</span><span style="color:#a31515">&quot;&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'''
+	</span><span style="color:Gray">&lt;summary&gt;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">''' 
+	The SldWorks swApp variable is pre-assigned for you.<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'''
+	</span><span style="color:Gray">&lt;/summary&gt;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Public</span><span style="color:Black"> 
+	swApp </span><span style="color:Blue">As</span><span style="color:Black"> 
+	SldWorks<br>
+	<br>
+	<br>
+	</span><span style="color:Blue">End</span><span style="color:Black"> </span>
+	<span style="color:Blue">Class</span></div>
+
+</body>
+
+</html>

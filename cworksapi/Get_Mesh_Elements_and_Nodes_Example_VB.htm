@@ -1,0 +1,132 @@
+<html>
+
+<head>
+<title>Get Mesh Elements and Nodes Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,meshes">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Get Mesh Elements and Nodes Example (VBA)</h1>
+<p>This example shows how to get the elements and nodes of a solid mesh.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in<br>
+'&nbsp;&nbsp;&nbsp; (in SOLIDWORKS, click <b>Tools &gt; Add-ins &gt; SOLIDWORKS 
+Simulation</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference<br>
+'&nbsp;&nbsp;&nbsp; (in the IDE, click <b>Tools &gt; References &gt; SOLIDWORKS<br>
+</b>'<b>&nbsp;&nbsp;&nbsp; Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Open <i>public_documents</i><b>\samples\Simulation Examples\tutor1.sldprt</b>.<br>
+' 4. Open the Immediate window.<br>
+'<br>
+' Postconditions:<br>
+' 1. Activates the <b>Ready</b> study.<br>
+' 2. Creates a solid mesh.<br>
+' 3. Gets the elements and nodes of the solid mesh.<br>
+' 4. Gets the elements and nodes at a depth of 0.001m in the solid mesh.<br>
+' 5. Runs the study.<br>
+' 6. Inspect the Immediate window.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+' ---------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS As 
+CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim CWMesh As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim errCode As Long<br>
+&nbsp;&nbsp;&nbsp; Dim el As Double, tl As Double<br>
+&nbsp;&nbsp;&nbsp; Dim num As Long<br>
+&nbsp;&nbsp;&nbsp; Dim idList As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim normalNum As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim normalVec As Variant</p>
+<p class="APICODE">&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = 
+SwApp.<b>GetAddInObject</b>(&quot;CosmosWorks.CosmosWorks&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWAddinCallBack object&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;No 
+CosmosWorks object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get active document<br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get Ready study<br>
+&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;No study 
+manager object&quot;<br>
+&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 0<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(0)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;No study object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Mesh<br>
+&nbsp;&nbsp;&nbsp; Set CWMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CWMesh Is Nothing Then ErrorMsg SwApp, &quot;No mesh object&quot;<br>
+&nbsp;&nbsp;&nbsp; CWMesh.<b>Quality</b> = 1<br>
+&nbsp;&nbsp;&nbsp; Call CWMesh.<b>GetDefaultElementSizeAndTolerance</b>(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Mesh failed&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get the elements of this solid 
+mesh<br>
+&nbsp;&nbsp;&nbsp; num = CWMesh.<b>GetElementList</b>(0, idList)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Number of elements in the mesh: &quot; &amp; num<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get the nodes of this solid mesh<br>
+&nbsp;&nbsp;&nbsp; num = CWMesh.<b>GetNodeList</b>(0, idList)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Number of nodes in the mesh: &quot; &amp; num<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get the elements at a depth of 
+0.001m in this solid mesh<br>
+&nbsp;&nbsp;&nbsp; num = CWMesh.<b>GetSolidElementList</b>(0.001, 2, idList)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Number of elements at a depth of 0.001m: &quot; &amp; num<br>
+<br>
+&nbsp;&nbsp;&nbsp; 'Get the nodes at a depth of 0.001m in this solid mesh<br>
+&nbsp;&nbsp;&nbsp; num = CWMesh.<b>GetSolidNodeList</b>(0.001, 2, idList)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Number of nodes at a depth of 0.001m: &quot; &amp; num<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get the nodes and normal vectors at the 
+surface of this solid mesh<br>
+&nbsp;&nbsp;&nbsp; num = CWMesh.<b>GetSurfaceNodesAndNormals</b>(idList, normalNum, 
+normalVec)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Number of surface nodes: &quot; &amp; num</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; 'Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed 
+with error code as defined in swsRunAnalysisError_e: &quot; &amp; errCode<br>
+&nbsp;&nbsp;&nbsp; <br>
+</p>
+<p class="APICODE">End Sub<br>
+&nbsp;<br>
+</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

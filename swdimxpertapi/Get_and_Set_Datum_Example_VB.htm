@@ -1,0 +1,245 @@
+<html>
+
+<head>
+<title>Get and Set Datum Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,datum annotation">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS API 
+ Help</span></h1>
+<h1>Get and Set Datum Example (VBA)</h1>
+<p>This example shows how to get and set DimXpert datum 
+annotations.<br>
+<br>
+<font face="Courier New " size="2">'---------------------------------------------------------------------------<br>
+' Preconditions:<br>
+'&nbsp;1. Open:<i> public_documents</i><b>\samples\tutorial\dimxpert\bracket_auto_manual.sldprt.</b><br>
+'&nbsp;2. Select a face.<br>
+'&nbsp;3. Open an Immediate window.<br>
+'&nbsp;4. Ensure that the latest SOLIDWORKS DimXpert type library 
+is loaded:<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;a. click <b>Tools &gt; References</b>.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;b. Click Browse.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;c. Find and select <i>install_dir</i><b>\swdimxpert.tlb</b>.<br>
+'<br>
+' Postconditions:</font><font face="Courier New "><font size="2"><br>
+'&nbsp;1. Inspect the Immediate window.<br>
+'&nbsp;2. Observe Plane1 and Datum G on the DimXpertManager tab.<br>
+'<br>
+'&nbsp;NOTE: Because this part is used elsewhere, do not save changes.</font><br>
+'--------------------------------------------------------------------------------------</font></p>
+<p class="APICODE">Option Explicit<br>
+Dim dimXpertPart As dimXpertPart</p>
+<p class="APICODE">Sub Main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim swapp As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Set swapp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim swModelDoc As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Set swModelDoc = swapp.ActiveDoc</p>
+<p class="APICODE">&nbsp;&nbsp; If swModelDoc Is Nothing Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp; Exit Sub<br>
+&nbsp;&nbsp; End If</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim dimXpertMgr As 
+SldWorks.DimXpertManager<br>
+&nbsp;&nbsp;&nbsp; Set dimXpertMgr = 
+swapp.IActiveDoc2.Extension.DimXpertManager(swapp.IActiveDoc2.IGetActiveConfiguration().Name, 
+True)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Model: &quot; &amp; swapp.IActiveDoc2.GetPathName</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim dimXpertPartObj As dimXpertPart</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set dimXpertPartObj = 
+dimXpertMgr.dimXpertPart<br>
+&nbsp;&nbsp;&nbsp; Set dimXpertPart = dimXpertPartObj<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim dimOption As DimXpertDimensionOption<br>
+&nbsp;&nbsp;&nbsp; Set dimOption = dimXpertPart.<b>GetDimOption</b><br>
+&nbsp;&nbsp;&nbsp; dimOption.<b>DatumLength</b> = 0.06<br>
+&nbsp;&nbsp;&nbsp; Dim dimarray(0) As Long<br>
+&nbsp;&nbsp;&nbsp; dimarray(0) = 0<br>
+&nbsp;&nbsp;&nbsp; Dim dimvar As Variant<br>
+&nbsp;&nbsp;&nbsp; dimvar = dimarray<br>
+&nbsp;&nbsp;&nbsp; dimOption.<b>FeatureSelectorOptions</b> = dimvar</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Insert datum<br>
+&nbsp;&nbsp;&nbsp; dimXpertPart.<b>InsertDatum</b> dimOption<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim vAnnotations As Variant<br>
+&nbsp;&nbsp;&nbsp; vAnnotations = dimXpertPart.GetAnnotations()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;------------------------&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Annotations...&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;------------------------&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim annotationTemp As DimXpertAnnotation<br>
+&nbsp;&nbsp;&nbsp; Dim annotationIndex As Long<br>
+&nbsp;&nbsp;&nbsp; For annotationIndex = 0 To UBound(vAnnotations)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set annotationTemp = 
+vAnnotations(annotationIndex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Call AnnotationData(annotationTemp)<br>
+&nbsp;&nbsp;&nbsp; Next</p>
+<p class="APICODE">End Sub<br>
+Public Sub AnnotationData(annotation As DimXpertAnnotation)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim annoType As Long</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'general info<br>
+&nbsp;&nbsp;&nbsp; Call GeneralInfo(annotation)<br>
+&nbsp;&nbsp;&nbsp; annoType = annotation.Type</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If annoType = swDimXpertDatum Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Call DatumData(annotation)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">End Sub<br>
+</p>
+<p class="APICODE">Private Sub GeneralInfo(annotation As DimXpertAnnotation)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim annoType As String<br>
+&nbsp;&nbsp;&nbsp; Dim modelObj As Object<br>
+&nbsp;&nbsp;&nbsp; Dim modelFeature As SldWorks.Feature</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&quot;)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Name: &quot; + annotation.Name)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; annoType = 
+annotationTypeNameFromObject(annotation)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Type: &quot; + annoType)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Display Entity: &quot; + DisplayEntity(annotation))</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; Set modelObj = annotation.GetModelFeature<br>
+&nbsp;&nbsp;&nbsp; Set modelFeature = modelObj</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If Not (modelFeature Is Nothing) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;ModelFeature: &quot; + 
+modelFeature.Name + &quot; (&quot; + modelFeature.GetTypeName2() + &quot;)&quot;)<br>
+&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Private Sub DatumData(annotation As DimXpertDatum)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' the datum letter<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&quot;)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Datum Letter:&nbsp; &quot; + annotation.<b>Identifier</b>)</p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Private Function annotationTypeNameFromObject(anno As 
+DimXpertAnnotation) As String<br>
+&nbsp;&nbsp;&nbsp; annotationTypeNameFromObject = 
+annotationTypeNameFromTypeNumber(anno.Type)<br>
+End Function</p>
+<p class="APICODE">Private Function 
+annotationTypeNameFromTypeNumber(annoTypeIndex As Long) As String<br>
+&nbsp;&nbsp;&nbsp; Select Case annoTypeIndex</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Case swDimXpertDimTol_DistanceBetween<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;DistanceBetween 
+Dim&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertDimTol_CounterBore<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;CounterBore 
+Dim&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertDimTol_Depth<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Depth Dim&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertDimTol_CounterSinkDiameter<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;CounterSinkDiameter 
+Dim&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertDimTol_ChamferDimension<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;ChamferDimension 
+Dim&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertDimTol_AngleBetween<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;AngleBetween 
+Dim&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertDimTol_CounterSinkAngle<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;CounterSinkAngle 
+Dim&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertDimTol_ConeAngle<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;ConeAngle 
+Dim&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertDimTol_Diameter<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Diameter Dim&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertDimTol_Length<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Length Dim&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertDimTol_Radius<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Radius Dim&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertDimTol_Width<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Width Dim&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertDimTol_CompositeDistanceBetween<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;CompositeDistanceBetween 
+Dim&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Case swDimXpertDatum<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Datum&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_Position<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Position Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_CompositePosition<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;CompositePosition 
+Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_Symmetry<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Symmetry Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_Concentricity<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Concentricity Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_LineProfile<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;LineProfile 
+Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_CompositeLineProfile<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;CompositeLineProfile 
+Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_SurfaceProfile<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;SurfaceProfile 
+Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_CompositeSurfaceProfile<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;CompositeSurfaceProfile 
+Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_Angularity<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Angularity Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_Parallelism<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Parallelism Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_Perpendicularity<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Perpendicularity Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_TotalRunout<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;TotalRunout 
+Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_CircularRunout<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;CircularRunout 
+Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_Flatness<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Flatness Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_Circularity<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Circularity Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_Cylindricity<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;Cylindricity 
+Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_Straightness<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Straightness Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertGeoTol_Tangency<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;Tangency Tol&quot;<br>
+&nbsp;&nbsp;&nbsp; Case Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = 
+&quot;&lt;unknown&gt; &quot; &amp; CStr(annoTypeIndex)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; End Select<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' returns a string containing the names of 
+the SW display entities<br>
+End Function<br>
+Private Function DisplayEntity(annotation As DimXpertAnnotation) As String</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim str As String<br>
+&nbsp;&nbsp;&nbsp; Dim dispEnt As Object<br>
+&nbsp;&nbsp;&nbsp; Dim swAnnot As SldWorks.annotation<br>
+&nbsp;&nbsp;&nbsp; Set dispEnt = annotation.GetDisplayEntity<br>
+&nbsp;&nbsp;&nbsp; If Not dispEnt Is Nothing Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If TypeOf dispEnt Is 
+SldWorks.annotation Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set swAnnot = 
+dispEnt<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; str = 
+swAnnot.GetName<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; DisplayEntity = str<br>
+End Function</p>
+<p>&nbsp;</p>
+
+</body>
+
+</html>

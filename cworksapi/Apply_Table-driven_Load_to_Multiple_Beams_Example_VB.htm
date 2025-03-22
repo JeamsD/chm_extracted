@@ -1,0 +1,172 @@
+<html>
+
+<head>
+<title>Apply Table-driven Load to Multiple Beams Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,loads">
+<meta name=MS-HKWD content="VBA examples,forces">
+<meta name=MS-HKWD content="VBA examples,beams">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Apply Table-driven Load to Multiple Beams Example (VBA)</h1>
+<p>This example shows how to apply a table-driven elliptical load to multiple 
+beams on a part.</p>
+
+<pre>'---------------------------------------------------------------------------
+' Preconditions:
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, 
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS Simulation </b><i>version</i><b> type library</b>).
+' 3. Open the Immediate window.
+' 4. Ensure that the specified part exists.
+'
+' Postconditions:
+' 1. Applies a table-driven elliptical load to the part
+'    and prints its type and other force-related values
+'    in the Immediate window.
+' 2. To verify, examine the External Loads folder
+'    in <b>Study 3</b> in the Simulation tree.
+' 3. Examine the Immediate window.
+'
+' <b>NOTE</b>: Because this part document is used elsewhere,
+' do not save any changes when closing it.
+'-------------------------------------------------------------</pre>
+<pre>Option Explicit</pre>
+<pre>Sub main()</pre>
+<pre>   Dim swApp As SldWorks.SldWorks
+   Dim swModel As SldWorks.ModelDoc2
+   Dim swModelDocExt As SldWorks.ModelDocExtension
+   Dim swSelMgr As SldWorks.SelectionMgr
+   Dim COSMOSWORKS As Object
+   Dim COSMOSObject As CosmosWorksLib.CwAddincallback
+   Dim swsActDoc As CosmosWorksLib.CWModelDoc
+   Dim swsStudyMngr As CosmosWorksLib.CWStudyManager
+   Dim swsStudy As CosmosWorksLib.CWStudy
+   Dim swsLBCMgr As CosmosWorksLib.CWLoadsAndRestraintsManager
+   Dim swsCWForce As CosmosWorksLib.CWForce
+   Dim beamArray As Variant
+   Dim selBeam1 As Object
+   Dim selBeam2 As Object
+   Dim selBeam3 As Object
+   Dim selBeam4 As Object
+   Dim selTrimExtend1 As Object
+   Dim selTrimExtend2 As Object
+   Dim selTrimExtend3 As Object
+   Dim selFace As Object
+   Dim forceArray As Variant
+   Dim data(6) As Double
+   Dim rowNum As Long
+   Dim distValue(3) As Double
+   Dim forceValue(3) As Double
+   Dim errors As Long
+   Dim warnings As Long
+   Dim errCode As Long
+   Dim forceType As String
+   Dim fileName as String   </pre>
+<pre>   fileName = &quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2021\samples\tutorial\api\Loop.sldprt&quot;</pre>
+<pre>   ' Open document
+   Set swApp = Application.SldWorks
+   Set swModel = swApp.<b>OpenDoc6</b>(fileName, swDocPART, swOpenDocOptions_Silent, &quot;&quot;, errors, warnings)
+   Set swModelDocExt = swModel.<b>Extension</b>
+   </pre>
+<pre>   ' Get the SOLIDWORKS Simulation object
+   Set COSMOSObject = swApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)
+   If COSMOSObject Is Nothing Then ErrorMsg swApp, &quot;No CWAddincallback object&quot;
+   Set COSMOSWORKS = COSMOSObject.<b>COSMOSWORKS</b>
+   If COSMOSWORKS Is Nothing Then ErrorMsg swApp, &quot;No COSMOSWORKS object&quot;
+  </pre>
+<pre>   ' Get active document
+   Set swsActDoc = COSMOSWORKS.<b>ActiveDoc</b>()
+   If swsActDoc Is Nothing Then ErrorMsg swApp, &quot;No active document&quot;</pre>
+<pre>   ' Create new static study
+   Set swsStudyMngr = swsActDoc.<b>StudyManager</b>()
+   If swsStudyMngr Is Nothing Then ErrorMsg swApp, &quot;No CWStudyManager object&quot;
+   Set swsStudy = swsStudyMngr.<b>GetStudy</b>(2)
+   If swsStudy Is Nothing Then ErrorMsg swApp, &quot;No CWStudy object&quot;</pre>
+<pre>   Set swsLBCMgr = swsStudy.<b>LoadsAndRestraintsManager</b></pre>
+<pre>   Set swSelMgr = swModel.<b>SelectionManager</b>
+   </pre>
+<pre>    ' Select entities
+    Call swModel.Extension.<b>SelectByID2</b>(&quot;Structural Member1[3]&quot;, &quot;SOLIDBODY&quot;, 0.2669983091512, -0.4441139265177, -0.05999999999995, True, 0, Nothing, 0)
+    Set selBeam1 = swSelMgr.GetSelectedObject6(1, -1)    </pre>
+<pre>    Call swModel.Extension.<b>SelectByID2</b>(&quot;Structural Member1[1]&quot;, &quot;SOLIDBODY&quot;, 0.5462661602309, 0.4984264234139, -0.02447052600974, True, 0, Nothing, 0)
+    Set selBeam2 = swSelMgr.GetSelectedObject6(2, -1)    </pre>
+<pre>    Call swModel.Extension.<b>SelectByID2</b>(&quot;Structural Member1[4]&quot;, &quot;SOLIDBODY&quot;, -0.364288009376, 0.3216654991368, -0.0596008827161, True, 0, Nothing, 0)
+    Set selBeam3 = swSelMgr.GetSelectedObject6(3, -1)    </pre>
+<pre>    Call swModel.Extension.<b>SelectByID2</b>(&quot;Structural Member1[2]&quot;, &quot;SOLIDBODY&quot;, 1.410399123355, -0.191782066378, -0.05999999999989, True, 0, Nothing, 0)
+    Set selBeam4 = swSelMgr.GetSelectedObject6(4, -1)    </pre>
+<pre>    Call swModel.Extension.<b>SelectByID2</b>(&quot;Trim/Extend3[1]&quot;, &quot;SOLIDBODY&quot;, 0.3090890041738, -0.1687816014703, -0.01999999999992, True, 0, Nothing, 0)
+    Set selTrimExtend1 = swSelMgr.GetSelectedObject6(5, -1)    </pre>
+<pre>    Call swModel.Extension.<b>SelectByID2</b>(&quot;Trim/Extend3[2]&quot;, &quot;SOLIDBODY&quot;, 0.7058778550122, -0.1651708212717, -0.01943888995868, True, 0, Nothing, 0)
+    Set selTrimExtend2 = swSelMgr.GetSelectedObject6(6, -1)    </pre>
+<pre>    Call swModel.Extension.<b>SelectByID2</b>(&quot;Trim/Extend2[2]&quot;, &quot;SOLIDBODY&quot;, 0.6681230178383, 0.1527188626094, -0.01999999999998, True, 0, Nothing, 0)
+    Set selTrimExtend3 = swSelMgr.GetSelectedObject6(7, -1)    </pre>
+<pre>    Call swModel.Extension.<b>SelectByID2</b>(&quot;&quot;, &quot;FACE&quot;, -0.4332349164914, -0.1431037474702, -0.05999999999989, True, 0, Nothing, 0)
+    Set selFace = swSelMgr.GetSelectedObject6(8, -1)    </pre>
+<pre>   beamArray = Array(selBeam1, selBeam2, selBeam3, selBeam4, selTrimExtend1, selTrimExtend2, selTrimExtend3)</pre>
+<pre>   ' Create the force
+   data(0) = 100
+   data(1) = 100#
+   data(2) = 100#
+   data(3) = 100#
+   data(4) = 100#
+   data(5) = 100#
+   forceArray = data</pre>
+<pre>   rowNum = 3</pre>
+<pre>   distValue(0) = 10#
+   distValue(1) = 50#
+   distValue(2) = 100#
+   </pre>
+<pre>   forceValue(0) = 100#
+   forceValue(1) = 0#
+   forceValue(2) = 50#
+   </pre>
+<pre>   ' Table-driven Load: Elliptical
+   Set swsCWForce = swsLBCMgr.<b>AddForce3</b>(swsForceTypeForceOrMoment, swsSelectionBeams, 2, swsLinear, swsPercentage, rowNum, distValue, forceValue, True, True, swsTableDrivenLoad, swsEllipticalLoad, 4, 100, (forceArray), False, False, (beamArray), selFace, True, errCode)
+   forceType = &quot;Table-driven Load: Multiple Beams&quot;
+   LoadError swApp, forceType, errCode
+   Debug.Print (&quot;  Type as defined in swsForceType_e: &quot; &amp; swsCWForce.<b>forceType</b>)
+   Debug.Print (&quot;  Phase angle: &quot; &amp; swsCWForce.<b>PhaseAngle</b>)
+   Debug.Print (&quot;  Phase unit as defined in swsPhaseAngle_e: &quot; &amp; swsCWForce.<b>PhaseAngleUnit</b>)
+   Debug.Print (&quot;  Unit as defined in swsForceUnit_e: &quot; &amp; swsCWForce.<b>Unit</b>)
+   Debug.Print (&quot;  Include nonuniform distribution (True if nonuniform, False if uniform)? &quot; &amp; swsCWForce.<b>IncludeNonUniformDistribution2</b>)
+   Debug.Print (&quot;  Normal force or torque value: &quot; &amp; swsCWForce.<strong>NormalForceOrTorqueValue</strong>)</pre>
+<pre>   swModel.<b>ClearSelection2</b> True
+     
+End Sub</pre>
+<pre>Function LoadError(swApp As Object, force As String, errorCode As Long)</pre>
+<pre>   Select Case errorCode
+        Case 18
+            ErrorMsg swApp, &quot;You cannot apply triangular and centered-load distribution on multiple beams&quot;
+        Case 19
+            ErrorMsg swApp, &quot;You cannot apply a zero-intensity load&quot;
+        Case 20
+            ErrorMsg swApp, &quot;Invalid selection&quot;
+        Case 21
+            ErrorMsg swApp, &quot;The table-driven data is invalid&quot;
+        Case 22
+            ErrorMsg swApp, &quot;In the table-driven distance data, the distance value from the previous row cannot be greater than the distance value in the next row&quot;
+        Case Is &lt;&gt; 0
+            ErrorMsg swApp, &quot;No forces applied&quot;
+        Case 0
+            Debug.Print (force)
+   End Select
+End Function</pre>
+<pre>Function ErrorMsg(swApp As SldWorks.SldWorks, Message As String)
+   swApp.<b>SendMsgToUser2</b> Message, 0, 0
+   swApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;
+   swApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message
+   swApp.<b>RecordLine</b> &quot;&quot;
+   
+End Function
+</pre>
+
+</body>
+
+</html>

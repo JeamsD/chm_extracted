@@ -1,0 +1,197 @@
+<html>
+
+<head>
+<title>Creating Add-in Hooks (C#)</title>
+<meta name=MS-HKWD content="Hooks">
+<meta name=MS-HKWD content="Add-ins, hooks">
+<meta name=MS-HKWD content="C# add-ins, hooks">
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+<style>
+<!--
+div.Section1
+	{page:Section1;}
+-->
+</style>
+</head>
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Creating Add-in Hooks (C#)</h1>
+<div class=Section1>
+
+<p><span lang=EN-US style='font-family:Verdana'>This topic shows how to program 
+an add-in to have SOLIDWORKS PDM Professional notify your add-in
+whenever a file is added, checked out, or checked in to a vault. <br>
+<br>
+</span><span lang="en-us"><b><span style="font-family: Verdana">NOTE: </span></b></span>
+	<span lang=EN-US style='font-family:Verdana;
+  mso-ansi-language:EN-US'>Because SOLIDWORKS PDM Professional cannot force a reload of 
+	add-ins if they are written in .NET, all client machines must be restarted to ensure that the latest version of the add-in is used.<o:p></o:p></span></p>
+<ol>
+	<li class="kadov-P"><span style="font-family: Verdana">Follow </span>
+	<span lang=EN-US style='font-family:Verdana'><a href="csharpmenuitem.htm">
+	Creating Menu Commands (C#)</a> to create a basic add-in.<br>
+&nbsp;</span><li class="kadov-P"><span style="font-family: Verdana">In your add-in's </span><span lang=EN-US style='font-family:Verdana'>
+	<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmAddIn5~GetAddInInfo.html">IEdmAddIn5::GetAddInInfo</a> implementation, c</span><span lang=EN-US style='font-family:Verdana'>all
+	<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmCmdMgr5~AddHook.html">IEdmCmdMgr5::AddHook</a>
+	for each SOLIDWORKS PDM Professional activity that you want your add-in to be 
+	notified about. Implement IEdmAddIn5::GetAddInInfo as follows:</span></li>
+
+  <blockquote>
+	<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+	<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;GetAddInInfo(<span style="color:blue;">ref</span>&nbsp;<span style="color:#2b91af;">EdmAddInInfo</span>&nbsp;poInfo,&nbsp;<span style="color:#2b91af;">IEdmVault5</span>&nbsp;poVault,&nbsp;<span style="color:#2b91af;">IEdmCmdMgr5</span>&nbsp;poCmdMgr)<br>
+	{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">&nbsp; //Specify information&nbsp;to display 
+	in&nbsp;the&nbsp;add-in's Properties&nbsp;dialog&nbsp;box</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; poInfo.mbsAddInName&nbsp;=&nbsp;<span style="color:#a31515;">&quot;My&nbsp;first&nbsp;add-in&quot;</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; poInfo.mbsCompany&nbsp;=&nbsp;<span style="color:#a31515;">&quot;The&nbsp;name&nbsp;of&nbsp;my&nbsp;company&quot;</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; poInfo.mbsDescription&nbsp;=&nbsp;<span style="color:#a31515;">&quot;This&nbsp;is&nbsp;a&nbsp;very&nbsp;nice&nbsp;add-in.&quot;</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.mlAddInVersion&nbsp;=&nbsp;1;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; background-position: 0 0">//Specify the 
+	minimum required version of S</span><span style="color: green">olidWorks&nbsp;PDM 
+	Professional</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.mlRequiredVersionMajor&nbsp;=&nbsp;5;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.mlRequiredVersionMinor&nbsp;=&nbsp;2;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Register&nbsp;hooks<br>
+	</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Notify&nbsp;the&nbsp;add-in&nbsp;when&nbsp;a&nbsp;file&nbsp;has&nbsp;been&nbsp;added</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poCmdMgr.AddHook(<span style="color:#2b91af;">EdmCmdType</span>.EdmCmd_PostAdd);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Notify&nbsp;the&nbsp;add-in&nbsp;when&nbsp;a&nbsp;file&nbsp;has&nbsp;been&nbsp;checked&nbsp;out</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poCmdMgr.AddHook(<span style="color:#2b91af;">EdmCmdType</span>.EdmCmd_PostLock);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Notify&nbsp;the&nbsp;add-in&nbsp;when&nbsp;a&nbsp;file&nbsp;is&nbsp;about&nbsp;to&nbsp;be&nbsp;checked&nbsp;in</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poCmdMgr.AddHook(<span style="color:#2b91af;">EdmCmdType</span>.EdmCmd_PreUnlock);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Notify&nbsp;the&nbsp;add-in&nbsp;when&nbsp;a&nbsp;file&nbsp;has&nbsp;been&nbsp;checked&nbsp;in</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poCmdMgr.AddHook(<span style="color:#2b91af;">EdmCmdType</span>.EdmCmd_PostUnlock);<br>
+	}</p>
+</blockquote>
+
+
+	<li class="kadov-P">
+	<p style='background:white'><span style="font-family: Verdana">Implement 
+	<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmAddIn5~OnCmd.html">IEdmAddIn5::</a></span><span lang=EN-US style='font-family:Verdana'><a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmAddIn5~OnCmd.html">OnCmd</a> as follows:</span></p></li>
+
+<blockquote>
+	<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+	<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;OnCmd(<span style="color:blue;">ref</span>&nbsp;<span style="color:#2b91af;">EdmCmd</span>&nbsp;poCmd,&nbsp;<span style="color:blue;">ref</span>&nbsp;<span style="color:#2b91af;">Array</span>&nbsp;ppoData)<br>
+	{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Handle the hook</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;name&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">switch</span>&nbsp;(poCmd.meCmdType)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">case</span>&nbsp;<span style="color:#2b91af;">EdmCmdType</span>.EdmCmd_PostAdd:<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;PostAdd&quot;</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">break</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">case</span>&nbsp;<span style="color:#2b91af;">EdmCmdType</span>.EdmCmd_PostLock:<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;PostLock&quot;</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">break</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">case</span>&nbsp;<span style="color:#2b91af;">EdmCmdType</span>.EdmCmd_PreUnlock:<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;PreUnlock&quot;</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">break</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c<span style="color:blue;">ase</span>&nbsp;<span style="color:#2b91af;">EdmCmdType</span>.EdmCmd_PostUnlock:<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;PostUnlock&quot;</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">break</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">default</span>:<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;?&quot;</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">break</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Check&nbsp;the&nbsp;upper&nbsp;and&nbsp;lower&nbsp;bounds&nbsp;of&nbsp;the&nbsp;array</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;message&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;index&nbsp;=&nbsp;0;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index&nbsp;=&nbsp;<span style="color:#2b91af;">Information</span>.LBound(ppoData);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;last&nbsp;=&nbsp;0;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;last&nbsp;=&nbsp;<span style="color:#2b91af;">Information</span>.UBound(ppoData);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Append&nbsp;the&nbsp;paths&nbsp;of&nbsp;all&nbsp;files&nbsp;to&nbsp;a&nbsp;message 
+	string</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">while</span>&nbsp;(index&nbsp;&lt;=&nbsp;last)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;=&nbsp;message&nbsp;+&nbsp;((<span style="color:#2b91af;">EdmCmdData</span>)(ppoData.GetValue(index))).mbsStrData1&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index&nbsp;=&nbsp;index&nbsp;+&nbsp;1;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Display&nbsp;a&nbsp;message&nbsp;to&nbsp;the&nbsp;user</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;=&nbsp;<span style="color:#a31515;">&quot;The&nbsp;following&nbsp;files&nbsp;were&nbsp;affected&nbsp;by&nbsp;a&nbsp;&quot;</span>&nbsp;+&nbsp;name&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;hook:&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Constants</span>.vbLf&nbsp;+&nbsp;message;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">EdmVault5</span>&nbsp;vault&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">EdmVault5</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault&nbsp;=&nbsp;(<span style="color:#2b91af;">EdmVault5</span>)poCmd.mpoVault;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault.MsgBox(poCmd.mlParentWnd,&nbsp;message);<br>
+	}</p>
+</blockquote>
+
+<p style='background:white'><span lang=EN-US style='font-family:Verdana'>
+SOLIDWORKS PDM Professional calls OnCmd whenever one of the
+hooks registered in GetAddInInfo triggers an event. You can tell which hook 
+triggered the call by inspecting
+<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmd.html">EdmCmd</a>.meCmdType 
+that is returned in OnCmd's poCmd argument. meCmdType contains an 
+<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmdType.html">EdmCmdType</a> constant 
+that indicates which hook triggered the call.<o:p></o:p></span></p>
+
+<p style='background:white'><span lang=EN-US style='font-family:Verdana'>The second argument to OnCmd, 
+ppoData, contains an array of
+<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmdData.html">EdmCmdData</a> structures. 
+The array contains one structure for each file that is affected by the hook. The
+contents of the structure members&nbsp;vary, depending on the hook. See EdmCmdData for a complete list
+of members and their descriptions.<o:p></o:p></span></p>
+
+
+	<li class="kadov-P">
+	<p class=MsoNormal style='background:white'>
+	<span lang=EN-US style='mso-ansi-language:EN-US'>Click <b>Build &gt; Build 
+	Solution</b> to build the add-in.</span></p></li>
+	<li class="kadov-P">
+	<span lang="en-us">I</span><span lang=EN-US style='mso-ansi-language:EN-US'>nstall 
+	the add-in through the SOLIDWORKS PDM Professional 
+	Administration tool: <br>&nbsp;</span><ol style="font-family: Verdana; font-size: 8pt">
+		<li><span lang="en-us">Open</span><span lang=EN-US style='mso-ansi-language:EN-US'> the SOLIDWORKS 
+	PDM Professional Administration tool.<br>&nbsp;</span></li>
+		<li><span lang=EN-US style='mso-ansi-language:EN-US'>Expand the vault where 
+	you want to install this add-in and log in as Admin.<br>&nbsp;</span></li>
+		<li><span lang="en-us">Right-click <b>Add-ins</b> and click <b>New 
+	Add-in</b>.<b><br>
+&nbsp;</b></span></li>
+		<li>B<span lang="en-us">rowse to </span>
+		<span lang=EN-US style='mso-ansi-language:EN-US'>
+		<i style='mso-bidi-font-style:
+normal'>project_path</i><span style='mso-bidi-font-style:
+normal; '><i>\</i></span></span><span style='mso-bidi-font-style:
+normal; mso-ansi-language:EN-US' lang="EN-US"><i>project_name\project_name</i><b>\bin\Debug</b>, 
+		click <i>project_name</i><b>.dll</b> and <b>EPDM.Interop.epdm.dll</b>.<br>&nbsp;</span></li>
+		<li><span lang="en-us">Click <b>Open</b>.<br>
+&nbsp;</span></li>
+		<li>Click <b>OK</b>.<br>
+&nbsp;</li>
+		<li>Click <b>OK</b>.</li>
+	</ol></li>
+	<li class="kadov-P">
+	<p class=MsoNormal style='background:white'><span lang=EN-US>
+	<font face="Verdana">Add, check out, or check in 
+	one or more vault files.</font><o:p> A message box displays with the files 
+	added, checked out, or checked in.</o:p></span></p></li>
+</ol>
+
+<p class=MsoNormal style='background:white'><strong>
+<span lang=EN-US
+style='font-family:Verdana'>NOTE: </span></strong>
+<span
+lang=EN-US style='font-family:Verdana'>OnCmd is not called during check-in if the
+file is not modified. During check-in of unmodified 
+files, SOLIDWORKS PDM Professional triggers an &quot;undo check-out&quot; event. To handle 
+this &quot;undo check-out&quot; event, register <a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmdType.html"> EdmCmdType.EdmCmd_PreUndoLock</a> and 
+<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmdType.html">EdmCmdType.EdmCmd_PostUndoLock</a> 
+hooks in your add-in's implementation of IEdmAddIn5::GetAddInInfo.</span></p>
+
+</div>
+
+</body>
+
+</html>

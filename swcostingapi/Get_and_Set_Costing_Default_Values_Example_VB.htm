@@ -1,0 +1,114 @@
+<html>
+
+<head>
+<title>Get and Set Costing Default Values Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,">
+<meta name=MS-HKWD content="VBA examples,Costing default values">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Costing API 
+ Help</span></h1>
+<h1>Get and Set Costing Default Values Example (VBA)</h1>
+<p>This example shows how to get and set Costing default values.</p>
+<pre>'-----------------------------------------------
+' Preconditions:
+' 1. Specified sheet metal part to open exists.
+' 3. Add a reference to <b>sldcostingapi.tlb</b>.
+' 4. Open the Immediate window.
+' 5. Open the Notepad text editor.
+' 6. Run the macro.
+'
+' Postconditions:
+' 1. Opens the specified sheet metal part.
+' 2. Prints to the Immediate window the current
+'    Costing default values.
+' 3. Copy and paste the contents of the
+'    Immediate window to Notepad.
+' 4. Press F5 to continue.
+' 5. Sets some new Costing default values.
+' 6. Pops up a message box.
+' 7. After reading the instructions in the message box,
+'    click <b>OK</b> to close the message box, and perform the 
+'    instructions. 
+'
+' <b>NOTE</b>: Running this macro changes the specified
+' Costing default values in your computer's registry.
+'------------------------------------------------
+Option Explicit</pre>
+<pre>Dim swApp As SldWorks.SldWorks
+Dim swModel As SldWorks.ModelDoc2
+Dim swModelDocExt As SldWorks.ModelDocExtension
+Dim swcCostingMgr As SldCostingAPI.CostManager
+Dim swcCostingPart As SldCostingAPI.CostPart
+Dim swcCostingBody As SldCostingAPI.CostBody
+Dim swcCostingDefaults As SldCostingAPI.CostingDefaults
+Dim fileName As String
+Dim errors As Long
+Dim warnings As Long</pre>
+<pre>Sub main()</pre>
+<blockquote>
+	<pre>Set swApp = Application.SldWorks</pre>
+	<pre>'Open the specified part
+fileName = &quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\costing\sheet_metal_part.sldprt&quot;
+Set swModel = swApp.<b>OpenDoc6</b>(fileName, swDocumentTypes_e.swDocPART, swOpenDocOptions_e.swOpenDocOptions_Silent, &quot;&quot;, errors, warnings)
+Set swModelDocExt = swModel.<b>Extension</b></pre>
+	<pre>'Get CostingManager
+Set swcCostingMgr = swModelDocExt.<b>GetCostingManager</b>
+If swcCostingMgr Is Nothing Then
+   Debug.Print &quot;CostingManager is nothing.&quot;
+   Exit Sub
+End If
+</pre>
+	<pre>'Get Costing part
+Set swcCostingPart = swcCostingMgr.<b>CostingModel</b>
+If swcCostingPart Is Nothing Then
+   Debug.Print &quot;Costing part is nothing.&quot;
+   Exit Sub
+End If</pre>
+	<pre>'Set the Costing manufacturing method
+'to sheet metal and get the Costing body
+Set swcCostingBody = swcCostingPart.<b>SetCostingMethod</b>(&quot;&quot;, swcMethodType_e.swcMethodType_Sheetmetal)
+If swcCostingBody Is Nothing Then
+   Debug.Print &quot;Costing body is nothing.&quot;
+   Exit Sub
+End If</pre>
+	<pre>'Get Costing defaults object
+Set swcCostingDefaults = swcCostingMgr.<b>CostingDefaults</b>
+If swcCostingDefaults Is Nothing Then
+   Debug.Print &quot;Costing defaults is nothing.&quot;
+   Exit Sub
+End If</pre>
+	<pre>'Get Costing defaults registry values
+Debug.Print (&quot;Costing costing defaults values:&quot;)
+Debug.Print (&quot;    Template name:  &quot; &amp; swcCostingDefaults.<b>GetTemplateName</b>(swcCostingType_e.swcCostingType_SheetMetal))
+Debug.Print (&quot;    Manufacturing method: &quot; &amp; swcCostingDefaults.<b>GetManufacturingMethod</b>(swcBodyType_e.swcBodyType_SheetMetal))
+Debug.Print (&quot;    Material class: &quot; &amp; swcCostingDefaults.<b>GetMaterialClass</b>(swcMethodType_e.swcMethodType_Sheetmetal))
+Debug.Print (&quot;    Material name: &quot; &amp; swcCostingDefaults.<b>GetMaterialName</b>(swcMethodType_e.swcMethodType_Sheetmetal))
+Debug.Print (&quot;    Lot size for single-body mode: &quot; &amp; swcCostingDefaults.<b>LotSizeForSingleBody</b>)
+Debug.Print (&quot;    Sheet metal blank size type: &quot; &amp; swcCostingDefaults.<b>SheetmetalBlankSizeType</b>)
+Debug.Print (&quot;    Total number of parts for single body: &quot; &amp; swcCostingDefaults.<b>TotalNumberOfPartsForSingleBody</b>)
+Debug.Print &quot;&quot;</pre>
+	<pre>Stop
+'Examine the Immediate window
+'Copy and paste the contents of the
+'Immediate window into Notepad if
+'running the macro for the first time
+'Press F5 to continue</pre>
+	<pre>'Set some Costing default registry values
+swcCostingDefaults.<b>SetMaterialClass</b> swcMethodType_e.swcMethodType_Sheetmetal, &quot;Alluminum Alloys&quot;
+swcCostingDefaults.<b>SetMaterialName</b> swcMethodType_e.swcMethodType_Sheetmetal, &quot;6061 Alloy&quot;
+swcCostingDefaults.<b>LotSizeForSingleBody</b> = 200
+swcCostingDefaults.<b>TotalNumberOfPartsForSingleBody</b> = 200</pre>
+	<pre>'Pop up message box
+ MsgBox &quot;1. Save and exit the macro.&quot; &amp; vbCrLf &amp; &quot;2. Close the part without saving any changes.&quot; &amp; vbCrLf &amp; &quot;3. Exit SOLIDWORKS.&quot; &amp; vbCrLf &amp; &quot;4. Start up SOLIDWORKS and run the macro again.&quot; &amp; vbCrLf &amp; &quot;5. Examine the Immediate window and Notepad to verify that new default values were set in the registry, where applicable.&quot;
+   </pre>
+</blockquote>
+<pre>End Sub</pre>
+
+</body>
+
+</html>

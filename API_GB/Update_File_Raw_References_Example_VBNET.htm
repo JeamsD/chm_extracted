@@ -1,0 +1,418 @@
+<html>
+
+<head>
+<title>Update File Raw References Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples,files">
+<meta name=MS-HKWD content="VB.NET examples,references">
+<meta name=MS-HKWD content="VB.NET examples,file references">
+
+<body>
+<h1><font size="1"><span style="font-weight: 400">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Update File Raw References Example (VB.NET)</h1>
+<p><a name="Top"></a>This example shows how to get file references directly 
+from a file and update file references directly in that file.</p>
+<p><b>NOTE</b>: If using the primary interop assembly 
+provided with SOLIDWORKS PDM Professional, see
+<a href="Using_NET_Framework_in_Applications.htm">Using .NET Framework 4.0 in 
+Stand-alone Applications</a>.</p>
+<p><img border="0" src="UpdateFileRefs.gif" width="315" height="302"></p>
+
+</font>
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><span style="color: green">'----------------------------------------------------------------------------</span>
+<span style="color: green">'&nbsp;Preconditions:</span>
+<span style="color: green">'&nbsp;&nbsp;1.&nbsp;Start&nbsp;Microsoft&nbsp;Visual&nbsp;Studio&nbsp;2010.</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Click&nbsp;<b>File&nbsp;&gt;&nbsp;New&nbsp;&gt;&nbsp;Project&nbsp;&gt;&nbsp;Visual&nbsp;Basic&nbsp;&gt;&nbsp;Windows&nbsp;Forms&nbsp;Application</b>.</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Type&nbsp;<b>RawReferencesVBNET</b>&nbsp;in&nbsp;<b>Name</b>.</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;<b>Browse</b>&nbsp;and&nbsp;navigate&nbsp;to&nbsp;the&nbsp;folder&nbsp;where&nbsp;to&nbsp;create&nbsp;the&nbsp;project.</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click&nbsp;<b>OK</b>.&nbsp;</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e.&nbsp;Click&nbsp;<b>Show&nbsp;All&nbsp;Files</b>&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer&nbsp;toolbar&nbsp;and&nbsp;expand&nbsp;</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Form1.vb</b>&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer.</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f.&nbsp;Replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>Form1.vb</b>&nbsp;with&nbsp;<a href="#Form1">this&nbsp;code</a>.</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g.&nbsp;To&nbsp;create&nbsp;the&nbsp;form,&nbsp;replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>Form1.Designer.vb</b>&nbsp;with&nbsp;</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Designer">this&nbsp;code</a>.</span>
+<span style="color: green">'&nbsp;&nbsp;2.&nbsp;Add&nbsp;<b>EPDM.Interop.epdm.dll</b>&nbsp;as&nbsp;a&nbsp;reference&nbsp;(right-click&nbsp;the&nbsp;project</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer,&nbsp;click&nbsp;<b>Add&nbsp;Reference</b>,&nbsp;click&nbsp;</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Assemblies&nbsp;&gt;&nbsp;Framework</b>&nbsp;in&nbsp;the&nbsp;left-side&nbsp;panel,&nbsp;browse&nbsp;to&nbsp;the&nbsp;top&nbsp;folder&nbsp;of&nbsp;</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;your&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;installation,&nbsp;locate&nbsp;and&nbsp;click&nbsp;</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>EPDM.Interop.epdm.dll</b>,&nbsp;click&nbsp;<b>Open</b>,&nbsp;click&nbsp;<b>Add</b>,&nbsp;and&nbsp;click&nbsp;<b>Close</b>).</span>
+<span style="color: green">'&nbsp;&nbsp;3.&nbsp;Right-click&nbsp;<b>EPDM.Interop.epdm</b>&nbsp;in&nbsp;References,&nbsp;click&nbsp;<b>Properties</b>,&nbsp;and&nbsp;set&nbsp;</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Embed&nbsp;Interop&nbsp;Types&nbsp;</b>to&nbsp;<b>False</b>&nbsp;to&nbsp;handle&nbsp;methods&nbsp;that&nbsp;pass&nbsp;arrays&nbsp;of&nbsp;</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;structures.</span>
+<span style="color: green">'&nbsp;&nbsp;4.&nbsp;Check&nbsp;out&nbsp;a SOLIDWORKS assembly or drawing document whose&nbsp;file&nbsp;
+'     references&nbsp;you&nbsp;want&nbsp;to&nbsp;update and check out all of the document's
+'     referenced files.</span>
+<span style="color: green">'&nbsp;&nbsp;5.&nbsp;Click&nbsp;<b>Debug&nbsp;&gt;&nbsp;Start&nbsp;Debugging</b>&nbsp;or&nbsp;press&nbsp;F5.</span>
+<span style="color: green">'</span>
+<span style="color: green">'&nbsp;Postconditions:&nbsp;</span>
+<span style="color: green">'&nbsp;&nbsp;1.&nbsp;Displays&nbsp;the&nbsp;Update&nbsp;Raw References&nbsp;in&nbsp;File&nbsp;dialog&nbsp;box.</span><span style="color:green;">
+'&nbsp;&nbsp;2.&nbsp;Select&nbsp;the&nbsp;vault&nbsp;view&nbsp;where&nbsp;the&nbsp;SOLIDWORKS&nbsp;assembly&nbsp;or</span>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;drawing&nbsp;document&nbsp;that&nbsp;you&nbsp;checked&nbsp;out&nbsp;in</span>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Preconditions&nbsp;step&nbsp;4 resides.</span>
+<span style="color: green">'&nbsp;&nbsp;3.&nbsp;Click&nbsp;<b>Open file</b>.</span>
+<span style="color: green">'&nbsp;&nbsp;4.&nbsp;Displays&nbsp;the&nbsp;Open&nbsp;a&nbsp;file&nbsp;dialog&nbsp;box.</span><span style="color:green;">
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Click&nbsp;the&nbsp;assembly&nbsp;or&nbsp;drawing&nbsp;document&nbsp;you&nbsp;checked</span>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;out&nbsp;in&nbsp;Preconditions&nbsp;step&nbsp;4.</span><span style="color: green">
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Click&nbsp;<b>Open</b>.</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;opened&nbsp;file's&nbsp;path&nbsp;and&nbsp;file&nbsp;name&nbsp;appear&nbsp;</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;the&nbsp;Update&nbsp;Raw References&nbsp;in&nbsp;File&nbsp;dialog&nbsp;box.</span>
+<span style="color: green">'&nbsp;&nbsp;5.&nbsp;Click&nbsp;<b>Get&nbsp;references</b>.</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Displays&nbsp;a&nbsp;message&nbsp;box&nbsp;for each referenced file. 
+'        The&nbsp;referenced&nbsp;file's&nbsp;ID, path&nbsp;and&nbsp;file&nbsp;name,&nbsp;file&nbsp;name,&nbsp;
+'        type,&nbsp;and&nbsp;number&nbsp;of&nbsp;times&nbsp;referenced appear in the 
+'        message box.</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Click&nbsp;<b>OK</b>&nbsp;to&nbsp;close&nbsp;each&nbsp;message&nbsp;box.</span>
+<span style="color: green">'&nbsp;&nbsp;6.&nbsp;Rename&nbsp;one&nbsp;of&nbsp;the&nbsp;referenced&nbsp;files&nbsp;in&nbsp;the&nbsp;selected&nbsp;vault
+'     in File Explorer.</span>
+<span style="color: green">'&nbsp;&nbsp;7.&nbsp;Click&nbsp;<b>Update&nbsp;references</b>.</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Displays&nbsp;a&nbsp;message&nbsp;box&nbsp;confirming&nbsp;that&nbsp;references&nbsp;were&nbsp;updated.</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Click&nbsp;<b>OK</b>&nbsp;to&nbsp;close&nbsp;the&nbsp;message&nbsp;box.</span>
+<span style="color: green">'&nbsp;&nbsp;8.&nbsp;Click&nbsp;<b>Get&nbsp;references</b>.</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Displays&nbsp;a&nbsp;message&nbsp;box&nbsp;for each referenced file. 
+'        The&nbsp;referenced&nbsp;file's&nbsp;ID, path&nbsp;and&nbsp;file&nbsp;name,&nbsp;file&nbsp;name,&nbsp;
+'        type,&nbsp;and&nbsp;number&nbsp;of&nbsp;times&nbsp;referenced appear in the 
+'        message box. Note&nbsp;that&nbsp;the&nbsp;renamed&nbsp;file&nbsp;is&nbsp;now&nbsp;a&nbsp;referenced&nbsp;
+'        file&nbsp;of&nbsp;the&nbsp;open&nbsp;document.</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Click&nbsp;<b>OK</b>&nbsp;to&nbsp;close&nbsp;each&nbsp;message&nbsp;box.</span>
+<span style="color: green">'&nbsp;&nbsp;9.&nbsp;Click&nbsp;<b>Close&nbsp;file</b>.</span><span style="color:green;">
+'&nbsp;10.&nbsp;Click&nbsp;<b>OK</b>&nbsp;to&nbsp;close&nbsp;the&nbsp;message&nbsp;box confirming that the
+'     open document was closed.</span>
+<span style="color:green;">'&nbsp;11.&nbsp;Close&nbsp;the&nbsp;Update&nbsp;Raw&nbsp;References&nbsp;in&nbsp;File&nbsp;dialog&nbsp;box.</span>
+<span style="color:green;">'&nbsp;12.&nbsp;Check&nbsp;in&nbsp;the&nbsp;SOLIDWORKS assembly or drawing&nbsp;and&nbsp;its&nbsp;
+'     file&nbsp;references.</span>
+<span style="color: green">'----------------------------------------------------------------------------</span>
+<span style="color: green"><a name="Form1"></a>'Form1.vb</span>
+<span style="color: blue">Imports</span>&nbsp;EPDM.Interop.epdm
+ 
+ 
+<span style="color: blue">Public</span>&nbsp;<span style="color: blue">Class</span>&nbsp;<span style="color: #2b91af">Form1</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Private</span>&nbsp;vault1&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">IEdmVault5</span>&nbsp;=&nbsp;<span style="color: blue">Nothing</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;aFile&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">IEdmFile5</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;fileName&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">String</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;rawRefs&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">IEdmRawReferenceMgr</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;refs()&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">EdmRawReference</span>&nbsp;=&nbsp;<span style="color: blue">Nothing</span>
+ 
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Private</span>&nbsp;<span style="color: blue">Sub</span>&nbsp;Form1_Load(&nbsp;_
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">ByVal</span>&nbsp;sender&nbsp;<span style="color: blue">As</span>&nbsp;System.<span style="color: #2b91af">Object</span>,&nbsp;_
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">ByVal</span>&nbsp;e&nbsp;<span style="color: blue">As</span>&nbsp;System.<span style="color: #2b91af">EventArgs</span>)&nbsp;_
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Handles</span>&nbsp;<span style="color: blue">MyBase</span>.Load
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;vault&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">IEdmVault8</span>&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;<span style="color: #2b91af">EdmVault5</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;Views()&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">EdmViewInfo</span>&nbsp;=&nbsp;<span style="color: blue">Nothing</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault.<b>GetVaultViews</b>(Views,&nbsp;<span style="color: blue">False</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Items.Clear()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">For</span>&nbsp;<span style="color: blue">Each</span>&nbsp;View&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">EdmViewInfo</span>&nbsp;<span style="color: blue">In</span>&nbsp;Views
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Items.Add(View.<b>mbsVaultName</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Next</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;VaultsComboBox.Items.Count&nbsp;&gt;&nbsp;0&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Text&nbsp;=&nbsp;VaultsComboBox.Items(0)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Catch</span>&nbsp;ex&nbsp;<span style="color: blue">As</span>&nbsp;Runtime.InteropServices.<span style="color: #2b91af">COMException</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(<span style="color: #a31515">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;_
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ex.ErrorCode.ToString(<span style="color: #a31515">&quot;X&quot;</span>)&nbsp;+&nbsp;vbCrLf&nbsp;+&nbsp;_
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ex.Message)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Catch</span>&nbsp;ex&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">Exception</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(ex.Message)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Sub</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Public</span>&nbsp;<span style="color: blue">Sub</span>&nbsp;UpdateButton_Click(<span style="color: blue">ByVal</span>&nbsp;sender&nbsp;<span style="color: blue">As</span>&nbsp;System.<span style="color: #2b91af">Object</span>,&nbsp;<span style="color: blue">ByVal</span>&nbsp;e&nbsp;<span style="color: blue">As</span>&nbsp;System.<span style="color: #2b91af">EventArgs</span>)&nbsp;<span style="color: blue">Handles</span>&nbsp;UpdateButton.Click
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Only&nbsp;create&nbsp;a&nbsp;new&nbsp;vault&nbsp;object</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'if&nbsp;one&nbsp;hasn't&nbsp;been&nbsp;created&nbsp;yet</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;vault1&nbsp;<span style="color: blue">Is</span>&nbsp;<span style="color: blue">Nothing</span>&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;<span style="color: #2b91af">EdmVault5</span>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;<span style="color: blue">Not</span>&nbsp;vault1.<b>IsLoggedIn</b>&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color: blue">Me</span>.Handle.ToInt32())
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Update&nbsp;the&nbsp;file&nbsp;references directly in the file</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rawRefs.<b>UpdateReferences</b>(refs)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(<span style="color: #a31515">&quot;File&nbsp;references&nbsp;updated.&quot;</span>)
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Catch</span>&nbsp;ex&nbsp;<span style="color: blue">As</span>&nbsp;System.Runtime.InteropServices.<span style="color: #2b91af">COMException</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(<span style="color: #a31515">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color: #a31515">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Catch</span>&nbsp;ex&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">Exception</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(ex.Message)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Sub</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Public</span>&nbsp;<span style="color: blue">Sub</span>&nbsp;OpenButton_Click(<span style="color: blue">ByVal</span>&nbsp;sender&nbsp;<span style="color: blue">As</span>&nbsp;System.<span style="color: #2b91af">Object</span>,&nbsp;<span style="color: blue">ByVal</span>&nbsp;e&nbsp;<span style="color: blue">As</span>&nbsp;System.<span style="color: #2b91af">EventArgs</span>)&nbsp;<span style="color: blue">Handles</span>&nbsp;OpenButton.Click
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'If&nbsp;one&nbsp;hasn't&nbsp;been&nbsp;created&nbsp;yet</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;vault1&nbsp;<span style="color: blue">Is</span>&nbsp;<span style="color: blue">Nothing</span>&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;<span style="color: #2b91af">EdmVault5</span>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;<span style="color: blue">Not</span>&nbsp;vault1.<b>IsLoggedIn</b>&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color: blue">Me</span>.Handle.ToInt32())
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Set&nbsp;the&nbsp;initial&nbsp;directory&nbsp;in&nbsp;the&nbsp;Open&nbsp;a&nbsp;file&nbsp;dialog</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OpenFileDialog1.InitialDirectory&nbsp;=&nbsp;vault1.<b>RootFolderPath</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Show&nbsp;the&nbsp;Open&nbsp;a file&nbsp;dialog</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;DialogResult&nbsp;<span style="color: blue">As</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">DialogResult</span>&nbsp;=&nbsp;<span style="color: blue">Nothing</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DialogResult&nbsp;=&nbsp;OpenFileDialog1.ShowDialog()
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;<span style="color: blue">Not</span>&nbsp;(DialogResult&nbsp;=&nbsp;System.Windows.Forms.<span style="color: #2b91af">DialogResult</span>.OK)&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Do&nbsp;nothing</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Else</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#008080">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font color="#008000">&nbsp;</font><span style="color: #008000">'</span><font color="#008000">Open a file</font>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fileName&nbsp;=&nbsp;OpenFileDialog1.FileName
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FileListBox.Items.Add(fileName)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aFile&nbsp;=&nbsp;vault1.<b>GetFileFromPath</b>(fileName)
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Get&nbsp;IEdmRawReferences&nbsp;interface&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rawRefs&nbsp;=&nbsp;vault1.<b>CreateUtility</b>(<span style="color: #2b91af">EdmUtility</span>.EdmUtil_RawReferenceMgr)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;fileRefsSupported&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Boolean</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fileRefsSupported&nbsp;=&nbsp;rawRefs.<b>Open</b>(fileName)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;<span style="color: blue">Not</span>&nbsp;fileRefsSupported&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(<span style="color: #a31515">&quot;File's&nbsp;format&nbsp;does&nbsp;not&nbsp;support&nbsp;file&nbsp;references.&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Exit&nbsp;Sub</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Catch</span>&nbsp;ex&nbsp;<span style="color: blue">As</span>&nbsp;System.Runtime.InteropServices.<span style="color: #2b91af">COMException</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(<span style="color: #a31515">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color: #a31515">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Catch</span>&nbsp;ex&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">Exception</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(ex.Message)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Sub</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Private</span>&nbsp;<span style="color: blue">Sub</span>&nbsp;GetButton_Click(<span style="color: blue">ByVal</span>&nbsp;sender&nbsp;<span style="color: blue">As</span>&nbsp;System.<span style="color: #2b91af">Object</span>,&nbsp;<span style="color: blue">ByVal</span>&nbsp;e&nbsp;<span style="color: blue">As</span>&nbsp;System.<span style="color: #2b91af">EventArgs</span>)&nbsp;<span style="color: blue">Handles</span>&nbsp;GetButton.Click
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Only&nbsp;create&nbsp;a&nbsp;new&nbsp;vault&nbsp;object</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'if&nbsp;one&nbsp;hasn't&nbsp;been&nbsp;created&nbsp;yet</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;vault1&nbsp;<span style="color: blue">Is</span>&nbsp;<span style="color: blue">Nothing</span>&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;<span style="color: #2b91af">EdmVault5</span>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;<span style="color: blue">Not</span>&nbsp;vault1.<b>IsLoggedIn</b>&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color: blue">Me</span>.Handle.ToInt32())
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;arrSize&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Integer</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;i&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Integer</span>&nbsp;=&nbsp;0
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;message&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">String
+</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Get&nbsp;the&nbsp;file&nbsp;references&nbsp;directly&nbsp;from&nbsp;the&nbsp;file</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rawRefs.<b>GetReferences</b>(refs)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;arrSize&nbsp;=&nbsp;refs.Length
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;arrSize&nbsp;=&nbsp;0&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(<span style="color: #a31515">&quot;No&nbsp;file&nbsp;references&nbsp;for&nbsp;opened&nbsp;file.&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Exit&nbsp;Sub</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">While</span>&nbsp;i&nbsp;&lt;&nbsp;arrSize
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;=&nbsp;<span style="color: #a31515">&quot;File&nbsp;reference&nbsp;information:&nbsp;&quot;</span>&nbsp;+&nbsp;vbLf&nbsp;+&nbsp;vbLf
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;=&nbsp;message&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&nbsp;Internal&nbsp;ID:&nbsp;&quot;</span>&nbsp;+&nbsp;refs(i).<b>mbsRefID</b>&nbsp;+&nbsp;vbLf
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;=&nbsp;message&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&nbsp;Referenced&nbsp;how:&nbsp;&quot;</span>&nbsp;+&nbsp;refs(i).<b>mbsIncludePath</b>&nbsp;+&nbsp;vbLf
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;=&nbsp;message&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&nbsp;Reference&nbsp;name:&nbsp;&quot;</span>&nbsp;+&nbsp;refs(i).<b>mbsRefName</b>&nbsp;+&nbsp;vbLf
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;=&nbsp;message&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&nbsp;Number&nbsp;of&nbsp;times&nbsp;file&nbsp;referenced&nbsp;=&nbsp;&quot;</span>&nbsp;+&nbsp;refs(i).<b>mlCount</b>.ToString&nbsp;+&nbsp;vbLf
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Select</span>&nbsp;<span style="color: blue">Case</span>&nbsp;refs(i).<b>mlFlags</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Case</span>&nbsp;<span style="color: #2b91af">EdmRawRefFlags</span>.Edmrrf_Ghost
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;=&nbsp;message&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&nbsp;Type&nbsp;=&nbsp;DWG&nbsp;files&nbsp;can&nbsp;store&nbsp;grandchildren&nbsp;as&nbsp;references&quot;</span>&nbsp;+&nbsp;vbLf
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Case</span>&nbsp;<span style="color: #2b91af">EdmRawRefFlags</span>.Edmrrf_InternalComponent
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;=&nbsp;message&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&nbsp;Type&nbsp;=&nbsp;Not&nbsp;used&quot;</span>&nbsp;+&nbsp;vbLf
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Case</span>&nbsp;<span style="color: #2b91af">EdmRawRefFlags</span>.Edmrrf_Nothing
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;=&nbsp;message&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&nbsp;Type&nbsp;=&nbsp;Normal&nbsp;file&nbsp;reference&quot;</span>&nbsp;+&nbsp;vbLf
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Select</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i&nbsp;=&nbsp;i&nbsp;+&nbsp;1
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(message)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">While</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Catch</span>&nbsp;ex&nbsp;<span style="color: blue">As</span>&nbsp;System.Runtime.InteropServices.<span style="color: #2b91af">COMException</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(<span style="color: #a31515">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color: #a31515">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Catch</span>&nbsp;ex&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">Exception</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(ex.Message)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Sub</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Private</span>&nbsp;<span style="color: blue">Sub</span>&nbsp;CloseButton_Click(<span style="color: blue">ByVal</span>&nbsp;sender&nbsp;<span style="color: blue">As</span>&nbsp;System.<span style="color: #2b91af">Object</span>,&nbsp;<span style="color: blue">ByVal</span>&nbsp;e&nbsp;<span style="color: blue">As</span>&nbsp;System.<span style="color: #2b91af">EventArgs</span>)&nbsp;<span style="color: blue">Handles</span>&nbsp;CloseButton.Click
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Only&nbsp;create&nbsp;a&nbsp;new&nbsp;vault&nbsp;object</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'if&nbsp;one&nbsp;hasn't&nbsp;been&nbsp;created&nbsp;yet</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;vault1&nbsp;<span style="color: blue">Is</span>&nbsp;<span style="color: blue">Nothing</span>&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;<span style="color: #2b91af">EdmVault5</span>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;<span style="color: blue">Not</span>&nbsp;vault1.<b>IsLoggedIn</b>&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color: blue">Me</span>.Handle.ToInt32())
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Close&nbsp;the&nbsp;file</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rawRefs.<b>Close</b>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(<span style="color: #a31515">&quot;File&nbsp;closed.&quot;</span>)
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Catch</span>&nbsp;ex&nbsp;<span style="color: blue">As</span>&nbsp;System.Runtime.InteropServices.<span style="color: #2b91af">COMException</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(<span style="color: #a31515">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color: #a31515">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Catch</span>&nbsp;ex&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">Exception</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(ex.Message)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Sub</span>
+<span style="color: blue">End</span>&nbsp;<span style="color: blue">Class</span></pre>
+<div align="center">
+	<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><font face="Calibri"><span style="color: #0000FF"><a href="#Top">Back to top</a></span></font></pre>
+</div>
+<div align="left">
+	<pre style="font-family: Courier New; font-size: 13; color: #008000; background: white"><a name="Designer"></a>'Form.Designer.vb</pre>
+</div>
+<div align="left">
+	<pre style="font-family: Courier New; font-size: 13; color: black; background: white">&lt;<span style="color: blue">Global</span>.Microsoft.VisualBasic.CompilerServices.<span style="color: #2b91af">DesignerGenerated</span>()&gt;&nbsp;_
+<span style="color: blue">Partial</span>&nbsp;<span style="color: blue">Class</span>&nbsp;<span style="color: #2b91af">Form1</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Inherits</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Form</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Form&nbsp;overrides&nbsp;dispose&nbsp;to&nbsp;clean&nbsp;up&nbsp;the&nbsp;component&nbsp;list.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;System.Diagnostics.<span style="color: #2b91af">DebuggerNonUserCode</span>()&gt;&nbsp;_
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Protected</span>&nbsp;<span style="color: blue">Overrides</span>&nbsp;<span style="color: blue">Sub</span>&nbsp;Dispose(<span style="color: blue">ByVal</span>&nbsp;disposing&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Boolean</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;disposing&nbsp;<span style="color: blue">AndAlso</span>&nbsp;components&nbsp;<span style="color: blue">IsNot</span>&nbsp;<span style="color: blue">Nothing</span>&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;components.Dispose()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Finally</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">MyBase</span>.Dispose(disposing)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Sub</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Required&nbsp;by&nbsp;the&nbsp;Windows&nbsp;Form&nbsp;Designer</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Private</span>&nbsp;components&nbsp;<span style="color: blue">As</span>&nbsp;System.ComponentModel.<span style="color: #2b91af">IContainer</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'NOTE:&nbsp;The&nbsp;following&nbsp;procedure&nbsp;is&nbsp;required&nbsp;by&nbsp;the&nbsp;Windows&nbsp;Form&nbsp;Designer</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'It&nbsp;can&nbsp;be&nbsp;modified&nbsp;using&nbsp;the&nbsp;Windows&nbsp;Form&nbsp;Designer.&nbsp;&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Do&nbsp;not&nbsp;modify&nbsp;it&nbsp;using&nbsp;the&nbsp;code&nbsp;editor.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;System.Diagnostics.<span style="color: #2b91af">DebuggerStepThrough</span>()&gt;&nbsp;_
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Private</span>&nbsp;<span style="color: blue">Sub</span>&nbsp;InitializeComponent()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Label1&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Label</span>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.VaultsComboBox&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">ComboBox</span>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.OpenButton&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Button</span>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.GetButton&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Button</span>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.UpdateButton&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Button</span>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.CloseButton&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Button</span>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.FileListBox&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">ListBox</span>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.OpenFileDialog1&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">OpenFileDialog</span>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.SuspendLayout()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Label1</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Label1.AutoSize&nbsp;=&nbsp;<span style="color: blue">True</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Label1.Location&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(88,&nbsp;26)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Label1.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;Label1&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Label1.Size&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(91,&nbsp;13)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Label1.TabIndex&nbsp;=&nbsp;0
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Label1.Text&nbsp;=&nbsp;<span style="color: #a31515">&quot;Select&nbsp;vault&nbsp;view:&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'VaultsComboBox</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.VaultsComboBox.FormattingEnabled&nbsp;=&nbsp;<span style="color: blue">True</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.VaultsComboBox.Location&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(55,&nbsp;42)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.VaultsComboBox.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;VaultsComboBox&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.VaultsComboBox.Size&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(154,&nbsp;21)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.VaultsComboBox.TabIndex&nbsp;=&nbsp;1
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'OpenButton</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.OpenButton.Location&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(55,&nbsp;88)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.OpenButton.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;OpenButton&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.OpenButton.Size&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(154,&nbsp;23)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.OpenButton.TabIndex&nbsp;=&nbsp;2
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.OpenButton.Text&nbsp;=&nbsp;<span style="color: #a31515">&quot;Open&nbsp;file&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.OpenButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color: blue">True</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'GetButton</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.GetButton.Location&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(12,&nbsp;165)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.GetButton.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;GetButton&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.GetButton.Size&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(108,&nbsp;23)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.GetButton.TabIndex&nbsp;=&nbsp;3
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.GetButton.Text&nbsp;=&nbsp;<span style="color: #a31515">&quot;Get&nbsp;references&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.GetButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color: blue">True</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'UpdateButton</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.UpdateButton.Location&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(164,&nbsp;165)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.UpdateButton.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;UpdateButton&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.UpdateButton.Size&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(108,&nbsp;23)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.UpdateButton.TabIndex&nbsp;=&nbsp;4
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.UpdateButton.Text&nbsp;=&nbsp;<span style="color: #a31515">&quot;Update&nbsp;references&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.UpdateButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color: blue">True</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'CloseButton</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.CloseButton.Location&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(55,&nbsp;222)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.CloseButton.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;CloseButton&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.CloseButton.Size&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(154,&nbsp;23)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.CloseButton.TabIndex&nbsp;=&nbsp;5
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.CloseButton.Text&nbsp;=&nbsp;<span style="color: #a31515">&quot;Close&nbsp;file&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.CloseButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color: blue">True</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'FileListBox</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.FileListBox.FormattingEnabled&nbsp;=&nbsp;<span style="color: blue">True</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.FileListBox.Location&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(12,&nbsp;118)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.FileListBox.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;FileListBox&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.FileListBox.Size&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(260,&nbsp;30)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.FileListBox.TabIndex&nbsp;=&nbsp;6
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'OpenFileDialog1</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.OpenFileDialog1.FileName&nbsp;=&nbsp;<span style="color: #a31515">&quot;OpenFileDialog1&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.OpenFileDialog1.Multiselect&nbsp;=&nbsp;<span style="color: blue">True</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.OpenFileDialog1.Title&nbsp;=&nbsp;<span style="color: #a31515">&quot;Open&nbsp;a&nbsp;file&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Form1</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.AutoScaleDimensions&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">SizeF</span>(6.0!,&nbsp;13.0!)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.AutoScaleMode&nbsp;=&nbsp;System.Windows.Forms.<span style="color: #2b91af">AutoScaleMode</span>.Font
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.ClientSize&nbsp;=&nbsp;<span style="color: blue">New</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(284,&nbsp;264)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Controls.Add(<span style="color: blue">Me</span>.FileListBox)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Controls.Add(<span style="color: blue">Me</span>.CloseButton)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Controls.Add(<span style="color: blue">Me</span>.UpdateButton)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Controls.Add(<span style="color: blue">Me</span>.GetButton)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Controls.Add(<span style="color: blue">Me</span>.OpenButton)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Controls.Add(<span style="color: blue">Me</span>.VaultsComboBox)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Controls.Add(<span style="color: blue">Me</span>.Label1)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;Form1&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.Text&nbsp;=&nbsp;<span style="color: #a31515">&quot;Update&nbsp;References&nbsp;in&nbsp;File&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.ResumeLayout(<span style="color: blue">False</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Me</span>.PerformLayout()
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Sub</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Friend</span>&nbsp;<span style="color: blue">WithEvents</span>&nbsp;Label1&nbsp;<span style="color: blue">As</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Label</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Friend</span>&nbsp;<span style="color: blue">WithEvents</span>&nbsp;VaultsComboBox&nbsp;<span style="color: blue">As</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">ComboBox</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Friend</span>&nbsp;<span style="color: blue">WithEvents</span>&nbsp;OpenButton&nbsp;<span style="color: blue">As</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Button</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Friend</span>&nbsp;<span style="color: blue">WithEvents</span>&nbsp;GetButton&nbsp;<span style="color: blue">As</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Button</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Friend</span>&nbsp;<span style="color: blue">WithEvents</span>&nbsp;UpdateButton&nbsp;<span style="color: blue">As</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Button</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Friend</span>&nbsp;<span style="color: blue">WithEvents</span>&nbsp;CloseButton&nbsp;<span style="color: blue">As</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Button</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Friend</span>&nbsp;<span style="color: blue">WithEvents</span>&nbsp;FileListBox&nbsp;<span style="color: blue">As</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">ListBox</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Friend</span>&nbsp;<span style="color: blue">WithEvents</span>&nbsp;OpenFileDialog1&nbsp;<span style="color: blue">As</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">OpenFileDialog</span>
+ 
+<span style="color: blue">End</span>&nbsp;<span style="color: blue">Class</span></pre>
+	<div align="center">
+		<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><font face="Calibri"><span style="color: #0000FF"><a href="#Top">Back to top</a></span></font></pre>
+	</div>
+	<pre style="font-family: Courier New; font-size: 13; color: #008000; background: white">&nbsp;</pre>
+</div>
+<div align="left">
+	<pre style="font-family: Courier New; font-size: 13; color: black; background: white">&nbsp;</pre>
+</div>
+<div align="left">
+	<pre style="font-family: Courier New; font-size: 13; color: black; background: white">
+</pre>
+</div>
+
+</body>
+
+</html>

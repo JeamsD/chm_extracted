@@ -1,0 +1,115 @@
+<html>
+
+<head>
+<title>Create a Design Insight Plot for a Static Study Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,result plots">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Create a Design Insight Plot for a Static Study Example (VBA)</h1>
+<p>This example shows how to create a Design Insight plot and set its load 
+level.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Open <i>public_documents</i><b>\samples\Simulation Examples\actuator.sldasm</b>.<br>
+'<br>
+' Postconditions:<br>
+' 1. Deletes all default static study plots from the model document.<br>
+' 2. Activates the <b>Ready</b> static study.<br>
+' 3. Meshes and runs the study.<br>
+' 4. Creates a Design Insight plot.<br>
+' 5. Gets the Design Insight plot and sets its load level to 50.<br>
+' 6. Inspect the graphics area.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+' ---------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS As CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim CWMesh As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; Dim CWResult As CosmosWorksLib.CWResults<br>
+&nbsp;&nbsp;&nbsp; Dim CWCFf As CosmosWorksLib.CWPlot<br>
+&nbsp;&nbsp;&nbsp; Dim plot As CosmosWorksLib.CWPlot<br>
+&nbsp;&nbsp;&nbsp; Dim errCode As Long<br>
+&nbsp;&nbsp;&nbsp; Dim el As Double, tl As Double</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Set SwApp = 
+Application.SldWorks</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = SwApp.<b>GetAddInObject</b>(&quot;CosmosWorks.CosmosWorks&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWAddinCallBack object&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;No 
+CosmosWorks object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get active document<br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Delete all default static study plots 
+from this model<br>
+&nbsp;&nbsp;&nbsp; ActDoc.<b>DeleteAllDefaultStaticStudyPlots</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get Ready study<br>
+&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWStudyManager object&quot;<br>
+&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 0<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(0)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;No CWStudy object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Mesh<br>
+&nbsp;&nbsp;&nbsp; Set CWMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CWMesh Is Nothing Then ErrorMsg SwApp, &quot;No CWMesh object&quot;<br>
+&nbsp;&nbsp;&nbsp; CWMesh.<b>Quality</b> = 0<br>
+&nbsp;&nbsp;&nbsp; Call CWMesh.<b>GetDefaultElementSizeAndTolerance</b>(0, el, 
+tl)<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Mesh failed&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed 
+with error code as defined in swsRunAnalysisError_e: &quot; &amp; errCode</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get results<br>
+&nbsp;&nbsp;&nbsp; Set CWResult = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWResult Is Nothing Then ErrorMsg SwApp, &quot;No CWResults 
+object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create Design Insight plot of the results<br>
+&nbsp;&nbsp;&nbsp; Set CWCFf = CWResult.<b>CreatePlot</b>(swsResultDesignInsight, 
+0, swsUnitSI, False, errCode)<br>
+&nbsp;&nbsp;&nbsp; If CWCFf Is Nothing Then ErrorMsg SwApp, &quot;Failed to create 
+plot&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get Design Insight plot<br>
+&nbsp;&nbsp;&nbsp; Set plot = CWResult.<b>GetPlot</b>(&quot;Design Insight1&quot;, errCode)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Set load level of Design Insight plot<br>
+&nbsp;&nbsp;&nbsp; plot.<b>IsoValue</b> = 50</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Activate plot<br>
+&nbsp;&nbsp;&nbsp; errCode = plot.<b>ActivatePlot</b>()<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Plot is not 
+activated&quot;</p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

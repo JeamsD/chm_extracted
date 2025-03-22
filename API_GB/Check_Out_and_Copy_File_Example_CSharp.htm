@@ -1,0 +1,237 @@
+<html>
+
+<head>
+<title>Check Out and Copy File Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,vaults">
+<meta name=MS-HKWD content="C# examples,files">
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Check Out and Copy File Example (C#)</h1>
+<p><a name="top"></a>This example shows how to find a vault from a file path, 
+check out the file from the vault, and copy the file to another location.</p><font size="1">
+</font>
+<p><b>NOTE</b>: If using the primary interop assembly 
+provided with SOLIDWORKS PDM Professional, see
+<a href="Using_NET_Framework_in_Applications.htm">Using .NET Framework 4.0 in 
+Stand-alone Applications</a>.</p>
+<p><img border="0" src="CheckOutFile.gif" width="279" height="125"></p>
+
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:green;">
+//----------------------------------------------------------------------------</span><br>
+<span style="color:green;">//&nbsp;Preconditions:</span><br>
+<span style="color:green;">//&nbsp;1.&nbsp;Start&nbsp;Microsoft&nbsp;Visual&nbsp;Studio&nbsp;2010.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Click&nbsp;<b>File&nbsp;&gt;&nbsp;New&nbsp;&gt;&nbsp;Project&nbsp;&gt;&nbsp;Visual 
+C#&nbsp;&gt;&nbsp;Windows&nbsp;Forms&nbsp;Application</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Type&nbsp;<b>GetVaultFromFilePath_CSharp</b>&nbsp;in&nbsp;<b>Name</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;<b>Browse</b>&nbsp;and&nbsp;navigate&nbsp;to&nbsp;the&nbsp;folder&nbsp;where&nbsp;to&nbsp;create&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;project.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click&nbsp;<b>OK</b>.&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;e.&nbsp;Click&nbsp;<b>Show&nbsp;All&nbsp;Files</b>&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer&nbsp;toolbar&nbsp;and&nbsp;expand&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Form1.cs</b>&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;f.&nbsp;Replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>Form1.cs</b>&nbsp;with&nbsp;<a href="#Form1.cs">this&nbsp;code</a>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;g.&nbsp;To create the form, 
+replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>Form1.Designer.cs</b>&nbsp;with&nbsp;<a href="#Form1.Designer.cs">this&nbsp;code</a>.</span><br>
+<span style="color:green;">//&nbsp;2.&nbsp;Add&nbsp;<b>EPDM.Interop.epdm.dll</b>&nbsp;as&nbsp;a&nbsp;reference&nbsp;(right-click&nbsp;the&nbsp;project</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer,&nbsp;click&nbsp;<b>Add&nbsp;Reference</b>,&nbsp;click&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;<b>Assemblies&nbsp;&gt;&nbsp;Framework</b>&nbsp;in&nbsp;the&nbsp;left-side&nbsp;panel,&nbsp;browse&nbsp;to&nbsp;the&nbsp;top&nbsp;folder&nbsp;of&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;your&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;installation,&nbsp;locate&nbsp;and&nbsp;click&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;<b>EPDM.Interop.epdm.dll</b>,&nbsp;click&nbsp;<b>Open</b>,&nbsp;click&nbsp;<b>Add</b>,<b> </b>
+and click<b> Close</b>).</span><br>
+<span style="color:green;">//&nbsp;3.&nbsp;Right-click&nbsp;<b>EPDM.Interop.epdm</b>&nbsp;in&nbsp;References,&nbsp;click&nbsp;<b>Properties</b>,&nbsp;and&nbsp;set&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;<b>Embed&nbsp;Interop&nbsp;Types</b>&nbsp;to&nbsp;<b>False</b>&nbsp;to&nbsp;handle&nbsp;methods&nbsp;that&nbsp;pass&nbsp;arrays&nbsp;of&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;structures.<br>
+// 4. Ensure that <b>c:\temp</b> exists.<br>
+// 5. Ensure that at least one file is checked into a vault.</span><br>
+<span style="color:green;">//&nbsp;6.&nbsp;Click&nbsp;<b>Debug&nbsp;&gt;&nbsp;Start&nbsp;Debugging</b>&nbsp;or&nbsp;press&nbsp;F5.</span><br>
+<span style="color:green;">//</span><br>
+<span style="color:green;">//&nbsp;Postconditions:&nbsp;</span><br>
+<span style="color: #008000; background-position: 0 0">//</span><font size="2"><span style="color:green;">&nbsp;1.&nbsp;Displays the&nbsp;Check 
+out and copy a file&nbsp;dialog&nbsp;box.</span><br>
+<span style="color: #008000">//</span><span style="color:green;">&nbsp;2. Click <b>Check 
+out and copy a file</b>.<br>
+// 3. In the Open dialog, navigate to and click a file checked into a vault.<br>
+// 4. Click <b>Open</b>.<br>
+</span><span style="color: #008000">//</span><span style="color:green;">&nbsp;&nbsp;&nbsp; 
+a. Gets the vault from the selected file's path.<br>
+//&nbsp;&nbsp;&nbsp; b. Logs into the vault.<br>
+//&nbsp;&nbsp;&nbsp; c. Checks out the file.</span><span style="color:green;"><br>
+//&nbsp;&nbsp;&nbsp; d. Displays a message box confirming the check-out.<br>
+//&nbsp;&nbsp;&nbsp; e. Click <b>OK</b>.<br>
+//&nbsp;&nbsp;&nbsp; f. Copies the selected file to <b>c:\temp</b>.<br>
+//&nbsp;&nbsp;&nbsp; g. Displays a message box confirming the copy.<br>
+//&nbsp;&nbsp;&nbsp; h. Click <b>OK</b>.</span><br>
+<span style="color: #008000">//</span><span style="color:green;">&nbsp;5.&nbsp;Close&nbsp;the&nbsp;Check 
+out and copy a file&nbsp;dialog box.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></font><br>
+<span style="color:green;">
+//----------------------------------------------------------------------------</span><br>
+&nbsp;<br>
+<span style="color:green;"><a name="Form1.cs"></a>//Form1.cs</span></p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:blue;">using</span>&nbsp;System;<br>
+<span style="color:blue;">using</span>&nbsp;System.Collections.Generic;<br>
+<span style="color:blue;">using</span>&nbsp;System.ComponentModel;<br>
+<span style="color:blue;">using</span>&nbsp;System.Data;<br>
+<span style="color:blue;">using</span>&nbsp;System.Drawing;<br>
+<span style="color:blue;">using</span>&nbsp;System.Linq;<br>
+<span style="color:blue;">using</span>&nbsp;System.Text;<br>
+<span style="color:blue;">using</span>&nbsp;System.Windows.Forms;<br>
+<span style="color:blue;">using</span>&nbsp;EPDM.Interop.epdm;<br>
+&nbsp;<br>
+<span style="color:blue;">namespace</span>&nbsp;GetVaultFromPath_CSharp<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">partial</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Form1</span>&nbsp;:&nbsp;<span style="color:#2b91af;">Form</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;Form1()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InitializeComponent();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;Form1_Load(System.<span style="color:#2b91af;">Object</span>&nbsp;sender,&nbsp;System.<span style="color:#2b91af;">EventArgs</span>&nbsp;e)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;Button1_Click(System.<span style="color:#2b91af;">Object</span>&nbsp;sender,&nbsp;System.<span style="color:#2b91af;">EventArgs</span>&nbsp;e)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">EdmVault5</span>&nbsp;vault&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">EdmVault5</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmVault5</span>();<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmStrLst5</span>&nbsp;strList&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmStrLst5</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;strList&nbsp;=&nbsp;vault.<b>BrowseForFile</b>(<span style="color:blue;">this</span>.Handle.ToInt32());<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmPos5</span>&nbsp;pos&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmPos5</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pos&nbsp;=&nbsp;strList.<b>GetHeadPosition</b>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;filePath&nbsp;=&nbsp;strList.<b>GetNext</b>(pos);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Get&nbsp;name&nbsp;of&nbsp;the&nbsp;vault&nbsp;in&nbsp;which&nbsp;the&nbsp;file&nbsp;is&nbsp;located&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;VaultName&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultName&nbsp;=&nbsp;vault.<b>GetVaultNameFromPath</b>(filePath);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Log&nbsp;into&nbsp;the&nbsp;vault&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault.<b>LoginAuto</b>(VaultName,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Get&nbsp;the&nbsp;interface&nbsp;to&nbsp;the&nbsp;file&nbsp;and&nbsp;its&nbsp;parent&nbsp;folder&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmFile5</span>&nbsp;file&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmFile5</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmFolder5</span>&nbsp;folder&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file&nbsp;=&nbsp;vault.<b>GetFileFromPath</b>(filePath,&nbsp;<span style="color:blue;">out</span>&nbsp;folder);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(file&nbsp;==&nbsp;<span style="color:blue;">null</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;The&nbsp;file&nbsp;is&nbsp;not&nbsp;in&nbsp;the&nbsp;vault&nbsp;&quot;</span>&nbsp;+&nbsp;VaultName&nbsp;+&nbsp;<span style="color:#a31515;">&quot;.&quot;</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">else</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Check&nbsp;out&nbsp;the&nbsp;file&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file.<b>LockFile</b>(folder.<b>ID</b>,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;Checked&nbsp;out&nbsp;&quot;</span>&nbsp;+&nbsp;file.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;in&nbsp;vault&nbsp;&quot;</span>&nbsp;+&nbsp;VaultName&nbsp;+&nbsp;<span style="color:#a31515;">&quot;.&quot;</span>);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Copy&nbsp;the&nbsp;file</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmEnumeratorVersion5</span>&nbsp;verEnum&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmEnumeratorVersion5</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;verEnum&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmEnumeratorVersion5</span>)file;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;Version&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Version&nbsp;=&nbsp;file.<b>GetLocalVersionNo</b>(folder.<b>ID</b>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmVersion5</span>&nbsp;ver&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmVersion5</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ver&nbsp;=&nbsp;verEnum.<b>GetVersion</b>(Version);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ver.<b>GetFileCopy</b>(<span style="color:blue;">this</span>.Handle.ToInt32(),&nbsp;<span style="color:#a31515;">&quot;c:\\temp\\&quot;</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;Copied&nbsp;&quot;</span>&nbsp;+&nbsp;file.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;to&nbsp;c:\\temp.&quot;</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(ex.ErrorCode.ToString()&nbsp;==&nbsp;<span style="color:#a31515;">&quot;-2147220949&quot;</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;The&nbsp;selected&nbsp;file&nbsp;is&nbsp;not&nbsp;located&nbsp;in&nbsp;a&nbsp;file&nbsp;vault.&quot;</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">else</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}</p>
+<p style="font-family: Courier New; color: black; background: white" align="center">
+<a href="#top">Back to top</a></p>
+<p style="font-family: Courier New; font-size: 13; color: #008000; background: white" class="APICODE">
+<a name="Form1.Designer.cs"></a>//Form1.Designer.cs</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:blue;">namespace</span>&nbsp;GetVaultFromPath_CSharp<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">partial</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Form1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;Required&nbsp;designer&nbsp;variable.</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.ComponentModel.<span style="color:#2b91af;">IContainer</span>&nbsp;components&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;Clean&nbsp;up&nbsp;any&nbsp;resources&nbsp;being&nbsp;used.</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;param&nbsp;name=&quot;disposing&quot;&gt;</span><span style="color:green;">true&nbsp;if&nbsp;managed&nbsp;resources&nbsp;should&nbsp;be&nbsp;disposed;&nbsp;otherwise,&nbsp;false.</span><span style="color:gray;">&lt;/param&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">void</span>&nbsp;Dispose(<span style="color:blue;">bool</span>&nbsp;disposing)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(disposing&nbsp;&amp;&amp;&nbsp;(components&nbsp;!=&nbsp;<span style="color:blue;">null</span>))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;components.Dispose();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">base</span>.Dispose(disposing);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#region</span>&nbsp;Windows&nbsp;Form&nbsp;Designer&nbsp;generated&nbsp;code<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;Required&nbsp;method&nbsp;for&nbsp;Designer&nbsp;support&nbsp;-&nbsp;do&nbsp;not&nbsp;modify</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;the&nbsp;contents&nbsp;of&nbsp;this&nbsp;method&nbsp;with&nbsp;the&nbsp;code&nbsp;editor.</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;InitializeComponent()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Button1&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.SuspendLayout();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Button1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Button1.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(31,&nbsp;26);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Button1.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Button1&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Button1.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(150,&nbsp;23);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Button1.TabIndex&nbsp;=&nbsp;6;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Button1.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Check&nbsp;out&nbsp;and&nbsp;copy&nbsp;a&nbsp;file&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Button1.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Button1.Click&nbsp;+=<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(Button1_Click);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Form1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AutoScaleDimensions&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">SizeF</span>(6f,&nbsp;13f);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AutoScaleMode&nbsp;=&nbsp;System.Windows.Forms.<span style="color:#2b91af;">AutoScaleMode</span>.Font;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.ClientSize&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(263,&nbsp;87);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.Button1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Form1&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Check&nbsp;out&nbsp;and&nbsp;copy&nbsp;a&nbsp;file&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Load&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(<span style="color:blue;">this</span>.Form1_Load);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.ResumeLayout(<span style="color:blue;">false</span>);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#endregion</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">internal</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>&nbsp;Button1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+&nbsp;</p>
+<p style="font-family: Courier New; color: black; background: white" align="center">
+<a href="#top">Back to top</a></p>
+
+</body>
+
+</html>

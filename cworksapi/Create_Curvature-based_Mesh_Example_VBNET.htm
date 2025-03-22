@@ -1,0 +1,250 @@
+<html>
+
+<head>
+<title>Create Curvature-based Mesh Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples,meshes">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Create Curvature-based Mesh Example (VB.NET)</h1>
+<p>This example shows how to create a curvature-based mesh for a part.</p>
+
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p class="APICODE"><span style="color:Green">
+	'----------------------------------------------------------------------------<br>
+	' Preconditions:<br>
+	</span>
+<span style="color:green;">'&nbsp;1.&nbsp;Add&nbsp;the&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;as&nbsp;an&nbsp;add-in</span>
+<span style="color:green;">(in&nbsp;SOLIDWORKS,&nbsp;click&nbsp;<b><br>
+	</b>'<b>&nbsp;&nbsp;&nbsp; Tools&nbsp;&gt;&nbsp;Add-ins&nbsp;&gt;&nbsp;SOLIDWORKS&nbsp;Simulation &gt; OK</b>).</span><br>
+<span style="color: #008000">'</span><span style="color:green;">&nbsp;2.&nbsp;Add&nbsp;the&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;primary&nbsp;interop&nbsp;assembly&nbsp;as&nbsp;a&nbsp;reference</span><br>
+<span style="color: #008000">'</span><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;(in&nbsp;the&nbsp;IDE,&nbsp;click&nbsp;<b>Project&nbsp;&gt;&nbsp;Add&nbsp;Reference&nbsp;&gt;&nbsp;.NET&nbsp;&gt;&nbsp;<br>
+</b>'<b>&nbsp;&nbsp;&nbsp; SolidWorks.Interop.cosworks&nbsp;&gt;&nbsp;OK</b>).<br>
+	' 3. Ensure that the specified part exists.</span><span style="color:Green"><br>
+	' 4. Open the Immediate window.<br>
+	'<br>
+	' Postconditions:<br>
+	' 1. Opens the part document.<br>
+	' 2. Creates a curvature-based mesh for study, <b>Ready</b>.<br>
+	' 3. In SOLIDWORKS, click Ready, right-click <b>Mesh</b><br>
+	'&nbsp;&nbsp;&nbsp;&nbsp;in the Simulation study tree, and click <b>Show Mesh</b>.<br>
+	' 4. Gets mesh connectivity data and node normal coordinates.
+	</span><font color="#008000">Because the<br>
+	'&nbsp;&nbsp;&nbsp; amount of data returned is large, the display code is 
+	commented out.<br>
+	'&nbsp;&nbsp;&nbsp; Uncomment the display code or add break points to 
+	inspect the returned <br>
+	'&nbsp;&nbsp;&nbsp; arrays in the Locals window.</font><span style="color:Green"><br>
+	' 5. Zoom in on the part and examine the mesh.<br>
+	' 6. Examine the Immediate window.<br>
+	'<br>
+	' NOTE: Because the part document is used elsewhere, do not save changes.<br>
+	'----------------------------------------------------------------------------<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.sldworks<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.swconst<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	System<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	System.Diagnostics<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.cosworks<br>
+	<br>
+	</span><span style="color:Blue">Partial</span><span style="color:Black">
+	</span><span style="color:Blue">Class</span><span style="color:Black"> 
+	SolidWorksMacro<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Public</span><span style="color:Black">
+	</span><span style="color:Blue">Sub</span><span style="color:Black"> Main()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	COSMOSWORKS </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	COSMOSObject </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CwAddincallback<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	ActDoc </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWModelDoc<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	StudyMngr </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWStudyManager<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	Study </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CWStudy<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	CwMesh </span><span style="color:Blue">As</span><span style="color:Black"> 
+	CwMesh<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	errCode </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color: #0000FF">Integer</span><span style="color:Blue"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	errors </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color: #0000FF">Integer</span><span style="color:Blue"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	warnings </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color: #0000FF">Integer</span><span style="color:Blue"><br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Const</span><span style="color:Black"> 
+	fileName </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black"> =
+	</span><span style="color:#a31515">&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2019\samples\Simulation Examples\bikeframe.sldprt&quot;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COSMOSObject = swApp.<b>GetAddInObject</b>(</span><span style="color:#a31515">&quot;</span><span style="color:#a31515">SldWorks.Simulation</span><span style="color:#a31515">&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	COSMOSObject </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(swApp, </span><span style="color:#a31515">&quot;No Simulation 
+	add-in&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COSMOSWORKS = COSMOSObject.<b>COSMOSWORKS</b><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	COSMOSWORKS </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(swApp, </span><span style="color:#a31515">&quot;No COSMOSWORKS 
+	object&quot;</span><span style="color:Black">)<br>
+	</span><span style="color:Green"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>OpenDoc6</b>(fileName, 
+	swDocumentTypes_e.swDocPART, swOpenDocOptions_e.swOpenDocOptions_Silent,
+	</span><span style="color:#a31515">&quot;&quot;</span><span style="color:Black">, 
+	errors, warnings)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	ActDoc </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(swApp, </span><span style="color:#a31515">&quot;No active document&quot;</span><span style="color:Black">)<br>
+	</span><span style="color:Green"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	StudyMngr </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(swApp, </span><span style="color:#a31515">&quot;No CWStudyManager object&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Study = StudyMngr.<b>GetStudy</b>(0)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	Study </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(swApp, </span><span style="color:#a31515">&quot;No study&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	(Study.<b>Name</b> &lt;&gt; </span><span style="color:#a31515">&quot;Ready&quot;</span><span style="color:Black">)
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(swApp, </span><span style="color:#a31515">&quot;Wrong study&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Name of study: &quot;</span><span style="color:Black"> 
+	&amp; Study.<b>Name</b>)<br>
+	</span><span style="color:Green"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CwMesh = Study.<b>Mesh</b><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	CwMesh </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(swApp, </span><span style="color:#a31515">&quot;No mesh&quot;</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Set type of mesh to 
+	curvature-based<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CwMesh.<b>MesherType</b> = 
+	swsMesherType_e.swsMesherTypeAlternate<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Set mesh parameters<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CwMesh.<b>GrowthRatio</b> = 1.6<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CwMesh.<b>MinElementsInCircle</b> = 8<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CwMesh.<b>GetDefaultMaxAndMinElementSize</b>(swsLinearUnit_e.swsLinearUnitMillimeters, 
+	20, 4)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Create mesh<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode = Study.<b>CreateMesh</b>(swsLinearUnit_e.swsLinearUnitMillimeters, 
+	20, 1)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Error code: &quot;</span><span style="color:Black"> 
+	&amp; errCode) </span><span style="color:Green">'0 indicates successful creation 
+	of the mesh<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	errCode &lt;&gt; 0 </span><span style="color:Blue">Then</span><span style="color:Black"> 
+	ErrorMsg(swApp, </span><span style="color:#a31515">&quot;Mesh failed; check error 
+	code&quot;</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Get maximum and minimum element 
+	sizes used for boundaries<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Maximum 
+	element size used for boundaries with lowest curvature: &quot;</span><span style="color:Black"> 
+	&amp; CwMesh.<b>MaxElementSize</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Minimum element size 
+	used for boundaries with highest curvature: &quot;</span><span style="color:Black"> 
+	&amp; CwMesh.<b>MinElementSize</b>)<br>
+&nbsp;</span><p style="font-family: Consolas; font-size: 13; color: black; background: white" class="APICODE">
+	&nbsp;<font face="Courier New"><span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+	Dim</span>&nbsp;Var&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Object</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;Var1&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Object</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Dim&nbsp;i&nbsp;As&nbsp;Integer</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Debug.Print(&quot;Mesh&nbsp;connectivity&nbsp;data&quot;)</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Debug.Print(&quot;Number&nbsp;of&nbsp;nodes&nbsp;in&nbsp;connectivity&nbsp;unit,&nbsp;node&nbsp;numbers&nbsp;in&nbsp;connectivity&nbsp;unit&quot;)</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'i&nbsp;=&nbsp;0</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Var&nbsp;=&nbsp;CwMesh.<b>GetConnectivity</b>(errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Do&nbsp;While&nbsp;i&nbsp;&lt;=&nbsp;UBound(Var)</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">&nbsp;&nbsp; 'Debug.Print(Var(i))</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">&nbsp;&nbsp; 'i&nbsp;=&nbsp;i&nbsp;+&nbsp;1</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Loop</span><br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Debug.Print(&quot;Mesh&nbsp;node&nbsp;normals&quot;)</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Debug.Print(&quot;Node&nbsp;#,&nbsp;x-coord,&nbsp;y-coord,&nbsp;z-coord&nbsp;of&nbsp;node's&nbsp;normal&nbsp;vector&quot;)</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'i&nbsp;=&nbsp;0</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Var1&nbsp;=&nbsp;CwMesh.<b>GetNodeOutwardDirections</b>(errCode)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Do&nbsp;While&nbsp;i&nbsp;&lt;=&nbsp;UBound(Var1)</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">&nbsp;&nbsp; 'if 0 =&nbsp;i&nbsp;Mod&nbsp;4&nbsp;Then</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Debug.Print(&quot;Node:&nbsp;&quot;&nbsp;&amp;&nbsp;Var1(i))</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Debug.Print(&quot;&nbsp;&nbsp;Normal&nbsp;vector&nbsp;(x,&nbsp;y,&nbsp;z&nbsp;coordinates):&quot;)</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">&nbsp;&nbsp; 'Else</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Debug.Print(&quot;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&amp;&nbsp;Var1(i))</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">&nbsp;&nbsp; 'End&nbsp;If</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">&nbsp;&nbsp; 'i&nbsp;=&nbsp;i&nbsp;+&nbsp;1</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Loop</span></font><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><font face="Courier New"><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub<br>
+	</span><span style="color:Green"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	ErrorMsg(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	swApp </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color: #0000FF">SldWorks</span><span style="color:Black">,
+	</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	Message </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>SendMsgToUser2</b>(Message, 0, 0)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>RecordLine</b>(</span><span style="color:#a31515">&quot;'*** WARNING - 
+	General&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>RecordLine</b>(</span><span style="color:#a31515">&quot;'*** &quot;</span><span style="color:Black"> 
+	&amp; Message)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>RecordLine</b>(</span><span style="color:#a31515">&quot;&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub<br>
+	<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'''
+	</span><span style="color:Gray">&lt;summary&gt;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">''' 
+	The SldWorks swApp variable is pre-assigned for you.<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'''
+	</span><span style="color:Gray">&lt;/summary&gt;<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Public</span><span style="color:Black"> 
+	swApp </span><span style="color:Blue">As</span><span style="color:Black"> 
+	SldWorks<br>
+	<br>
+	<br>
+	</span><span style="color:Blue">End</span><span style="color:Black"> </span>
+	</font>
+	<span style="color:Blue"><font face="Courier New">Class</font><br>
+	<br>
+&nbsp;</span></div>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

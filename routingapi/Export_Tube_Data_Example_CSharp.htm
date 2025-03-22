@@ -1,0 +1,122 @@
+<html>
+
+<head>
+<title>Export Tube Data Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,export">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Routing 
+ API Help</span></h1>
+<h1>Export Tube Data Example (C#)</h1>
+<p>This example shows how to export routing tube data.</p>
+
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+		<p class="APICODE"><span style="color:Green">
+		<font size="2">
+		//---------------------------------------------------------------------------<br>
+		// Preconditions: <br>
+		//&nbsp;1. Add SOLIDWORKS Routing as an add-in </font> 
+		</span><font size="2" color="#008000"><br>
+		//&nbsp;&nbsp; </font>
+		<span style="color:Green">
+		<font size="2">(in SOLIDWORKS select <b>
+		Tools &gt; Add-Ins &gt; SOLIDWORKS Routing</b>). <br>
+		//&nbsp;2. Add <b>SolidWorks.Interop.SwRoutingLib.dll</b> as a reference 
+		</font> 
+		</span><font size="2" color="#008000"><br>
+		//&nbsp;&nbsp; </font>
+		<span style="color:Green">
+		<font size="2">(in the IDE right-click the project, </font> 
+		</span><font size="2" color="#008000"><br>
+		//&nbsp;&nbsp;&nbsp;
+		</font><span style="color:Green">
+		<font size="2">select <b>Add Reference</b>, and 
+		browse <i>install_dir</i><b>\api\redist</b>). 
+		<br>
+		//&nbsp;3. In <b>Tools &gt; Options &gt; System Options &gt; Routing &gt; Routing File 
+		Locations</b>,  
+		</font> 
+		</span><font size="2" color="#008000"><br>
+		//&nbsp;&nbsp;&nbsp;
+		</font><span style="color:Green">
+		<font size="2">add locations of your SOLIDWORKS Routing files.</font></span><font size="2"><span style="color:Green"><br>
+		//&nbsp;4. Open <i>public_documents</i><b>\samples\tutorial\api\tubing.sldasm</b>.
+		<br>
+		//&nbsp;5. In the FeatureManager design tree select <b>Tube1^Tubing</b> assembly.
+		<br>
+		//&nbsp;6. Rename the namspace to match the name of your C# project.<br>
+		//&nbsp;7. Open an Immediate Window. <br>
+		//&nbsp;8. Ensure that <b>c:\temp</b> exists. <br>
+		// <br>
+		// Postconditions: Tangent bend data is exported to <b>c:\temp\default.html</b>. &nbsp;&nbsp;&nbsp;<br>
+		//---------------------------------------------------------------------------<br>
+		<br>
+		</span><span style="color:Blue">using</span><span style="color:Black"> 
+		SolidWorks.Interop.sldworks;<br>
+		</span><span style="color:Blue">using</span><span style="color:Black"> 
+		SolidWorks.Interop.swconst;<br>
+		</span><span style="color:Blue">using</span><span style="color:Black"> 
+		SolidWorks.Interop.SWRoutingLib;<br>
+		</span><span style="color:Blue">using</span><span style="color:Black"> 
+		System;<br>
+		</span><span style="color:Blue">using</span><span style="color:Black"> 
+		System.Diagnostics;<br>
+		</span><span style="color:Blue">namespace</span><span style="color:Black"> 
+		ExportTubeData_CSharp.csproj<br>
+		{<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">partial</span><span style="color:Black">
+		</span><span style="color:Blue">class</span><span style="color:Black">
+		</span><span style="color:#2b91af">SolidWorksMacro<br>
+		</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+		<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black">
+		</span><span style="color:Blue">void</span><span style="color:Black"> 
+		Main()<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ModelDoc2</span><span style="color:Black"> 
+		swModel = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">ModelDoc2</span><span style="color:Black">);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">AssemblyDoc</span><span style="color:Black"> 
+		swTopLevelAssembly = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">AssemblyDoc</span><span style="color:Black">);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">RouteManager</span><span style="color:Black"> 
+		rtRouteManager = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">RouteManager</span><span style="color:Black">);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000FF">int</span><span style="color:Black"> 
+		resultCode = 0;<br>
+		<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swModel = (</span><span style="color:#2b91af">ModelDoc2</span><span style="color:Black">)swApp.ActiveDoc;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swTopLevelAssembly = (</span><span style="color:#2b91af">AssemblyDoc</span><span style="color:Black">)swModel;<br>
+		<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// Get the RouteManager 
+		from the top-level assembly <br>
+		</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rtRouteManager = (</span><span style="color:#2b91af">RouteManager</span><span style="color:Black">)swTopLevelAssembly.<b>GetRouteManager</b>();<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> 
+		(rtRouteManager == </span><span style="color:Blue">null</span><span style="color:Black">)<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;No 
+		RouteManager found in top-level document.&quot;</span><span style="color:Black">);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">return</span><span style="color:Black">;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+		<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resultCode = rtRouteManager.<b>ExportTubeData</b>(</span><span style="color:#a31515">&quot;c:\\temp.html&quot;</span><span style="color:Black">, 
+		1, 0);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+		<br>
+		<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black">
+		</span><span style="color:#2b91af">SldWorks</span><span style="color:Black"> 
+		swApp;<br>
+		<br>
+		<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+		}</span>
+	</font>
+	</div>
+&nbsp;</div>
+
+</body>
+
+</html>

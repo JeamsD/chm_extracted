@@ -1,0 +1,92 @@
+<html>
+
+<head>
+<title>Add to Route Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,routing">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Routing API 
+ Help</span></h1>
+<h1>Add to Route Example (VBA)</h1>
+<p>This example shows how to add to a route.</p>
+
+<p class=APICODE>'---------------------------------------------------------------------------- 
+<br>
+' Preconditions: <font size="2"><br>
+' 1. Add SOLIDWORKS Routing as an add-in (select <b>Tools &gt; Add-Ins &gt; SOLIDWORKS
+<br>
+'&nbsp;&nbsp;&nbsp; Routing</b> in SOLIDWORKS).<br>
+' 2. Add the <b>SOLIDWORKS</b> <i>&lt;version&gt;</i> <b>Routing Type Library</b> as a 
+reference <br>
+'&nbsp;&nbsp;&nbsp; (select <b>Tools &gt; References</b> in the IDE).<br>
+' 3.&nbsp;In <b>Tools &gt; Options &gt; System Options &gt; Routing &gt; Routing File Locations</b>,
+<br>
+'&nbsp;&nbsp;&nbsp; add the locations of your SOLIDWORKS Routing files.<br>
+' 4. Press F5 to run the macro.<br>
+</font>' <br>
+' Postconditions:&nbsp; <br>
+' 1. The routing assembly component is added to the route at<br>
+'&nbsp;&nbsp;&nbsp; CPoint1 and CPoint3 on the <b>straight cross inch pipe</b> 
+component.<br>
+' 2. The routing assembly component is added to the <b>reducing outlet cross inch</b><br>
+'&nbsp;&nbsp;&nbsp; component.<br>
+'<br>
+' <span style="font-weight: bold;">NOTE</span>: Because 
+ the models are used elsewhere,<br>
+' do not save changes when closing the models. <br>
+' 
+---------------------------------------------------------------------------<br>
+Option Explicit<br>
+<br>
+Dim swApp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.SldWorks</p>
+<pre>Sub main()
+
+    Dim swModel         As SldWorks.ModelDoc2
+    Dim swAssembly      As SldWorks.AssemblyDoc
+    Dim swRouteMgr      As SWRoutingLib.RouteManager
+    Dim swModelDocExt   As SldWorks.ModelDocExtension
+    Dim boolstatus      As Boolean
+    Dim errors          As Long
+    Dim warnings        As Long
+    Dim fileName        As String    </pre>
+<pre>    Set swApp = Application.SldWorks
+    If swApp Is Nothing Then Exit Sub    </pre>
+<pre>    ' Open assembly document and make it the active document
+    fileName = &quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\api\AddtoRoute.sldasm&quot;
+    swApp.<b>OpenDoc6 </b>fileName, swDocASSEMBLY, swOpenDocOptions_Silent, &quot;Default&quot;, errors, warnings
+    Set swModel = swApp.<b>ActiveDoc</b>
+    Set swAssembly = swModel    </pre>
+<pre>    ' Get the RouteManager
+    Set swRouteMgr = swAssembly.<b>GetRouteManager</b></pre>
+<pre>    swModel.<b>ClearSelection2</b> True    </pre>
+<pre>   ' Select the routing assembly component to add to the route
+    Set swModelDocExt = swModel.<b>Extension</b>
+    boolstatus = swModelDocExt.<b>SelectByID2</b>(&quot;Route1@Pipe_2^AddToRoute-1@AddToRoute&quot;, &quot;ROUTEFABRICATED&quot;, 0, 0, 0, False, 0, Nothing, 0)    </pre>
+<pre>    ' Put the route in edit mode
+    swRouteMgr.<b>EditRoute</b>    </pre>
+<pre>    swModel.<b>ClearSelection2</b> True</pre>
+<pre>   ' Select the connection points where to add the routing assembly component
+    boolstatus = swModelDocExt.<b>SelectByID2</b>(&quot;CPoint3@Pipe_2^AddToRoute-1@AddToRoute/straight cross inch-1@Pipe_2^AddToRoute&quot;, &quot;CONNECTIONPOINT&quot;, 0#, 0#, 0#, True, 0, Nothing, 0)
+    boolstatus = swModelDocExt.<b>SelectByID2</b>(&quot;CPoint1@Pipe_2^AddToRoute-1@AddToRoute/straight cross inch-1@Pipe_2^AddToRoute&quot;, &quot;CONNECTIONPOINT&quot;, 0#, 0#, 0#, True, 0, Nothing, 0)    </pre>
+<pre>    ' Add to the route
+    boolstatus = swRouteMgr.<b>AddToRoute</b>()</pre>
+<pre>    swModel.<b>ClearSelection2</b> True    </pre>
+<pre>    ' Select the assembly component where to add the routing assembly component
+    boolstatus = swModelDocExt.<b>SelectByID2</b>(&quot;reducing outlet cross inch-1@AddToRoute&quot;, &quot;COMPONENT&quot;, 0, 0, 0, False, 0, Nothing, 0)    </pre>
+<pre>    ' Add to the route
+    boolstatus = swRouteMgr.<b>AddToRoute</b>() </pre>
+<pre>    ' Exit the route from edit mode
+    swRouteMgr.<b>ExitRoute</b>    </pre>
+<pre>    ' Exit editing the assembly
+    swAssembly.<b>EditAssembly</b></pre>
+<pre>    swModel.<b>ViewZoomtofit</b>    </pre>
+<pre>End Sub</pre>
+
+</body>
+
+</html>

@@ -1,0 +1,173 @@
+<html>
+
+<head>
+<title>Notify User When File Changes State Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="Add-ins, VB.NET">
+<meta name=MS-HKWD content="VB.NET add-ins">
+<meta name=MS-HKWD content="VB.NET add-ins,hooks">
+<meta name=MS-HKWD content="VB.NET add-ins,workflows">
+<meta name=MS-HKWD content="VB.NET add-ins,states">
+<meta name=MS-HKWD content="VB.NET add-ins,transitions">
+<meta name=MS-HKWD content="VB.NET add-ins,notifications">
+<body>
+<h1><font size="1"><span style="font-weight: 400">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Notify User When File Changes State Example (VB.NET)</h1>
+<p>This example shows how to create an add-in that pops up a message box when a file is 
+approved.</p>
+
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE"><span style="color:green;">'--------------------------------------------------------------------------------------</span><br>
+<span style="color:green;">'&nbsp;Preconditions:</span><br>
+<span style="color:green;">'&nbsp;1.&nbsp;Start&nbsp;Microsoft&nbsp;Visual&nbsp;Studio.</span><br>
+<span style="color:green;">'&nbsp;2.&nbsp;Click&nbsp;<b>File&nbsp;&gt;&nbsp;New&nbsp;&gt;&nbsp;Project&nbsp;&gt;&nbsp;Visual&nbsp;Basic&nbsp;&gt;&nbsp;Class&nbsp;Library (.NET Framework)</b>.</span><br>
+<span style="color:green;">'&nbsp;3. Select&nbsp;<b>.NET&nbsp;Framework&nbsp;</b><strong>4.5</strong>&nbsp;in&nbsp;the&nbsp;dropdown.</span><br>
+<span style="color:green;">'&nbsp;4. Type&nbsp;<b>StateChangeNotificationAddin</b>&nbsp;in&nbsp;<b>Name</b>.</span><br>
+<span style="color:green;">'&nbsp;5. Click&nbsp;<b>Browse</b>&nbsp;and&nbsp;navigate&nbsp;to&nbsp;the&nbsp;folder&nbsp;where&nbsp;to&nbsp;create&nbsp;the&nbsp;project.</span><br>
+<span style="color:green;">'&nbsp;6. Click&nbsp;<b>OK</b>.&nbsp;</span><br>
+<span style="color:green;">'&nbsp;7.&nbsp;Right-click&nbsp;the&nbsp;project&nbsp;name&nbsp;in&nbsp;the Solution&nbsp;Explorer&nbsp;and&nbsp;click&nbsp;<b>Add&nbsp;Reference</b>.&nbsp;<br>
+' 8. In&nbsp;the&nbsp;Add&nbsp;Reference&nbsp;dialog:&nbsp;&nbsp;&nbsp;</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Add&nbsp;PDM 
+Professional interop assembly&nbsp;as&nbsp;a&nbsp;reference&nbsp;(click&nbsp;<strong>Browse</strong>&nbsp;in&nbsp;the</span><br>
+<span style="color:green;">
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;left-side&nbsp;panel,&nbsp;select <strong>EPDM.Interop.epdm.dll</strong>,&nbsp;<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; and click&nbsp;<strong>OK</strong>).</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Add&nbsp;<b>System.Windows.Forms</b>&nbsp;as&nbsp;a&nbsp;reference&nbsp;(click&nbsp;<b>Assemblies 
+&gt; Framework</b>&nbsp;in&nbsp;the</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;left-side&nbsp;panel,&nbsp;select&nbsp;<b>System.Windows.Forms</b>,&nbsp;and&nbsp;click&nbsp;<strong>OK</strong>).</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;<b>Close</b>.<br>
+</span>
+<span style="color:green;">' 9. Right-click the project name in the Solution 
+Explorer and click <b>Properties</b>.<br>
+'10. In the Properties window:<br>
+'&nbsp;&nbsp;&nbsp; a. On the Application tab, click <b>Assembly Information</b>.<br>
+'&nbsp;&nbsp;&nbsp; b. De-select <b>Make assembly COM-Visible</b>.<br>
+'&nbsp;&nbsp;&nbsp; c. On the Compile tab, <font size="2"><span style="color:green;"> 
+select <strong>Any CPU</strong>, de-select <strong>Prefer 32-bit</strong>, and 
+select <b>Register for COM interop</b></span></font>.<br>
+'11. Save the project.<br>
+'12. Copy the code below to <b>Class1.vb</b>.<br>
+'13. </span><font color="#008000">To populate the GUID 
+	attribute, click <b>Tools &gt; Create GUID</b> in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; select GUID Format 
+	6, click <b>Copy</b>, and click <b>Exit</b>. Replace
+	&lt;</font><span style="color:#008000;">Guid</span><font color="#008000">(</font><span style="color:#008000;">&quot;&quot;</span><font color="#008000">)&gt; 
+with the <br>
+'&nbsp;&nbsp;&nbsp; copied string.</font><br>
+<span style="color:green;">'14.&nbsp;Click <b>Build &gt; Build Solution</b>.</span><br>
+<span style="color:green;">'</span><br>
+<span style="color:green;">'&nbsp;Postconditions:&nbsp;</span><br>
+<span style="color:green;">'&nbsp;1.&nbsp;Open the SOLIDWORKS PDM Professional Administration tool, expand a <i>vault_name</i> node,
+<br>
+'&nbsp;&nbsp;&nbsp; and log in as Admin.</span><br>
+<span style="color:green;">'&nbsp;2.&nbsp;</span><span style="color:green;">Ensure&nbsp;that&nbsp;Default Workflow&nbsp;exists&nbsp;under&nbsp;<i>vault_name</i>&nbsp;<b>&gt;&nbsp;Workflows</b>.<br>
+'&nbsp;&nbsp;&nbsp; a. Ensure that the workflow has an Approved state.<br>
+'&nbsp;&nbsp;&nbsp; b. Ensure that the workflow has a Change Approved 
+transition.</span><br>
+<span style="color:green;">'&nbsp;3.&nbsp;Under <i>vault_name</i>, right-click
+<b>Add-ins</b>&nbsp;and&nbsp;click&nbsp;<b>New&nbsp;Add-in</b>.<br>
+'&nbsp;&nbsp;&nbsp; a. Navigate to the </span>
+<span style="color:green;"><b>bin\Debug </b></span><span style="color:green;">directory of your built project.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Click&nbsp;<b>EPDM.Interop.epdm.dll</b>&nbsp;and&nbsp;<b>StateChangeNotificationAddin.dll<br>
+</b>'&nbsp;&nbsp;&nbsp; c. Click&nbsp;<b>Open</b>.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click&nbsp;<b>OK</b>.</span><br>
+<span style="color:green;">'&nbsp;4.&nbsp;Click&nbsp;<b>OK</b>&nbsp;after reading&nbsp;the&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;warning&nbsp;dialog.</span><br>
+<span style="color:green;">'&nbsp;5.&nbsp;Open&nbsp;File&nbsp;Explorer&nbsp;on&nbsp;a 
+view of&nbsp;<i>vault_name</i> and:</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Log&nbsp;in&nbsp;as&nbsp;Admin.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Create&nbsp;a new file in 
+the root directory of <i>
+vault_name</i> and&nbsp;check&nbsp;it in.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Right-click&nbsp;the&nbsp;file&nbsp;and&nbsp;click&nbsp;<b>Change&nbsp;State&nbsp;&gt;&nbsp;</b><i>transition</i>.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click&nbsp;<b>OK</b>&nbsp;in&nbsp;the&nbsp;Do&nbsp;Transition&nbsp;dialog.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;e.&nbsp;Repeat steps c and d 
+until the file is in a state that it can be Approved.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;g.&nbsp;Right-click&nbsp;the&nbsp;file&nbsp;and&nbsp;click&nbsp;<b>Change&nbsp;State&nbsp;&gt;&nbsp;Change&nbsp;Approved</b>.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;h.&nbsp;Click&nbsp;<b>OK</b>&nbsp;in&nbsp;the&nbsp;Do&nbsp;Transition&nbsp;dialog.<br>
+' 6. A message box pops up notifying the user whether the file changing state is 
+a<br>
+'&nbsp;&nbsp;&nbsp; top node. Click <b>OK</b>.</span><br>
+<span style="color:green;">'&nbsp;7.&nbsp;A&nbsp;message&nbsp;box&nbsp;pops&nbsp;up&nbsp;notifying&nbsp;the&nbsp;user&nbsp;that&nbsp;the&nbsp;file&nbsp;has&nbsp;been&nbsp;approved.&nbsp;</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp; Click&nbsp;<b>OK</b>.</span><br>
+<span style="color:green;">'---------------------------------------------------------------------------------------</span><br>
+<span style="color:blue;">Imports</span>&nbsp;System.Windows.Forms<br>
+<span style="color:blue;">Imports</span>&nbsp;EPDM.Interop.epdm<br>
+<span style="color:blue;">Imports</span>&nbsp;System.Runtime.InteropServices<br>
+<br>
+&lt;<span style="color:#2b91af;">Guid</span>(<span style="color:#a31515;">&quot;&quot;</span>)&gt;<br>
+&lt;<span style="color:#2b91af;">ComVisible</span>(<span style="color:blue;">True</span>)&gt;<br>
+ 
+<span style="color:blue;">Public</span>&nbsp;<span style="color:blue;">Class</span>&nbsp;<span style="color:#2b91af;">ChangeStateNotification</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Implements</span>&nbsp;<span style="color:#2b91af;">IEdmAddIn5</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Public</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;GetAddInInfo(<span style="color:blue;">ByRef</span>&nbsp;poInfo&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">EdmAddInInfo</span>,&nbsp;<span style="color:blue;">ByVal</span>&nbsp;poVault&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmVault5</span>,&nbsp;<span style="color:blue;">ByVal</span>&nbsp;poCmdMgr&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmCmdMgr5</span>)&nbsp;<span style="color:blue;">Implements</span>&nbsp;<span style="color:#2b91af;">IEdmAddIn5</span>.<b>GetAddInInfo</b><br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.<b>mbsAddInName</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;VB.NET&nbsp;Add-In&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.<b>mbsCompany</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Dassault&nbsp;Systemes&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.<b>mbsDescription</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Exercise&nbsp;demonstrating&nbsp;responding&nbsp;to&nbsp;a&nbsp;change&nbsp;state&nbsp;event.&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.<b>mlAddInVersion</b>&nbsp;=&nbsp;1<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Minimum&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;version</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'needed&nbsp;for&nbsp;VB.Net&nbsp;Add-Ins&nbsp;is&nbsp;6.4</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.<b>mlRequiredVersionMajor</b>&nbsp;=&nbsp;6<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.<b>mlRequiredVersionMinor</b>&nbsp;=&nbsp;4<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Register&nbsp;to&nbsp;receive&nbsp;a&nbsp;notification&nbsp;when</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'a&nbsp;file&nbsp;has&nbsp;changed&nbsp;state</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poCmdMgr.<b>AddHook</b>(<span style="color:#2b91af;">EdmCmdType</span>.<b>EdmCmd_PostState</b>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Catch</span>&nbsp;ex&nbsp;<span style="color:blue;">As</span>&nbsp;Runtime.InteropServices.<span style="color:#2b91af;">COMException</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;vbCrLf&nbsp;+&nbsp;ex.Message)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Catch</span>&nbsp;ex&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">Exception</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Public</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;OnCmd(<span style="color:blue;">ByRef</span>&nbsp;poCmd&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">EdmCmd</span>,&nbsp;<span style="color:blue;">ByRef</span>&nbsp;ppoData&nbsp;<span style="color:blue;">As</span>&nbsp;System.<span style="color:#2b91af;">Array</span>)&nbsp;<span style="color:blue;">Implements</span>&nbsp;<span style="color:#2b91af;">IEdmAddIn5</span>.<b>OnCmd</b><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;AffectedFile&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">EdmCmdData</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;AffectedFileNames&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">String</span>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color:blue;">Dim</span>&nbsp;cmdNode&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmCmdNode</span><span style="color:blue;"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim</span>&nbsp;topNode&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color: #0000FF">Boolean</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Select</span>&nbsp;<span style="color:blue;">Case</span>&nbsp;poCmd.<b>meCmdType</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'A&nbsp;file&nbsp;has&nbsp;changed&nbsp;state</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Case</span>&nbsp;<span style="color:#2b91af;">EdmCmdType</span>.<b>EdmCmd_PostState</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">For</span>&nbsp;<span style="color:blue;">Each</span>&nbsp;AffectedFile&nbsp;<span style="color:blue;">In</span>&nbsp;ppoData<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;AffectedFile.<b>mbsStrData2</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Approved&quot;</span>&nbsp;<span style="color:blue;">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AffectedFileNames&nbsp;+=&nbsp;AffectedFile.<b>mbsStrData1</b>&nbsp;+&nbsp;vbCrLf<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span></p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+cmdNode&nbsp;=&nbsp;AffectedFile.<b>mpoExtra</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;topNode&nbsp;=&nbsp;cmdNode.<b>GetProperty</b>(<span style="color:#2b91af;">EdmCmdNodeProp</span>.EdmCmdNode_IsTopNode)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2b91af;">MessageBox</span>.Show(<font color="#A31515">&quot;File</font><font color="#A31515"> 
+changing state is a top node? &quot;</font> + topNode)</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Next</span>&nbsp;AffectedFile<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;AffectedFileNames.Length&nbsp;&gt;&nbsp;0&nbsp;<span style="color:blue;">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poCmd.<b>mpoVault</b>.<b>MsgBox</b>(poCmd.<b>mlParentWnd</b>,&nbsp;AffectedFileNames&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;has&nbsp;been&nbsp;approved.&quot;</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'The&nbsp;event&nbsp;isn't&nbsp;registered</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Case&nbsp;Else</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poCmd.mpoVault.<b>MsgBox</b>(poCmd.<b>mlParentWnd</b>,&nbsp;<span style="color:#a31515;">&quot;An&nbsp;unknown&nbsp;command&nbsp;type&nbsp;was&nbsp;issued.&quot;</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Select</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Catch</span>&nbsp;ex&nbsp;<span style="color:blue;">As</span>&nbsp;Runtime.InteropServices.<span style="color:#2b91af;">COMException</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;vbCrLf&nbsp;+&nbsp;ex.Message)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Catch</span>&nbsp;ex&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">Exception</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Class</span></p>
+<p class="APICODE">&nbsp;</p>
+<p class=APICODE>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

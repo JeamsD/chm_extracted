@@ -1,0 +1,310 @@
+<html>
+
+<head>
+<title>Batch Update Card Variables Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples, batches">
+<meta name=MS-HKWD content="VB.NET examples, files">
+<meta name=MS-HKWD content="VB.NET examples, folders">
+<meta name=MS-HKWD content="VB.NET examples, card variables">
+<body>
+<h1><font size="1"><span style="font-weight: 400">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Batch Update Card Variables Example (VB.NET)</h1>
+<p><a name="top"></a>This example shows how to update file and folder card 
+variables in one batch.</p>
+<p><b>NOTE</b>: If using the primary interop assembly 
+provided with SOLIDWORKS PDM Professional, see
+<a href="Using_NET_Framework_in_Applications.htm">Using .NET Framework 4.0 in 
+Stand-alone Applications</a>.</p>
+<p><img border="0" src="BatchUpdateVars.gif" width="300" height="191"></p>
+
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:green;">
+'----------------------------------------------------------------------------</span><br>
+<span style="color:green;">'&nbsp;Preconditions:</span><br>
+<span style="color:green;">'&nbsp;&nbsp;1.&nbsp;Start&nbsp;Microsoft&nbsp;Visual&nbsp;Studio&nbsp;2012.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Click&nbsp;<b>File&nbsp;&gt;&nbsp;New&nbsp;&gt;&nbsp;Project&nbsp;&gt;&nbsp;Visual&nbsp;Basic&nbsp;&gt;&nbsp;Windows&nbsp;Forms&nbsp;Application</b>.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Type&nbsp;<b>BatchUpdateCardVars</b>&nbsp;in&nbsp;<b>Name</b>.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;<b>Browse</b>&nbsp;and&nbsp;navigate&nbsp;to&nbsp;the&nbsp;folder&nbsp;where&nbsp;to&nbsp;create&nbsp;the&nbsp;project.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click&nbsp;<b>OK</b>.&nbsp;</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e.&nbsp;Click&nbsp;<b>Show&nbsp;All&nbsp;Files</b>&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer&nbsp;toolbar&nbsp;and&nbsp;expand&nbsp;</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Form1.vb</b>&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f.&nbsp;Replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>Form1.vb</b>&nbsp;with&nbsp;<a href="#form1">this&nbsp;code</a>.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g.&nbsp;To create the 
+form, replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>Form1.Designer.vb</b>&nbsp;with&nbsp;<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="#form1designer">this&nbsp;code</a>.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;2.&nbsp;Add&nbsp;<b>EPDM.Interop.epdm.dll</b>&nbsp;as&nbsp;a&nbsp;reference&nbsp;(right-click&nbsp;the&nbsp;project</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer,&nbsp;click&nbsp;<b>Add&nbsp;Reference</b>,&nbsp;click&nbsp;</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Assemblies&nbsp;&gt;&nbsp;Framework</b>&nbsp;in&nbsp;the&nbsp;left-side&nbsp;panel,&nbsp;browse&nbsp;to&nbsp;the&nbsp;top&nbsp;folder&nbsp;of&nbsp;</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;your&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;installation,&nbsp;locate&nbsp;and&nbsp;click&nbsp;</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>EPDM.Interop.epdm.dll</b>,&nbsp;click&nbsp;<b>Add</b>,&nbsp;and&nbsp;click&nbsp;<b>OK</b>).</span><br>
+<span style="color:green;">'&nbsp;&nbsp;3.&nbsp;Right-click&nbsp;<b>EPDM.Interop.epdm</b>&nbsp;in&nbsp;References,&nbsp;click&nbsp;<b>Properties</b>,&nbsp;and&nbsp;set&nbsp;</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Embed&nbsp;Interop&nbsp;Types</b>&nbsp;to&nbsp;<b>False</b>&nbsp;to&nbsp;handle&nbsp;methods&nbsp;that&nbsp;pass&nbsp;arrays&nbsp;of&nbsp;</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;structures.<br>
+'&nbsp; 4. Ensure that at least one text file is checked out, and at least one 
+folder <br>
+'&nbsp;&nbsp;&nbsp;&nbsp; with the word <b>Folder</b> in its name exists in the vault.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;5.&nbsp;Click&nbsp;<b>Debug&nbsp;&gt;&nbsp;Start&nbsp;Debugging</b>&nbsp;or&nbsp;press&nbsp;F5.</span><br>
+<span style="color:green;">'</span><br>
+<span style="color:green;">'&nbsp;Postconditions:&nbsp;<br>
+'&nbsp;&nbsp;1.&nbsp;Displays the&nbsp;Batch Update&nbsp;dialog&nbsp;box.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Select&nbsp;a&nbsp;vault.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; b. Click <b>Batch Update Variables</b>.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * Updates the Title and Comment 
+variables in the data cards<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;only of checked-out 
+text files.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * Updates the Description variable 
+of the data cards of all folders<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;with the word <b>Folder</b> in 
+their names.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * Displays a message box saying <b>
+Card variables updated</b>.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; c. Click <b>OK</b> to close the message box.</span><br>
+<span style="color:green;">'&nbsp;&nbsp;2.&nbsp;Close&nbsp;the&nbsp;Batch Update&nbsp;dialog&nbsp;box.<br>
+</span><span style="color: #008000">'</span><font size="2"><span style="color:green;">&nbsp; 
+3. Inspect the data cards of any checked-out text files and folders with<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; the word <b>Folder</b> in their names in the selected vault.</span></font><br>
+<span style="color:green;">
+'----------------------------------------------------------------------------</span><br>
+<font color="#008000"><a name="form1"></a>'Form1.vb</font></p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:blue;">Imports</span>&nbsp;System.IO<br>
+<span style="color:blue;">Imports</span>&nbsp;System.Xml.Serialization<br>
+<span style="color:blue;">Imports</span>&nbsp;System.Collections<br>
+<span style="color:blue;">Imports</span>&nbsp;System.Collections.Generic<br>
+<span style="color:blue;">Imports</span>&nbsp;System.Data<br>
+<span style="color:blue;">Imports</span>&nbsp;System.Diagnostics<br>
+<span style="color:blue;">Imports</span>&nbsp;System.Windows.Forms<br>
+<span style="color:blue;">Imports</span>&nbsp;System.ComponentModel<br>
+<span style="color:blue;">Imports</span>&nbsp;EPDM.Interop.epdm<br>
+&nbsp;<br>
+<span style="color:blue;">Public</span>&nbsp;<span style="color:blue;">Class</span>&nbsp;<span style="color:#2b91af;">Form1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;vault1&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmVault5</span>&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;<span style="color:#2b91af;">EdmVault5</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;vault&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmVault8</span>&nbsp;=&nbsp;<span style="color:blue;">DirectCast</span>(vault1,&nbsp;<span style="color:#2b91af;">IEdmVault8</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;Views&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">EdmViewInfo</span>()&nbsp;=&nbsp;<span style="color:blue;">Nothing</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Public</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;Form1_Load(<span style="color:blue;">ByVal</span>&nbsp;sender&nbsp;<span style="color:blue;">As</span>&nbsp;System.<span style="color:#2b91af;">Object</span>,&nbsp;<span style="color:blue;">ByVal</span>&nbsp;e&nbsp;<span style="color:blue;">As</span>&nbsp;System.<span style="color:#2b91af;">EventArgs</span>)&nbsp;<span style="color:blue;">Handles</span>&nbsp;<span style="color:blue;">MyBase</span>.Load<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault.<b>GetVaultViews</b>(Views,&nbsp;<span style="color:blue;">False</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Items.Clear()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">For</span>&nbsp;<span style="color:blue;">Each</span>&nbsp;View&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">EdmViewInfo</span>&nbsp;<span style="color:blue;">In</span>&nbsp;Views<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Items.Add(View.<b>mbsVaultName</b>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Next</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;VaultsComboBox.Items.Count&nbsp;&gt;&nbsp;0&nbsp;<span style="color:blue;">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Text&nbsp;=&nbsp;<span style="color:blue;">DirectCast</span>(VaultsComboBox.Items(0),&nbsp;<span style="color:blue;">String</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Catch</span>&nbsp;ex&nbsp;<span style="color:blue;">As</span>&nbsp;System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Catch</span>&nbsp;ex&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">Exception</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Try</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;BatchUpdateButton_Click(<span style="color:blue;">ByVal</span>&nbsp;sender&nbsp;<span style="color:blue;">As</span>&nbsp;System.<span style="color:#2b91af;">Object</span>,&nbsp;<span style="color:blue;">ByVal</span>&nbsp;e&nbsp;<span style="color:blue;">As</span>&nbsp;System.<span style="color:#2b91af;">EventArgs</span>)&nbsp;<span style="color:blue;">Handles</span>&nbsp;BatchUpdateButton.Click<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;vault2&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmVault7</span>&nbsp;=&nbsp;<span style="color:blue;">Nothing</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;vault1&nbsp;<span style="color:blue;">Is</span>&nbsp;<span style="color:blue;">Nothing</span>&nbsp;<span style="color:blue;">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;<span style="color:#2b91af;">EdmVault5</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault2&nbsp;=&nbsp;<span style="color:blue;">DirectCast</span>(vault1,&nbsp;<span style="color:#2b91af;">IEdmVault7</span>)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;<span style="color:blue;">Not</span>&nbsp;vault1.<b>IsLoggedIn</b>&nbsp;<span style="color:blue;">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color:blue;">Me</span>.Handle.ToInt32())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Create&nbsp;a&nbsp;batch&nbsp;update&nbsp;utility</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;Update&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmBatchUpdate2</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Update&nbsp;=&nbsp;vault2.<b>CreateUtility</b>(<span style="color:#2b91af;">EdmUtility</span>.EdmUtil_BatchUpdate)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Get&nbsp;the&nbsp;IDs&nbsp;of&nbsp;the&nbsp;file 
+and folder card variables to update</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;TitleID&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;CommentID&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;DescriptionID&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;VariableMgr&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmVariableMgr5</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VariableMgr&nbsp;=&nbsp;vault1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TitleID&nbsp;=&nbsp;VariableMgr.<b>GetVariable</b>(<span style="color:#a31515;">&quot;Title&quot;</span>).<b>ID</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DescriptionID&nbsp;=&nbsp;VariableMgr.<b>GetVariable</b>(<span style="color:#a31515;">&quot;Description&quot;</span>).<b>ID</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CommentID&nbsp;=&nbsp;VariableMgr.<b>GetVariable</b>(<span style="color:#a31515;">&quot;Comment&quot;</span>).<b>ID</b><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Search&nbsp;for&nbsp;all&nbsp;text&nbsp;files&nbsp;in 
+the vault</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;Search&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmSearch5</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Search&nbsp;=&nbsp;vault1.<b>CreateUtility</b>(<span style="color:#2b91af;">EdmUtility</span>.EdmUtil_Search)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Search.<b>FileName</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;%.txt&quot;</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;Result&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmSearchResult5</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Result&nbsp;=&nbsp;Search.<b>GetFirstResult</b><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">While</span>&nbsp;<span style="color:blue;">Not</span>&nbsp;Result&nbsp;<span style="color:blue;">Is</span>&nbsp;<span style="color:blue;">Nothing</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Update.<b>SetVar</b>(Result.<b>ID</b>,&nbsp;TitleID,&nbsp;<span style="color:#a31515;">&quot;My&nbsp;Title&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;&quot;</span>,&nbsp;<span style="color:#2b91af;">EdmBatchFlags</span>.EdmBatch_Nothing)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Update.<b>SetVar</b>(Result.<b>ID</b>,&nbsp;CommentID,&nbsp;<span style="color:#a31515;">&quot;My&nbsp;Comment&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;&quot;</span>,&nbsp;<span style="color:#2b91af;">EdmBatchFlags</span>.EdmBatch_Nothing)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Result&nbsp;=&nbsp;Search.<b>GetNextResult</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">While</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:green;">'Search&nbsp;for&nbsp;all 
+folders whose names contain the word Folder in the vault</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Search.<b>FileName</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;%Folder%&quot;</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Result&nbsp;=&nbsp;Search.<b>GetFirstResult</b><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">While</span>&nbsp;<span style="color:blue;">Not</span>&nbsp;Result&nbsp;<span style="color:blue;">Is</span>&nbsp;<span style="color:blue;">Nothing</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Update.<b>SetFolderVar</b>(Result.<b>ID</b>,&nbsp;DescriptionID,&nbsp;<span style="color:#a31515;">&quot;My&nbsp;Description&quot;</span>,&nbsp;<span style="color:#2b91af;">EdmBatchFlags</span>.EdmBatch_Nothing)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Result&nbsp;=&nbsp;Search.<b>GetNextResult</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">While</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Write&nbsp;all&nbsp;the&nbsp;card variable&nbsp;values&nbsp;to&nbsp;the&nbsp;database</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;Errors()&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">EdmBatchError2</span>&nbsp;=&nbsp;<span style="color:blue;">Nothing</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;errorSize&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errorSize&nbsp;=&nbsp;Update.<b>CommitUpdate</b>(Errors,&nbsp;<span style="color:blue;">Nothing</span>)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Display&nbsp;any&nbsp;errors</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;Msg&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">String</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Msg&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Card 
+variables updated.&quot;</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;ErrName&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">String</span>&nbsp;=&nbsp;<span style="color:blue;">Nothing</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;ErrDesc&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">String</span>&nbsp;=&nbsp;<span style="color:blue;">Nothing</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;FileName&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">String</span>&nbsp;=&nbsp;<span style="color:blue;">Nothing</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;Lo&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lo&nbsp;=&nbsp;LBound(Errors)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;Hi&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hi&nbsp;=&nbsp;UBound(Errors)</p>
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;vault9&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmVault9</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault9&nbsp;=&nbsp;<span style="color:blue;">DirectCast</span>(vault1,&nbsp;<span style="color:#2b91af;">IEdmVault9</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;ppoObjects(Hi)&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">EdmObjectInfo</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">While</span>&nbsp;Lo&nbsp;&lt;=&nbsp;Hi
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ppoObjects(Lo).meType&nbsp;=&nbsp;<span style="color:#2b91af;">EdmObjectType</span>.EdmObject_File
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lo&nbsp;=&nbsp;Lo&nbsp;+&nbsp;1
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">While
+</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault9.<b>GetObjects</b>(ppoObjects)
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">While</span>&nbsp;Lo&nbsp;&lt;=&nbsp;Hi
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;(Errors(Lo).<b>mlFileID</b>&nbsp;&gt;&nbsp;0)&nbsp;<span style="color:blue;">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;File&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">IEdmFile6</span>&nbsp;=&nbsp;<span style="color:blue;">Nothing</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;ID&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ID&nbsp;=&nbsp;<span style="color:blue;">DirectCast</span>(ppoObjects(Lo).<b>moObjectID</b>,&nbsp;<span style="color:blue;">Integer</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;(ppoObjects(Lo).<b>meType</b>&nbsp;=&nbsp;<span style="color:#2b91af;">EdmObjectType</span>.EdmObject_File)&nbsp;_
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">And</span>&nbsp;(ID&nbsp;=&nbsp;Errors(Lo).<b>mlFileID</b>)&nbsp;<span style="color:blue;">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;File&nbsp;=&nbsp;<span style="color:blue;">DirectCast</span>(ppoObjects(Lo).<b>mpoObject</b>,&nbsp;<span style="color:#2b91af;">IEdmFile6</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FileName&nbsp;=&nbsp;File.<b>Name</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault1.<b>GetErrorString</b>(Errors(Lo).<b>mlErrorCode</b>,&nbsp;ErrName,&nbsp;ErrDesc)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Msg&nbsp;=&nbsp;Msg&nbsp;+&nbsp;vbLf&nbsp;+&nbsp;ErrName&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;FileName<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lo&nbsp;=&nbsp;Lo&nbsp;+&nbsp;1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">While</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MsgBox(Msg)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Catch</span>&nbsp;ex&nbsp;<span style="color:blue;">As</span>&nbsp;System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Catch</span>&nbsp;ex&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">Exception</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Try</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+&nbsp;<br>
+<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Class</span></pre>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE" align="center">
+<a href="#top">Back to top</a> </p>
+<p style="font-family: Courier New; font-size: 13; color: #008000; background: white" class="APICODE">
+<a name="form1designer"></a>'Form1.Designer.vb</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+&lt;<span style="color:blue;">Global</span>.Microsoft.VisualBasic.CompilerServices.<span style="color:#2b91af;">DesignerGenerated</span>()&gt;&nbsp;_<br>
+<span style="color:blue;">Partial</span>&nbsp;<span style="color:blue;">Class</span>&nbsp;<span style="color:#2b91af;">Form1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Inherits</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Form</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Form&nbsp;overrides&nbsp;dispose&nbsp;to&nbsp;clean&nbsp;up&nbsp;the&nbsp;component&nbsp;list.</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;System.Diagnostics.<span style="color:#2b91af;">DebuggerNonUserCode</span>()&gt;&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Protected</span>&nbsp;<span style="color:blue;">Overrides</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;Dispose(<span style="color:blue;">ByVal</span>&nbsp;disposing&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Boolean</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;disposing&nbsp;<span style="color:blue;">AndAlso</span>&nbsp;components&nbsp;<span style="color:blue;">IsNot</span>&nbsp;<span style="color:blue;">Nothing</span>&nbsp;<span style="color:blue;">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;components.Dispose()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Finally</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">MyBase</span>.Dispose(disposing)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Required&nbsp;by&nbsp;the&nbsp;Windows&nbsp;Form&nbsp;Designer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;components&nbsp;<span style="color:blue;">As</span>&nbsp;System.ComponentModel.<span style="color:#2b91af;">IContainer</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'NOTE:&nbsp;The&nbsp;following&nbsp;procedure&nbsp;is&nbsp;required&nbsp;by&nbsp;the&nbsp;Windows&nbsp;Form&nbsp;Designer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'It&nbsp;can&nbsp;be&nbsp;modified&nbsp;using&nbsp;the&nbsp;Windows&nbsp;Form&nbsp;Designer.&nbsp;&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Do&nbsp;not&nbsp;modify&nbsp;it&nbsp;using&nbsp;the&nbsp;code&nbsp;editor.</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;System.Diagnostics.<span style="color:#2b91af;">DebuggerStepThrough</span>()&gt;&nbsp;_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Private</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;InitializeComponent()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.BatchUpdateButton&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.VaultsComboBox&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ComboBox</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label1&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.SuspendLayout()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'BatchUpdateButton</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.BatchUpdateButton.Location&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(30,&nbsp;100)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.BatchUpdateButton.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;BatchUpdateButton&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.BatchUpdateButton.Size&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(215,&nbsp;23)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.BatchUpdateButton.TabIndex&nbsp;=&nbsp;0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.BatchUpdateButton.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Batch&nbsp;Update&nbsp;Variables&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.BatchUpdateButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'VaultsComboBox</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.VaultsComboBox.FormattingEnabled&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.VaultsComboBox.Location&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(30,&nbsp;56)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.VaultsComboBox.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;VaultsComboBox&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.VaultsComboBox.Size&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(121,&nbsp;21)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.VaultsComboBox.TabIndex&nbsp;=&nbsp;1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Label1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label1.AutoSize&nbsp;=&nbsp;<span style="color:blue;">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label1.Location&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(27,&nbsp;23)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label1.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Label1&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label1.Size&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(75,&nbsp;13)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label1.TabIndex&nbsp;=&nbsp;2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Label1.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Select&nbsp;vault 
+view:&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Form1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.AutoScaleDimensions&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">SizeF</span>(6.0!,&nbsp;13.0!)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.AutoScaleMode&nbsp;=&nbsp;System.Windows.Forms.<span style="color:#2b91af;">AutoScaleMode</span>.Font<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ClientSize&nbsp;=&nbsp;<span style="color:blue;">New</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(284,&nbsp;153)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Controls.Add(<span style="color:blue;">Me</span>.Label1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Controls.Add(<span style="color:blue;">Me</span>.VaultsComboBox)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Controls.Add(<span style="color:blue;">Me</span>.BatchUpdateButton)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Form1&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Batch&nbsp;Update&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.ResumeLayout(<span style="color:blue;">False</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Me</span>.PerformLayout()<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;BatchUpdateButton&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;VaultsComboBox&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ComboBox</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Friend</span>&nbsp;<span style="color:blue;">WithEvents</span>&nbsp;Label1&nbsp;<span style="color:blue;">As</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span><br>
+&nbsp;<br>
+<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Class</span></p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+&nbsp;</p>
+</font>
+<p align="center"><a href="#top">Back to top</a></p>
+
+</body>
+
+</html>

@@ -1,0 +1,489 @@
+<html>
+
+<head>
+<title>Task Add-in Sample</title>
+<meta content="Tasks" name="MS-HKWD">
+<meta content="VB.NET,add-ins" name="MS-HKWD">
+<meta content="Add-ins,tasks " name="MS-HKWD">
+<meta content="en-us" http-equiv="Content-Language">
+<meta content="text/html; charset=windows-1252" http-equiv="Content-Type">
+<link href="ApiHelp.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS PDM Professional 
+API Help</span></h1>
+<h1>Task Add-in Sample</h1>
+<div class="Section1">
+	<p><span lang="EN-US">The following shows the entire source code of a task add-in 
+	written in VB.NET. The add-in:</span></p>
+	<ul>
+		<li class="kadov-P">Implements
+		<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmAddIn5.html">IEdmAddIn5</a>.</li>
+		<li class="kadov-P">Creates custom pages in the Task property dialog box.</li>
+		<li class="kadov-P">Customizes the task details page.</li>
+		<li class="kadov-P">Displays a user interface on launch.</li>
+	</ul>
+	<p>NOTE: To populate the GUID attribute below, click <b>Tools &gt; Create GUID</b> 
+	in the IDE, select GUID Format 6, click <b>Copy</b>, and click <b>Exit</b>. 
+	Replace &lt;<span style="color: #2b91af;">Guid</span>(<span style="color: #a31515;">&quot;&quot;</span>)&gt; 
+	with the copied string.</p>
+	<table>
+		<tr style="height: 11.3pt; mso-yfti-irow: 0; mso-yfti-lastrow: yes">
+			<td style="border-right: white 1.5pt solid; padding-right: 3.5pt; border-top: white 1.5pt solid; padding-left: 3.5pt; background: #e0e0e0; padding-bottom: 0cm; border-left: white 1.5pt solid; width: 855pt; padding-top: 0cm; border-bottom: white 1.5pt solid; height: 11.3pt" valign="top" width="1140">
+			<p class="APICODE"><span class="SpellE">
+			<span lang="EN-US" style="font-size: 10.0pt; font-family: &quot;Courier New&quot;;">
+			Imports EPDM.Interop.epdm<br></span></span><font face="Courier New" size="2">Imports&nbsp;System.Runtime.InteropServices</font></p>
+			<p class="APICODE" style="font-family: Courier New; font-size: 13; color: black; background: white">&lt;<span style="color: #2b91af;">Guid</span>(<span style="color: #a31515;">&quot;&quot;</span>)&gt;&nbsp;_<br>&lt;<span style="color: #2b91af;">ComVisible</span>(<span style="color: blue;">True</span>)&gt;&nbsp;_<span class="SpellE"><span lang="EN-US" style="font-size: 10.0pt; font-family: &quot;Courier New&quot;;"><br />
+			Public Class TaskAddIn<br />
+			Implements </span></span>
+			<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmAddIn5.html">IEdmAddIn5</a><span class="SpellE"><span lang="EN-US" style="font-size: 10.0pt; font-family: &quot;Courier New&quot;;"><br />
+			<br />
+			Public Sub GetAddInInfo(ByRef poInfo As EdmAddInInfo, ByVal poVault 
+			As <a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmVault5.html">IEdmVault5</a>, 
+			ByVal poCmdMgr As
+			<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmCmdMgr5.html">IEdmCmdMgr5</a>) 
+			Implements IEdmAddIn5.GetAddInInfo<br />
+			On Error GoTo ErrHand<br />
+&nbsp; <span style="color: #009900">' Fill in the add-in's description<br />
+			</span>&nbsp; poInfo.mbsAddInName = "Task Test Add-in"<br />
+&nbsp; poInfo.mbsCompany = "SOLIDWORKS"<br />
+&nbsp; poInfo.mbsDescription = "Add-in used to test the task execution system"<br />
+&nbsp; poInfo.mlAddInVersion = 1<br />
+			<br />
+&nbsp; <span style="color: #009900">' Minimum SOLIDWORKS PDM Professional version 
+			needed for VB.NET add-ins is 2010<br />
+			</span>&nbsp; poInfo.mlRequiredVersionMajor = 10<br />
+&nbsp; poInfo.mlRequiredVersionMinor = 0<br />
+			<br />
+&nbsp; <span style="color: #009900">'Register this add-in as a task add-in<br />
+			</span>&nbsp; poCmdMgr.AddHook(EdmCmdType.EdmCmd_TaskRun)<br />
+&nbsp; <span style="color: #009900">'Register this add-in as being able to append 
+			its own property pages in the Administration tool<br />
+			</span>&nbsp; poCmdMgr.AddHook(EdmCmdType.EdmCmd_TaskSetup)<br />
+&nbsp; <span style="color: #009900">'Register this add-in to be called when the 
+			task is launched on the client computer<br />
+			</span>&nbsp; poCmdMgr.AddHook(EdmCmdType.EdmCmd_TaskLaunch)<br />
+&nbsp; <span style="color: #009900">'Register this add-in to provide extra details 
+			in the Details dialog box in the task list in the Administration tool<br />
+			</span>&nbsp; poCmdMgr.AddHook(EdmCmdType.EdmCmd_TaskDetails)<br />
+&nbsp; <span style="color: #009900">'Register this add-in to be called when the 
+			launch dialog box is closed<br />
+			</span>&nbsp; poCmdMgr.AddHook(EdmCmdType.EdmCmd_TaskLaunchButton)<br />
+&nbsp; <span style="color: #009900">'Register this add-in to be called when the 
+			set-up wizard is closed<br />
+			</span>&nbsp; poCmdMgr.AddHook(EdmCmdType.EdmCmd_TaskSetupButton)<br />
+			<br />
+			Exit Sub<br />
+			<br />
+			ErrHand:<br />
+			Dim v11 As </span></span>
+			<span style="font-family: Courier New; font-size: 10pt">
+			<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmVault11.html">IEdmVault11</a></span><span class="SpellE"><span lang="EN-US" style="font-size: 10.0pt; font-family: &quot;Courier New&quot;;"><br />
+			v11 = poVault<br />
+			MsgBox(v11.GetErrorMessage(Err.Number))<br />
+			End Sub<br />
+			</span></span></p>
+			</td>
+		</tr>
+		<tr style="height: 11.3pt; mso-yfti-irow: 0; mso-yfti-lastrow: yes">
+			<td style="border-right: white 1.5pt solid; padding-right: 3.5pt; border-top: white 1.5pt solid; padding-left: 3.5pt; background: #e0e0e0; padding-bottom: 0cm; border-left: white 1.5pt solid; width: 855pt; padding-top: 0cm; border-bottom: white 1.5pt solid; height: 11.3pt" valign="top" width="1140">
+			<span style="font-family: Courier New; font-size: 10pt">Private Sub 
+			OnTaskDetails(ByRef poCmd As EdmCmd, ByRef ppoData As System.Array)<br />
+&nbsp; Dim inst As
+			<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmTaskInstance.html">
+			IEdmTaskInstance</a></span><span style="font-size: 10pt"><span style="font-family: Courier New"><br />
+&nbsp; inst = poCmd.mpoExtra<br />
+			<br />
+&nbsp; <span style="color: #009900">'Create a custom page in the task properties 
+			dialog box; TaskDetailsPage is a&nbsp;<br />
+&nbsp; 'user control; TaskDetailsPage::LoadData fills in some edit boxes with<br />
+&nbsp; 'values from IEdmTaskInstance::GetValEx<br />
+			</span>&nbsp; Dim myPage As TaskDetailsPage<br />
+&nbsp; myPage = New TaskDetailsPage<br />
+&nbsp; myPage.CreateControl()<br />
+&nbsp; poCmd.mpoExtra = myPage<br />
+			<br />
+&nbsp; poCmd.mlParentWnd = myPage.Handle.ToInt32<br />
+&nbsp; poCmd.mbsComment = "My Test Page"<br />
+			<br />
+&nbsp; myPage.LoadData(inst)<br />
+			<br />
+			End Sub</span><br />
+			</span></td>
+		</tr>
+		<tr style="height: 11.3pt; mso-yfti-irow: 0; mso-yfti-lastrow: yes">
+			<td style="border-right: white 1.5pt solid; padding-right: 3.5pt; border-top: white 1.5pt solid; padding-left: 3.5pt; background: #e0e0e0; padding-bottom: 0cm; border-left: white 1.5pt solid; width: 855pt; padding-top: 0cm; border-bottom: white 1.5pt solid; height: 11.3pt" valign="top" width="1140">
+			<span style="font-family: Courier New; font-size: 10pt">Private Sub 
+			OnTaskLaunch(ByRef poCmd As EdmCmd, ByRef ppoData As System.Array)<br />
+			<br />
+&nbsp; <span style="color: #009900">'Display a message box </span></span>
+			<span style="color: #009900; font-family: Courier New; font-size: 10pt">
+			where the user types data that is </span>
+			<span style="font-family: Courier New; font-size: 10pt">
+			<span style="color: #009900"><br />
+&nbsp; '</span></span><span style="color: #009900; font-family: Courier New; font-size: 10pt">passed
+			</span><span style="font-family: Courier New; font-size: 10pt">
+			<span style="color: #009900">to the task add-in via IEdmTaskInstance::SetValEx<br />
+			</span>&nbsp; Dim v11 As
+			<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmVault11.html">IEdmVault11</a><br />
+&nbsp; v11 = poCmd.mpoVault<br />
+&nbsp; If v11.MsgBox(poCmd.mlParentWnd, "Hello!" + vbLf + "Are you sure you want 
+			to launch the test task?", EdmMBoxType.EdmMbt_YesNo) &lt;&gt; EdmMBoxResult.EdmMbr_Yes 
+			Then<br />
+&nbsp; &nbsp; poCmd.mbCancel = True<br />
+&nbsp; &nbsp; Exit Sub<br />
+&nbsp; End If<br />
+			<br />
+&nbsp; <span style="color: #009900">'Get the property interface used to access the 
+			framework</span><br />
+&nbsp; Dim inst As
+			<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmTaskInstance.html">
+			IEdmTaskInstance</a></span><span style="font-size: 10pt"><span style="font-family: Courier New"><br />
+&nbsp; inst = poCmd.mpoExtra<br />
+&nbsp; inst.SetValEx("MyLaunchVar", "A launch value")<br />
+			<br />
+			End Sub</span><br />
+			</span></td>
+		</tr>
+		<tr style="height: 11.3pt; mso-yfti-irow: 0; mso-yfti-lastrow: yes">
+			<td style="border-right: white 1.5pt solid; padding-right: 3.5pt; border-top: white 1.5pt solid; padding-left: 3.5pt; background: #e0e0e0; padding-bottom: 0cm; border-left: white 1.5pt solid; width: 855pt; padding-top: 0cm; border-bottom: white 1.5pt solid; height: 11.3pt" valign="top" width="1140">
+			<span style="font-size: 10pt">
+			<span style="font-family: Courier New">Private Sub OnTaskLaunchButton(ByRef 
+			poCmd As EdmCmd, ByRef ppoData As System.Array)<br />
+			<br />
+			<span style="color: #009900">&nbsp; 'If displaying a card for editing, 
+			this is <br>&nbsp; 'called when the user clicks OK or Cancel in the 
+			launch dialog box<br />
+			</span><br />
+			End Sub</span><br />
+			</span></td>
+		</tr>
+		<tr style="height: 11.3pt; mso-yfti-irow: 0; mso-yfti-lastrow: yes">
+			<td style="border-right: white 1.5pt solid; padding-right: 3.5pt; border-top: white 1.5pt solid; padding-left: 3.5pt; background: #e0e0e0; padding-bottom: 0cm; border-left: white 1.5pt solid; width: 855pt; padding-top: 0cm; border-bottom: white 1.5pt solid; height: 11.3pt" valign="top" width="1140">
+			<span style="font-family: Courier New; font-size: 10pt">Private Sub 
+			OnTaskRun(ByRef poCmd As EdmCmd, ByRef ppoData As System.Array)<br />
+			<br />
+&nbsp; <span style="color: #009900">'Get the property interface used to access the 
+			framework<br />
+			</span>&nbsp; Dim inst As
+			<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmTaskInstance.html">
+			IEdmTaskInstance</a><br />
+&nbsp; inst = poCmd.mpoExtra<br />
+			<br />
+&nbsp; On Error GoTo ErrHand<br />
+&nbsp; <span style="color: #009900">'Inform the framework that the task has started<br />
+			</span>&nbsp; inst.SetStatus(EdmTaskStatus.EdmTaskStat_Running)<br />
+			<br />
+&nbsp; <span style="color: #009900">'Format a message to be displayed in the task 
+			list</span><br />
+&nbsp; Dim msg As String<br />
+&nbsp; msg = "Test is running:"<br />
+&nbsp; msg = msg + " MyTestSetupVar='" + CStr(inst.GetValEx("MyTestSetupVar"))<br />
+&nbsp; msg = msg + "' MyLaunchVar='" + inst.GetValEx("MyLaunchVar")<br />
+&nbsp; msg = msg + "' Idx="<br />
+			<br />
+&nbsp; <span style="color: #009900">'This is the main worker loop that does all 
+			of the important work;&nbsp;<br />
+&nbsp; 'it just beeps and sleeps<br />
+			</span>&nbsp; Dim idx As Integer<br />
+&nbsp; idx = 1<br />
+&nbsp; Dim maxPos As Integer<br />
+&nbsp; maxPos = 200<br />
+&nbsp; inst.SetProgressRange(maxPos, 0, msg + CStr(idx))<br />
+&nbsp; While idx &lt; maxPos<br />
+&nbsp; &nbsp; <span style="color: #009900">'Update progress bar that shows in the 
+			task list<br />
+			</span>&nbsp; &nbsp; inst.SetProgressPos(idx, msg + CStr(idx))<br />
+&nbsp; &nbsp; idx = idx + 1<br />
+			<br />
+&nbsp; &nbsp; <span style="color: #009900">'Do some important work here</span><br />
+&nbsp; &nbsp; System.Media.SystemSounds.Beep.Play()<br />
+&nbsp; &nbsp; System.Threading.Thread.Sleep(60000 / maxPos)<br />
+			<br />
+&nbsp; &nbsp; <span style="color: #009900">'Handle the cancel button in the task 
+			list</span><br />
+&nbsp; &nbsp; If inst.GetStatus() = EdmTaskStatus.EdmTaskStat_CancelPending Then<br />
+&nbsp; &nbsp; &nbsp; inst.SetStatus(EdmTaskStatus.EdmTaskStat_DoneCancelled)<br />
+&nbsp; &nbsp; &nbsp; Exit Sub<br />
+&nbsp; &nbsp; End If<br />
+			<br />
+&nbsp; &nbsp; <span style="color: #009900">'Handle temporary suspension of the task<br />
+			</span>&nbsp; &nbsp; If inst.GetStatus() = EdmTaskStatus.EdmTaskStat_SuspensionPending 
+			Then<br />
+&nbsp; &nbsp; &nbsp; inst.SetStatus(EdmTaskStatus.EdmTaskStat_Suspended)<br />
+&nbsp; &nbsp; &nbsp; While inst.GetStatus() = EdmTaskStatus.EdmTaskStat_Suspended<br />
+&nbsp; &nbsp; &nbsp; &nbsp; System.Threading.Thread.Sleep(1000)<br />
+&nbsp; &nbsp; &nbsp; End While<br />
+&nbsp; &nbsp; &nbsp; If inst.GetStatus() = EdmTaskStatus.EdmTaskStat_ResumePending 
+			Then<br />
+&nbsp; &nbsp; &nbsp; &nbsp; inst.SetStatus(EdmTaskStatus.EdmTaskStat_Running)<br />
+&nbsp; &nbsp; &nbsp; End If<br />
+&nbsp; &nbsp; End If<br />
+&nbsp; End While<br />
+			<br />
+&nbsp; <span style="color: #009900">'Inform the framework that the task has successfully
+			</span></span><span style="font-size: 10pt">
+			<span style="font-family: Courier New"><span style="color: #009900">
+			completed </span><br />
+&nbsp; inst.SetStatus(EdmTaskStatus.EdmTaskStat_DoneOK)<br />
+&nbsp; Exit Sub<br />
+			<br />
+			ErrHand:<br />
+&nbsp; <span style="color: #009900">'Return errors to the framework by failing the 
+			task<br />
+			</span>&nbsp; inst.SetStatus(EdmTaskStatus.EdmTaskStat_DoneFailed, Err.Number, 
+			"The test task failed!")<br />
+			End Sub</span><br />
+			</span></td>
+		</tr>
+		<tr style="height: 11.3pt; mso-yfti-irow: 0; mso-yfti-lastrow: yes">
+			<td style="border-right: white 1.5pt solid; padding-right: 3.5pt; border-top: white 1.5pt solid; padding-left: 3.5pt; background: #e0e0e0; padding-bottom: 0cm; border-left: white 1.5pt solid; width: 855pt; padding-top: 0cm; border-bottom: white 1.5pt solid; height: 11.3pt" valign="top" width="1140">
+			<span style="font-family: Courier New; font-size: 10pt">
+			<span style="color: #009900">'Store the custom set-up page here so it 
+			can be accessed from both OnTaskSetup and OnTaskSetupButton</span><br />
+			Dim currentSetupPage As SetupPage</span></td>
+		</tr>
+		<tr style="height: 11.3pt; mso-yfti-irow: 0; mso-yfti-lastrow: yes">
+			<td style="border-right: white 1.5pt solid; padding-right: 3.5pt; border-top: white 1.5pt solid; padding-left: 3.5pt; background: #e0e0e0; padding-bottom: 0cm; border-left: white 1.5pt solid; width: 855pt; padding-top: 0cm; border-bottom: white 1.5pt solid; height: 11.3pt" valign="top" width="1140">
+			<span style="font-family: Courier New; font-size: 10pt">Private Sub 
+			OnTaskSetup(ByRef poCmd As EdmCmd, ByRef ppoData As System.Array)<br />
+&nbsp; <span style="color: #009900">'Get the property interface used to access the 
+			framework<br />
+			</span>&nbsp; Dim props As
+			<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmTaskProperties.html">
+			IEdmTaskProperties</a><br />
+&nbsp; props = poCmd.mpoExtra<br />
+			<br />
+&nbsp; <span style="color: #009900">'Turn on some properties, e.g., the task can 
+			be launched during a <br />
+&nbsp; 'state change,&nbsp;</span></span><span style="color: #009900; font-family: Courier New; font-size: 10pt">can 
+			extend the details page, is called when the <br />
+&nbsp; 'task is </span><span style="font-size: 10pt">
+			<span style="font-family: Courier New"><span style="color: #009900">
+			launched, and supports scheduling<br />
+			</span>&nbsp; props.TaskFlags = EdmTaskFlag.EdmTask_SupportsChangeState 
+			+ EdmTaskFlag.EdmTask_SupportsDetails + EdmTaskFlag.EdmTask_SupportsInitExec 
+			+ EdmTaskFlag.EdmTask_SupportsScheduling<br />
+			<br />
+&nbsp; <span style="color: #009900">'Set menu commands that launch this task from 
+			File Explorer<br />
+			</span>&nbsp; Dim cmds(0) As EdmTaskMenuCmd<br />
+&nbsp; cmds(0).mbsMenuString = "Run the test task"<br />
+&nbsp; cmds(0).mbsStatusBarHelp = "This command runs the task add-in"<br />
+&nbsp; cmds(0).mlCmdID = 1<br />
+&nbsp; cmds(0).mlEdmMenuFlags = EdmMenuFlags.EdmMenu_Nothing<br />
+&nbsp; props.SetMenuCmds(cmds)<br />
+			<br />
+&nbsp; <span style="color: #009900">'Add a custom setup page; SetupPage is a user 
+			control with an<br />
+&nbsp; 'edit box; SetupPage::LoadData populates the edit box from a<br />
+&nbsp; 'variable in IEdmTaskProperties; saving of properties is handled<br />
+&nbsp; 'by OnTaskSetupButton&nbsp;<br />
+			</span>&nbsp; currentSetupPage = New SetupPage<br />
+&nbsp; currentSetupPage.CreateControl()<br />
+&nbsp; currentSetupPage.LoadData(poCmd)<br />
+			<br />
+&nbsp; Dim pages(0) As EdmTaskSetupPage<br />
+&nbsp; pages(0).mbsPageName = "Test Add-in page"<br />
+&nbsp; pages(0).mlPageHwnd = currentSetupPage.Handle.ToInt32<br />
+&nbsp; pages(0).mpoPageImpl = currentSetupPage<br />
+			<br />
+&nbsp; props.SetSetupPages(pages)<br />
+			End Sub</span><br />
+			</span></td>
+		</tr>
+		<tr style="height: 11.3pt; mso-yfti-irow: 0; mso-yfti-lastrow: yes">
+			<td style="border-right: white 1.5pt solid; padding-right: 3.5pt; border-top: white 1.5pt solid; padding-left: 3.5pt; background: #e0e0e0; padding-bottom: 0cm; border-left: white 1.5pt solid; width: 855pt; padding-top: 0cm; border-bottom: white 1.5pt solid; height: 11.3pt" valign="top" width="1140">
+			<span style="font-family: Courier New; font-size: 10pt">
+			<span style="color: #009900">'Called when the user clicks OK or Cancel 
+			in the <br>'task property dialog box<br />
+			</span>Private Sub OnTaskSetupButton(ByRef poCmd As EdmCmd, ByRef ppoData 
+			As System.Array)<br />
+&nbsp; <span style="color: #009900">'The custom set-up page in currentSetupPage
+			<br>&nbsp; 'was created in method OnTaskSetup;<br />
+&nbsp; 'StoreData saves the contents of the edit <br>&nbsp; 'box in the user control 
+			to<br />
+&nbsp; 'IEdmTaskProperties in poCmd.mpoExtra<br />
+			</span>&nbsp; If poCmd.mbsComment = "OK" And Not currentSetupPage Is 
+			Nothing Then<br />
+&nbsp; &nbsp; currentSetupPage.StoreData(poCmd)<br />
+&nbsp; End If<br />
+&nbsp; currentSetupPage = Nothing<br />
+			End Sub<br />
+			</span></td>
+		</tr>
+		<tr style="height: 11.3pt; mso-yfti-irow: 0; mso-yfti-lastrow: yes">
+			<td style="border-right: white 1.5pt solid; padding-right: 3.5pt; border-top: white 1.5pt solid; padding-left: 3.5pt; background: #e0e0e0; padding-bottom: 0cm; border-left: white 1.5pt solid; width: 855pt; padding-top: 0cm; border-bottom: white 1.5pt solid; height: 11.3pt" valign="top" width="1140">
+			<span style="font-size: 10pt; font-family: Courier New">
+			<span style="color: #009900">'Main entry point of the add-in; called 
+			by SOLIDWORKS <br>'PDM Professional for all task-related events<br />
+			</span>Public Sub OnCmd(ByRef poCmd As EdmCmd, ByRef ppoData As System.Array) 
+			Implements IEdmAddIn5.OnCmd<br />
+			On Error GoTo ErrHand<br />
+			<br />
+&nbsp; <span style="color: #009900">'Check the command type and call the right procedure</span><br />
+&nbsp; Select Case poCmd.meCmdType<br />
+&nbsp; &nbsp; Case EdmCmdType.EdmCmd_TaskDetails<br />
+&nbsp; &nbsp; &nbsp; OnTaskDetails(poCmd, ppoData)<br />
+&nbsp; &nbsp; Case EdmCmdType.EdmCmd_TaskLaunch<br />
+&nbsp; &nbsp; &nbsp; OnTaskLaunch(poCmd, ppoData)<br />
+&nbsp; &nbsp; Case EdmCmdType.EdmCmd_TaskLaunchButton<br />
+&nbsp; &nbsp; &nbsp; OnTaskLaunchButton(poCmd, ppoData)<br />
+&nbsp; &nbsp; Case EdmCmdType.EdmCmd_TaskRun<br />
+&nbsp; &nbsp; &nbsp; OnTaskRun(poCmd, ppoData)<br />
+&nbsp; &nbsp; Case EdmCmdType.EdmCmd_TaskSetup<br />
+&nbsp; &nbsp; &nbsp; OnTaskSetup(poCmd, ppoData)<br />
+&nbsp; &nbsp; Case EdmCmdType.EdmCmd_TaskSetupButton<br />
+&nbsp; &nbsp; &nbsp; OnTaskSetupButton(poCmd, ppoData)<br />
+&nbsp; End Select<br />
+&nbsp; Exit Sub<br />
+			<br />
+			ErrHand:<br />
+&nbsp; Dim v11 As </span>
+			<span style="font-family: Courier New; font-size: 10pt">
+			<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmVault11.html">IEdmVault11</a></span><span style="font-size: 10pt; font-family: Courier New"><br />
+&nbsp; v11 = poCmd.mpoVault<br />
+&nbsp; MsgBox(v11.GetErrorMessage(Err.Number))<br />
+			End Sub<br />
+			<br />
+			End Class</span><br />
+			</td>
+		</tr>
+	</table>
+	<p style="background: white"><span lang="EN-US"><o:p><br />
+	The following is a resource template of the custom set-up page that is displayed 
+	in the Task property dialog box by <strong>TaskAddIn::OnTaskSetup</strong>. 
+	It is a user control in Visual Studio with an edit box named TextBox1 and a 
+	button named TestButton.</o:p></span></p>
+	<p style="background: white"><span lang="EN-US">
+<o:p><br />
+	<img ,="" alt="" src="SetupPage.png" />&nbsp;<br />
+&nbsp;</o:p></span></p>
+	<p style="background: white"><span lang="EN-US">
+<o:p>The code behind the custom set-up page is as follows.<br />
+	</p>
+	<blockquote>
+		<p class="MsoNormal"><span class="SpellE">
+		<span lang="EN-US" style="font-size: 10pt; font-family: 'Courier New';">
+		Imports EPDM.Interop.epdm<br />
+		<br />
+		Public Class SetupPage<br />
+		<br />
+		<span style="color: #009900">'Button handler for a button on the page</span><br />
+		Private Sub TestButton_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) 
+		Handles TestButton.Click<br />
+&nbsp; MsgBox("You pressed the test button")<br />
+		End Sub<br />
+		</p>
+		Public Sub LoadData(ByRef poCmd As
+		<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmd.html">EdmCmd</a>)<br />
+		<br />
+		<span style="color: #009900">&nbsp; 'Get the property interface used to 
+		access the framework<br />
+		</span>&nbsp; Dim props As
+		<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmTaskProperties.html">IEdmTaskProperties</a><br />
+&nbsp; props = poCmd.mpoExtra<br />
+		<br />
+		<span style="color: #009900">&nbsp; 'Populate the edit box from a variable<br />
+&nbsp;</span> TextBox1.Text = props.GetValEx("MyTestSetupVar")<span style="color: #009900"><br />
+		<br />
+		</span>End Sub<p><br />
+		</td>
+		</tr>
+		<tr style="font-size: 10pt">
+		<td style="border-right: white 1.5pt solid; padding-right: 3.5pt; border-top: white 1.5pt solid; padding-left: 3.5pt; background: #e0e0e0; padding-bottom: 0cm; border-left: white 1.5pt solid; width: 855pt; padding-top: 0cm; border-bottom: white 1.5pt solid; height: 11.3pt" valign="top" width="1140">
+		<span style="font-family: Courier New"><font size="2">Public Sub StoreData(ByRef 
+		poCmd As <a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmd.html">EdmCmd</a>)<br />
+		<br />
+&nbsp; <span style="color: #009900">'Get the property interface used to access the 
+		framework<br />
+		</span>&nbsp; Dim props As
+		<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmTaskProperties.html">IEdmTaskProperties</a><br />
+&nbsp; props = poCmd.mpoExtra<br />
+		<br />
+&nbsp; <span style="color: #009900">'Make sure the user has typed a value in the 
+		edit box</span><br />
+&nbsp; If TextBox1.Text = "" Then<br />
+&nbsp; &nbsp; MsgBox("Enter a test value for the add-in!")<br />
+&nbsp; &nbsp; poCmd.mbCancel = True<br />
+&nbsp; &nbsp; Exit Sub<br />
+&nbsp; End If<br />
+		<br />
+&nbsp; <span style="color: #009900">'Save the value entered by the user</span><br />
+&nbsp; props.SetValEx("MyTestSetupVar", TextBox1.Text)<br />
+		<br />
+		End Sub<br />
+		<br />
+		End Class</font></span></p>
+	</blockquote>
+	<p><br />
+	<br />
+	</span><font face="Verdana" style="font-size: 8pt"><span lang="EN-US">The following 
+	is the r</span></font><span lang="EN-US" style="font-size: 10pt; font-family: 'Courier New';"><font face="Verdana" style="font-size: 8pt">esource 
+	template of the extra details page added by <strong>TaskAddIn::OnTaskDetails</strong>.
+	<span lang="EN-US">
+<o:p>It is a user control in Visual Studio </o:p></span>that displays two task variables:</font></p>
+	</span></span>
+	<blockquote>
+		<span class="SpellE">
+		<span lang="EN-US" style="font-size: 10pt; font-family: 'Courier New';">
+		<p><br />
+		<img ,="" alt="" src="TaskDetailsPage.png" /> <br />
+&nbsp;</p>
+	</blockquote>
+	<p><font face="Verdana" style="font-size: 8pt">The code behind the extra details 
+	page:</font><br />
+	</p>
+	</span></span>
+	<blockquote>
+		<span class="SpellE">
+		<span lang="EN-US" style="font-size: 10pt; font-family: 'Courier New';">
+		<p class="MsoNormal"><span class="SpellE">
+		<span lang="EN-US" style="font-size: 10pt; font-family: 'Courier New';">
+		Imports EPDM.Interop.epdm<br />
+		Public Class TaskDetailsPage<br />
+		<br />
+		Public Sub LoadData(ByRef inst As IEdmTaskInstance)<br />
+		<br />
+&nbsp; 'Populate the editboxes from the variables in the task<br />
+&nbsp; TextBoxSetupVar.Text = CStr(inst.GetValEx("MyTestSetupVar"))<br />
+&nbsp; TextBoxLaunchVar.Text = CStr(inst.GetValEx("MyLaunchVar"))<br />
+		<br />
+		End Sub<br />
+		End Class<br />
+		</span></span></p>
+	</blockquote>
+	<p><font face="Verdana" style="font-size: 8pt">The following is the set-up page 
+	when the add-in is used in a task.</font></p>
+	<p><br />
+	<img ,="" alt="" src="SetupPageResult.png" /><br />
+	<br />
+	<font face="Verdana" style="font-size: 8pt">The following is the task details 
+	page when opened from the task list.</font></p>
+	<p><br />
+	<img ,="" alt="" src="TaskDetailsPageResult.png" /></span></span></o:p><span class="SpellE"><span lang="EN-US" style="font-size: 10pt; font-family: 'Courier New';"></p>
+	<p></p>
+	<p class="MsoNormal" style="background: white">&nbsp;</p>
+	<p style="background: white"><span lang="EN-US">
+      <o:p>The following is the task list during task execution.</o:p></span></p>
+	<p style="background: white"><span lang="EN-US">
+      <o:p><br />
+	<img ,="" alt="" src="TaskList.png" /></o:p></span></p>
+	<p class="MsoNormal" style="background: white">&nbsp;</p>
+	<p class="MsoNormal" style="background: white"><strong>See Also</strong></p>
+	<p class="MsoNormal" style="background: white"><a href="tasks.htm">Programming 
+	Tasks</a></p>
+	<p class="MsoNormal" style="background: white">
+	<a href="standardtaskaddin.htm">Standard Task Add-in</a></p>
+	<p class="MsoNormal" style="background: white"><span lang="EN-US">
+      <o:p>&nbsp;&nbsp;<br />
+	</o:p></span></p>
+</div>
+</span></span></span>
+
+</body>
+
+</html>
+

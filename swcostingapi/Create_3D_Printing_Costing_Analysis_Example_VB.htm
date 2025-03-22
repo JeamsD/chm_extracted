@@ -1,0 +1,154 @@
+<html>
+
+<head>
+<title>Create 3D Printing Costing Analysis Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,3D printing Costing analysis">
+<meta name=MS-HKWD content="VBA examples">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Costing API 
+ Help</span></h1>
+<h1>Create 3D Printing Costing Analysis Example (VBA)</h1>
+<p>This example shows how to create a 3D printing Costing analysis for a part.</p>
+
+<pre>'------------------------------------------------
+' Preconditions:
+' 1. Specified part to open exists.
+' 2. Add a reference to <b>SldCostingAPI </b><i>nnnn </i><b>Type Library</b>.
+' 3. Open the Immediate window.
+' 4. Run the macro.
+'
+' Postconditions:
+' 1. Opens the specified part.
+' 2. Gets the CostingManager.
+' 3. Gets the Costing part.
+' 4. Sets the Costing manufacturing method
+'    to 3D printing and gets the Costing body.
+' 5. Gets the common Costing analysis and the
+'    3D printing Costing analysis.
+' 6. Gets the material classes from the Costing template
+'    and sets the material class.
+' 7. Gets the material names from the Costing template
+'    and sets the material for the material class.
+' 8. Sets and gets 3D printing Costing analysis
+'    parameters.
+' 9. Gets the total manufacturing cost.
+'10. Examine the Immediate window to see the
+'    results of steps 6 through 9.
+'
+' <b>NOTE</b>: Because the part is used elsewhere, do
+' not save changes when closing it.
+'-------------------------------------------------
+Option Explicit</pre>
+<pre>Dim swApp As SldWorks.SldWorks
+Dim swModel As SldWorks.ModelDoc2
+Dim swModelDocExt As SldWorks.ModelDocExtension
+Dim swcCostMgr As SldCostingAPI.CostManager
+Dim swcCostPart As SldCostingAPI.CostPart
+Dim swcCostBody As SldCostingAPI.CostBody
+Dim swcCostAnalysis As SldCostingAPI.CostAnalysis
+Dim swc3DPrintAnalysis As SldCostingAPI.CostAnalysis3dPrinting
+Dim fileName As String
+Dim errors As Long
+Dim warnings As Long
+Dim totalCost As Double
+Dim templateName As String
+Dim materialClassCount As Long
+Dim materialClasses As Variant
+Dim materialCount As Long
+Dim materials As Variant
+Dim i As Long</pre>
+<pre>Sub main()</pre>
+<pre>Set swApp = Application.SldWorks</pre>
+<pre>'Open the specified part
+fileName = &quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\api\clamp1.sldprt&quot;
+Set swModel = swApp.<b>OpenDoc6</b>(fileName, swDocumentTypes_e.swDocPART, swOpenDocOptions_e.swOpenDocOptions_Silent, &quot;&quot;, errors, warnings)
+Set swModelDocExt = swModel.<b>Extension</b></pre>
+<pre>'Get CostingManager
+Set swcCostMgr = swModelDocExt.<b>GetCostingManager</b>
+If swcCostMgr Is Nothing Then
+    Debug.Print &quot;CostingManager is nothing.&quot;
+    Exit Sub
+End If</pre>
+<pre>'Get Costing part
+Set swcCostPart = swcCostMgr.<b>CostingModel</b>
+If swcCostPart Is Nothing Then
+    Debug.Print &quot;Costing part is nothing.&quot;
+    Exit Sub
+End If</pre>
+<pre>'Set the Costing manufacturing method
+'to 3D printing and get the Costing body
+Set swcCostBody = swcCostPart.<b>SetCostingMethod</b>(&quot;&quot;, swcMethodType_e.swcMethodType_3dPrinting)
+If swcCostBody Is Nothing Then
+    Debug.Print &quot;Costing body is nothing.&quot;
+    Exit Sub
+End If</pre>
+<pre>Debug.Print (&quot;3D printing Costing analysis&quot;)</pre>
+<pre>'Get the common Costing analysis
+Set swcCostAnalysis = swcCostBody.<b>GetCostAnalysis</b>
+If swcCostAnalysis Is Nothing Then
+    Debug.Print &quot;Failed to activate Costing analysis.&quot;
+    Exit Sub
+End If</pre>
+<pre>'Get the 3D printing Costing analysis
+Set swc3DPrintAnalysis = swcCostAnalysis.<b>GetSpecificAnalysis</b>
+If swc3DPrintAnalysis Is Nothing Then
+    Debug.Print &quot;3D printing Costing analysis is nothing.&quot;
+    Exit Sub
+End If</pre>
+<pre>'Get the material classes from the Costing template
+materialClassCount = swc3DPrintAnalysis.<b>GetMaterialClassesCount</b>
+If materialClassCount = 0 Then
+    Debug.Print (&quot;No material classes for this 3D printing Costing analysis.&quot;)
+    Exit Sub
+End If
+materialClasses = swc3DPrintAnalysis.<b>GetMaterialClasses</b></pre>
+<pre>For i = 0 To materialClassCount - 1
+    Debug.Print (&quot;  Valid material classes for this 3D printing Costing Analysis: &quot;)
+    Debug.Print (&quot;    &quot; &amp; materialClasses(i))
+Next i</pre>
+<pre>'Set the material class
+swc3DPrintAnalysis.<b>CurrentMaterialClass</b> = materialClasses(0)
+Debug.Print (&quot;  Name of the material class for this 3D printing Costing analysis: &quot; &amp; materialClasses(0))</pre>
+<pre>'Get the material names from the Costing template
+templateName = swcCostAnalysis.<b>CostingTemplateName</b>
+Debug.Print (&quot;  Costing template path and file name: &quot; &amp; templateName)
+materialCount = swc3DPrintAnalysis.<b>GetMaterialCount</b>(materialClasses(0))
+If materialCount = 0 Then
+    Debug.Print &quot;No materials for this 3D printing Costing Analysis.&quot;
+    Exit Sub
+End If</pre>
+<pre>Debug.Print &quot;  Number of materials: &quot; &amp; materialCount
+materials = swc3DPrintAnalysis.<b>GetMaterials</b>(materialClasses(0))</pre>
+<pre>For i = 0 To materialCount - 1
+    Debug.Print (&quot;  Valid materials for this 3D printing Costing Analysis: &quot;)
+    Debug.Print (&quot;    &quot; &amp; materials(i))
+Next i</pre>
+<pre>'Set the material
+swc3DPrintAnalysis.<b>CurrentMaterial</b> = materials(0)
+Debug.Print (&quot;  Name of material for &quot; &amp; materialClasses(0) &amp; &quot; for this 3D printing Costing analysis: &quot; &amp; materials(0))</pre>
+<pre>'Set and get 3D printing Costing analysis parameters
+swc3DPrintAnalysis.<b>OrientationPlane</b> = swcPlane_e.swcPlane_XZ
+swc3DPrintAnalysis.<b>PercentInfill</b> = 80
+swc3DPrintAnalysis.<b>WallThickness</b> = swc3DPrintAnalysis.<b>WallThickness</b> * 2</pre>
+<pre>Debug.Print (&quot;  3D printing Costing analysis parameters:&quot;)
+Debug.Print (&quot;    Orientation plane: &quot; &amp; swc3DPrintAnalysis.<b>OrientationPlane</b>)
+Debug.Print (&quot;    Infill percentage: &quot; &amp; swc3DPrintAnalysis.<b>PercentInfill</b> &amp; &quot;%&quot;)
+Debug.Print (&quot;    Wall thickness: &quot; &amp; swc3DPrintAnalysis.<b>WallThickness</b> &amp; &quot; meters&quot;)
+Debug.Print (&quot;    Structural material cost: $&quot; &amp; swc3DPrintAnalysis.<b>StructuralMaterialCost</b>)
+'Reset the shop rate to the default
+swc3DPrintAnalysis.<b>ResetShopRate</b>
+swc3DPrintAnalysis.<b>ShopRateApplied</b> = True
+Debug.Print (&quot;    Default shop rate applied: &quot; &amp; swc3DPrintAnalysis.<b>ShopRateApplied</b>)
+Debug.Print (&quot;    Default shop rate: $&quot; &amp; swc3DPrintAnalysis.<b>shoprate</b>)</pre>
+<pre>totalCost = swcCostAnalysis.<b>GetTotalCostToManufacture</b>
+Debug.Print (&quot;Total 3D printing cost to manufacture: $&quot; &amp; totalCost)</pre>
+<pre>End Sub</pre>
+
+</body>
+
+</html>

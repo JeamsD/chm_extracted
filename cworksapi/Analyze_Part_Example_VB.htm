@@ -1,0 +1,646 @@
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<html>
+
+<!--(==============================================================)-->
+<!--(Document created with RoboEditor. )============================-->
+<!--(==============================================================)-->
+
+<head>
+
+<title>Analyze Part Example (VBA)</title>
+
+<!--(Meta)==========================================================-->
+
+<meta http-equiv=content-type content="text/html; charset=windows-1252">
+<meta name=MS-HKWD content="VBA examples,analysis">
+<meta name=MS-HKWD content="VBA examples,stresses">
+<meta name=MS-HKWD content="VBA examples,strains">
+<meta name=MS-HKWD content="VBA examples,fixtures">
+<meta name=MS-HKWD content="VBA examples,forces">
+<meta name=MS-HKWD content="VBA examples,result plots">
+<meta name=generator content="RoboHELP by eHelp Corporation - www.ehelp.com">
+<meta name=generator-major-version content=0.1>
+<meta name=generator-minor-version content=1>
+<meta name=filetype content=kadov>
+<meta name=filetype-version content=1>
+<meta name=page-count content=1>
+<meta name=layout-height content=4759>
+<meta name=layout-width content=6926>
+
+
+<!--(Links)=========================================================-->
+
+<link rel="StyleSheet" href="ApiHelp.css">
+
+
+
+</head>
+
+<!--(Body)==========================================================-->
+
+
+<body>
+
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation 
+ API Help</span></h1>
+
+<h1>Analyze Part Example (VBA)</h1>
+
+<p>This example shows how to perform a static analysis of a part and plot nodal 
+strain results.</p>
+
+<p><span style="font-weight: bold;">NOTE:</span> To get persistent reference 
+ identifiers (PIDs) for model selections, you can use
+<a href="GettingStarted-swsimulationapi.html">pidcollector.exe</a> 
+ or IModelDocExtension::GetPersistReference3.</p>
+
+<p class="APICODE">'---------------------------------------------------------------------------<br>
+' Preconditions:<br>
+'&nbsp; 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>&nbsp;Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+'&nbsp; 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+'&nbsp; 3. Modify the path to <b>solidworks materials.sldmat</b> as needed.<br>
+'&nbsp; 4. Ensure that the specified part exists.<br>
+'&nbsp; 5. Open the Immediate window.<br>
+'<br>
+' Postconditions:<br>
+'&nbsp; 1.&nbsp;Adds a default static study results plot.<br>
+'&nbsp; 2.&nbsp;Creates study, <b>Static_solid</b>.<br>
+'&nbsp; 3.&nbsp;Applies material to the model.<br>
+'&nbsp; 4.&nbsp;Applies restraints and pressure to the selected faces.<br>
+'&nbsp; 5.&nbsp;Creates a mesh.<br>
+'&nbsp; 6.&nbsp;Runs the analysis.<br>
+'&nbsp; 7.&nbsp;Prints strain and stress results to the Immediate window.<br>
+'&nbsp; 8.&nbsp;Creates a nodal equivalent strain plot of the results.<br>
+'&nbsp; 9.&nbsp;Prints plot data to the Immediate window.<br>
+' 10. Hides fixture and force symbols. Examine the graphics area<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; to verify.<br>
+' 11. Press F5 to continue.<br>
+' 12. Shows fixture and force symbols. Examine the graphics area<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; to verify.<br>
+' 13. Inspect the plots.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save any changes.<br>
+'-----------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">   &nbsp;&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS As Object<br>
+&nbsp;&nbsp;&nbsp; Dim CWObject As CosmosWorksLib.CwAddincallback<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim SolidMgr As CosmosWorksLib.CWSolidManager<br>
+&nbsp;&nbsp;&nbsp; Dim SolidComponent As CosmosWorksLib.CWSolidComponent<br>
+&nbsp;&nbsp;&nbsp; Dim SolidBody As CosmosWorksLib.CWSolidBody<br>
+&nbsp;&nbsp;&nbsp; Dim CwMesh As CosmosWorksLib.CwMesh<br>
+&nbsp;&nbsp;&nbsp; Dim CWResult As CosmosWorksLib.CWResults<br>
+&nbsp;&nbsp;&nbsp; Dim Part As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Dim LBCMgr As CosmosWorksLib.CWLoadsAndRestraintsManager<br>
+&nbsp;&nbsp;&nbsp; Dim CWPressure As CosmosWorksLib.CWPressure<br>
+&nbsp;&nbsp;&nbsp; Dim CWRes1 As CosmosWorksLib.CWRestraint<br>
+&nbsp;&nbsp;&nbsp; Dim pointer1 As Object, pointer2 As Object, pointer3 As Object, 
+pointer4 As Object<br>
+&nbsp;&nbsp;&nbsp; Dim CWMat As CosmosWorksLib.CWMaterial<br>
+&nbsp;&nbsp;&nbsp; Dim var1 As Variant, var2 As Variant, var3 As Variant, var4 
+As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim varArray1 As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim varArray2 As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim stress As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim bApp As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim selection1 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection2 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection3 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection4 As String<br>
+&nbsp;&nbsp;&nbsp; Dim longstatus As Long, longwarnings As Long<br>
+&nbsp;&nbsp;&nbsp; Dim errCode As Long<br>
+&nbsp;&nbsp;&nbsp; Dim NSource As Long<br>
+&nbsp;&nbsp;&nbsp; Dim el As Double, tl As Double<br>
+&nbsp;&nbsp;&nbsp; Dim errorCode As Long<br>
+&nbsp;&nbsp;&nbsp; Dim results As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim plot As CosmosWorksLib.CWPlot<br>
+&nbsp;&nbsp;&nbsp; Dim plotName As String<br>
+&nbsp;&nbsp;&nbsp; Dim i As Long<br>
+&nbsp;&nbsp;&nbsp; Dim status As Long<br>
+&nbsp;&nbsp;&nbsp; Dim entity(0) As SldWorks.entity<br>
+&nbsp;&nbsp;&nbsp; Dim nType As Long<br>
+&nbsp;&nbsp;&nbsp; Dim nBase As Long<br>
+&nbsp;&nbsp;&nbsp; Dim nContour As Long<br>
+&nbsp;&nbsp;&nbsp; Dim BFlip As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim BSpecifyColorLimit As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim VarColor As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim vDispOptions As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim vPlotPosFormatOptions As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim vPlotSettings As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim Name As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim Color As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim selEntity As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim InputVar1 as Variant<br>
+&nbsp;&nbsp;&nbsp; Dim Var as Variant</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim oSelect2 As Object<br>
+&nbsp;&nbsp;&nbsp; Dim boolstatus As Boolean</p>
+<p class="APICODE">   &nbsp;</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' Connect to SOLIDWORKS<br>
+&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Set SwApp = Application.SldWorks</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' Open SOLIDWORKS part document<br>
+&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>OpenDoc6</b>(&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2019\samples\Simulation Examples\Tutor1.SLDPRT &quot;, swDocPART, 
+swOpenDocOptions_Silent, &quot;&quot;, longstatus, longwarnings)<br>
+&nbsp;&nbsp;&nbsp; If Part Is Nothing Then ErrorMsg SwApp, &quot;Failed to open C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2019\samples\Simulation Examples\Tutor1.SLDPRT.&quot;<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Insert a coordinate system<br>
+&nbsp;&nbsp;&nbsp; boolstatus = Part.<b>Extension</b>.<b>SelectByID2</b>(&quot;&quot;, 
+&quot;FACE&quot;, 0.170849242404917, 8.98492424049175E-02, -0.031, False, 1, Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; boolstatus = Part.<b>Extension</b>.<b>SelectByID2</b>(&quot;&quot;, 
+&quot;EDGE&quot;, 0.101612421576135, 1.02144219597449E-02, -3.03238444132603E-04, True, 2, 
+Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; boolstatus = Part.<b>Extension</b>.<b>SelectByID2</b>(&quot;&quot;, 
+&quot;EDGE&quot;, 0.16010192941178, 1.63935978611676E-02, -3.91019294117427E-02, True, 4, 
+Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; boolstatus = Part.<b>Extension</b>.<b>SelectByID2</b>(&quot;&quot;, 
+&quot;EDGE&quot;, 0.160121414911089, 9.91414669255164E-03, -2.84339843419161E-02, True, 8, 
+Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; boolstatus = Part.<b>InsertCoordinateSystem</b>(False, False, 
+False)<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection1 = 
+&quot;233,35,0,0,1,0,0,0,255,254,255,0,0,0,0,0,131,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray selection1, var2<br>
+&nbsp;&nbsp;&nbsp; Set oSelect2 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var2), 
+status)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; 'Get SOLIDWORKS Simulation object<br>
+&nbsp;&nbsp;&nbsp; Set CWObject = SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWObject Is Nothing Then ErrorMsg SwApp, &quot;No 
+CwAddincallback object&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWObject.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;No 
+CosmosWorks object&quot;</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' Get active document<br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;<br>
+<br>
+&nbsp;&nbsp;&nbsp; ' Add default static study results plot<br>
+&nbsp;&nbsp;&nbsp; errCode = ActDoc.<b>AddDefaultStaticStudyPlot</b>(swsStaticResultElementalStrain, 
+swsStaticElementalStrain_ENERGY)<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Set default plot boundary color<br>
+&nbsp;&nbsp;&nbsp; errCode = ActDoc.<b>SetSimulationOptionDefaultPlotsBoundaryColorInRGB</b>(swsSimulationOptionDefaultPlotsBoundaryColorInRGBBoundaryOption_ModelOrMesh, 
+0, 0, 255)<br>
+&nbsp;&nbsp;&nbsp; errCode = ActDoc.<b>SetSimulationOptionDefaultPlotsBoundaryColorInRGB</b>(swsSimulationOptionDefaultPlotsBoundaryColorInRGBBoundaryOption_TranslucentSingleColor, 
+255, 0, 0)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get default plot model or mesh boundary 
+color<br>
+&nbsp;&nbsp;&nbsp; Dim colorObj As Variant<br>
+&nbsp;&nbsp;&nbsp; colorObj = ActDoc.<b>GetSimulationOptionDefaultPlotsBoundaryColorInRGB</b>(swsSimulationOptionDefaultPlotsBoundaryColorInRGBBoundaryOption_ModelOrMesh, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;RGB values for model or mesh:&quot;<br>
+&nbsp;&nbsp;&nbsp; For i = 0 To UBound(colorObj)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print colorObj(i)<br>
+&nbsp;&nbsp;&nbsp; Next</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' Create new static study<br>
+&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWStudyManager object&quot;<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>CreateNewStudy3</b>(&quot;Static_solid&quot;, swsAnalysisStudyTypeStatic, swsMeshTypeSolid, errCode)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;No CWStudy object&quot;</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' Set material from the SOLIDWORKS material library<br>
+&nbsp;&nbsp;&nbsp; Set SolidMgr = Study.<b>SolidManager</b><br>
+&nbsp;&nbsp;&nbsp; If SolidMgr Is Nothing Then ErrorMsg SwApp, &quot;No CWSolidManager 
+object&quot;<br>
+&nbsp;&nbsp;&nbsp; Set SolidComponent = SolidMgr.<b>GetComponentAt</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No solid 
+component&quot;<br>
+&nbsp;&nbsp;&nbsp; Set SolidBody = SolidComponent.<b>GetSolidBodyAt</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No solid body&quot;<br>
+&nbsp;&nbsp;&nbsp; bApp = SolidBody.<b>SetLibraryMaterial</b>(&quot;c:\Program Files\SOLIDWORKS Corp\SOLIDWORKS\lang\english\sldmaterials\solidworks materials.sldmat&quot;, &quot;Ductile Iron (SN)&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bApp = False Then ErrorMsg SwApp, &quot;No material applied&quot;<br>
+&nbsp;&nbsp;&nbsp; Set CWMat = SolidBody.<b>GetDefaultMaterial</b><br>
+&nbsp;&nbsp;&nbsp; NSource = CWMat.<b>Source<br>
+&nbsp;</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get the PIDs of the faces<br>
+&nbsp;&nbsp;&nbsp; ' First two selections are the faces for restraints<br>
+&nbsp;&nbsp;&nbsp; ' Third selection is the face where pressure is applied<br>
+&nbsp;&nbsp;&nbsp; ' Fourth selection is the direction reference face<br>
+&nbsp;&nbsp;&nbsp; selection1 = 
+&quot;216,14,0,0,3,0,0,0,255,254,255,0,0,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,21,0,109,111,76,80,97,116,116,101,114,110,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,14,0,109,111,79,98,106,70,105,108,101,68,101,102,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,6,84,0,117,0,116,0,111,0,114,0,49,0,123,228,186,50,11,128,255,254,255,62,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,111,0,108,0,105,0,100,0,87,0,111,0,114,0,107,0,115,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,87,0,111,0,114,0,107,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,84,0,117,0,116,0,111,0,114,0,49,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,97,23,28,65,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; 
+&quot;,2,0,1,0,0,0,0,0,0,0,1,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,0,0,0,0,17,0,0,0,156,231,186,50,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,14,0,0,0,88,231,186,50,3,0,0,0,1,0,0,0,0,0,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,6,0,0,0,211,228,186,50,1,0,0,0,255,255,255,255,0,0,17,128,0,0,5,128,8,0,6,0,0,0,211,228,186,50,0,0,0,0,255,255,255,255,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; &quot;,Type=1&quot;<br>
+&nbsp;&nbsp;&nbsp; StringtoArray selection1, var1<br>
+&nbsp;&nbsp;&nbsp; Set pointer1 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var1), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection2 = 
+&quot;216,14,0,0,3,0,0,0,255,254,255,0,0,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,14,0,109,111,79,98,106,70,105,108,101,68,101,102,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,6,84,0,117,0,116,0,111,0,114,0,49,0,123,228,186,50,11,128,255,254,255,62,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,111,0,108,0,105,0,100,0,87,0,111,0,114,0,107,0,115,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,87,0,111,0,114,0,107,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,84,0,117,0,116,0,111,0,114,0,49,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,97,23,28,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection2 = selection2 &amp; 
+&quot;65,0,0,0,0,2,0,1,0,0,0,0,0,0,0,1,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,88,231,186,50,3,0,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,6,0,0,0,211,228,186,50,1,0,0,0,255,255,255,255,0,0,14,128,0,0,5,128,8,0,6,0,0,0,211,228,186,50,0,0,0,0,255,255,255,255,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection2 = selection2 &amp; &quot;,Type=1&quot;<br>
+&nbsp;&nbsp;&nbsp; StringtoArray selection2, var2<br>
+&nbsp;&nbsp;&nbsp; Set pointer2 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var2), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection3 = 
+&quot;216,14,0,0,3,0,0,0,255,254,255,0,0,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,8,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,14,0,109,111,79,98,106,70,105,108,101,68,101,102,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,6,84,0,117,0,116,0,111,0,114,0,49,0,123,228,186,50,11,128,255,254,255,62,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,111,0,108,0,105,0,100,0,87,0,111,0,114,0,107,0,115,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,87,0,111,0,114,0,107,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,84,0,117,0,116,0,111,0,114,0,49,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,97,23,28,65,0,0,0,0,2,0,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection3 = selection3 &amp; 
+&quot;1,0,0,0,0,0,0,0,1,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,0,0,0,0,11,0,0,0,51,230,186,50,1,0,0,0,255,255,255,255,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,8,0,0,0,218,229,186,50,4,0,0,0,0,0,255,255,1,0,18,0,109,111,80,76,105,110,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,31,0,0,0,210,195,223,50,17,128,0,0,5,128,8,0,23,0,0,0,160,192,223,50,14,128,0,0,5,128,8,0,19,0,0,0,181,233,186,50,1,0,0,0,1,0,0,0,2,0,0,0,17,128,0,0,5,128,8,0,31,0,0,0,210,195,223,50,17,128,0,0,5,128,8,0,23,0,0,0,160,192,223,50,14,128,0,0,5,128,8,0,19,0,0,0,181,233,186,50,1,0,0,0,1,0,0,0,1,0,0,0,17,128,0,0,5,128,8,0,31,0,0,0,210,195,223,50,17,128,0,0,5,128,8,0,23,0,0,0,160,192,223,50,14,128,0,0,5,128,8,0,19,0,0,0,181,233,186,50,1,0,0,0,2,0,0,0,3,0,0,0,17,128,0,0,5,128,8,0,31,0,0,0,210,195,223,50,17,128,0,0,5,128,8,0,23,0,0,0,160,192,223,50,14,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection3 = selection3 &amp; 
+&quot;128,0,0,5,128,8,0,19,0,0,0,181,233,186,50,1,0,0,0,2,0,0,0,4,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection3 = selection3 &amp; &quot;,Type=1&quot;<br>
+&nbsp;&nbsp;&nbsp; StringtoArray selection3, var3<br>
+&nbsp;&nbsp;&nbsp; Set pointer3 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var3), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection4 = 
+&quot;189,35,0,0,3,0,0,0,255,254,255,0,0,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,10,0,0,0,0,2,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,77,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,32,0,67,0,111,0,114,0,112,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,92,0,83,0,105,0,109,0,117,0,108,0,97,0,116,0,105,0,111,0,110,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,116,0,117,0,116,0,111,0,114,0,49,0,46,0,115,0,108,0,100,0,112,0,114,0,116,0,9,128,255,254,255,6,116,0,117,0,116,0,111,0,114,0,49,0,2,0,0,123,228,186,50,255&quot;<br>
+&nbsp;&nbsp;&nbsp; selection4 = selection4 &amp; 
+&quot;,254,255,0,0,97,23,28,65,1,0,0,0,0,0,0,0,1,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,97,23,28,65,6,0,0,0,211,228,186,50,1,0,0,0,255,255,255,255,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,13,0,0,0,1,231,186,50,1,0,0,0,3,128,0,0,5,128,8,0,8,0,0,0,218,229,186,50,1,0,0,0,255,255,255,255,12,128,0,0,5,128,8,0,6,0,0,0,211,228,186,50,2,0,0,0,12,128,0,0,5,128,8,0,6,0,0,0,211,228,186,50,3,0,0,0,12,128,0,0,5,128,8,0,6,0,0,0,211,228,186,50,4,0,0,0,12,128,0,0,5,128,8,0,6,0,0,0,211,228,186,50,5,0,0,0,12,128,0,0,5,128,8,0,6,0,0,0,211,228,186,50,6,0,0,0,12,128,0,0,5,128,8,0,13,0,0,0,1,231,186,50,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection4 = selection4 &amp; &quot;,Type=1&quot;<br>
+&nbsp;&nbsp;&nbsp; StringtoArray selection4, var4<br>
+&nbsp;&nbsp;&nbsp; Set pointer4 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var4), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; varArray1 = Array(pointer1, pointer2)<br>
+&nbsp;&nbsp;&nbsp; varArray2 = Array(pointer3)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Add a restraint that uses reference 
+geometry<br>
+&nbsp;&nbsp;&nbsp; Set LBCMgr = Study.<b>LoadsAndRestraintsManager</b><br>
+&nbsp;&nbsp;&nbsp; If LBCMgr Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWLoadsAndRestraintsManager object&quot;<br>
+&nbsp;&nbsp;&nbsp; Set CWRes1 = LBCMgr.<b>AddRestraint</b>(5, (varArray1), 
+pointer4, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No restraint created&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CWRes1.<b>RestraintBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; CWRes1.<b>SetTranslationComponentsValues</b> 1, 1, 1, 1, 1, 1<br>
+&nbsp;&nbsp;&nbsp; errCode = CWRes1.<b>RestraintEndEdit</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Coordinate system type as 
+defined in swsCoordinateType_e: &quot; &amp; CWRes1.<b>GetCoordinateType</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Restraint type as defined in swsRestraintType_e: 
+&quot; &amp; CWRes1.<b>RestraintType</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Units of translation as defined in 
+swsLinearUnit_e: &quot; &amp; CWRes1.<b>Unit</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim bval1 As Long, bval2 As Long, bval3 As 
+Long<br>
+&nbsp;&nbsp;&nbsp; Dim brev1 As Long, brev2 As Long, brev3 As Long, brev4 As 
+Long, brev5 As Long, brev6 As Long<br>
+&nbsp;&nbsp;&nbsp; Dim dval1 As Double, dval2 As Double, dval3 As Double<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CWRes1.<b>GetReverseDirections</b> brev1, 
+brev2, brev3, brev4, brev5, brev6</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CWRes1.<b>GetTranslationComponentsValues</b> 
+bval1, bval2, bval3, dval1, dval2, dval3<br>
+<br>
+&nbsp;&nbsp;&nbsp; If bval1 = 1 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot; Translation along plane 
+direction 1: &quot; &amp; dval1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Reverse? (1=yes, 0=no): &quot; &amp; brev4<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; If bval2 = 1 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot; Translation along plane 
+direction 2: &quot; &amp; dval2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Reverse? (1=yes, 0=no): &quot; &amp; brev5<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; If bval3 = 1 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot; Translation along 
+direction normal to the plane: &quot; &amp; dval3<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Reverse? (1=yes, 0=no): &quot; &amp; brev6<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;</p>
+<p class="APICODE">   &nbsp;&nbsp;&nbsp; ' Apply a nonuniform pressure normal to 
+the selected face<br>
+&nbsp;&nbsp;&nbsp; Set CWPressure = LBCMgr.<b>AddPressure</b>(0, (varArray2), Nothing, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No 
+CWPressure object&quot;<br>
+&nbsp;&nbsp;&nbsp; Call CWPressure.<b>PressureBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp;
+    CWPressure.<b>Unit</b> = 1<br>
+&nbsp;&nbsp;&nbsp; CWPressure.<b>Value</b> = 1000<br>
+&nbsp;&nbsp;&nbsp; CWPressure.<b>IncludeNonUniformDistribution</b> = 1<br>
+&nbsp;&nbsp;&nbsp; CWPressure.<b>SetCoordinateSystem</b> oSelect2<br>
+&nbsp;&nbsp;&nbsp; CWPressure.<b>CoordSystemType</b> = 
+swsCoordinateTypeCartesian<br>
+&nbsp;&nbsp;&nbsp; CWPressure.<b>Equation</b> = &quot;.4*&quot;&quot;x&quot;&quot; + .8* &quot;&quot;y&quot;&quot; + .6* 
+&quot;&quot;z&quot;&quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; errCode = CWPressure.<b>PressureEndEdit</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Pressure not 
+set with error code as defined in swsPressureEndEditError_e: &quot; &amp; errCode</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Pressure type as defined in 
+swsPressureType_e: &quot; &amp; CWPressure.<b>PressureType</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Pressure: &quot; &amp; CWPressure.<b>Value</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Reverse direction? (1=yes, 0=no) &quot; &amp; 
+CWPressure.<b>ReverseDirection</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Include nonuniform distribution of 
+pressure? (1=yes, 0=no) &quot; &amp; CWPressure.<b>IncludeNonUniformDistribution</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If CWPressure.<b>IncludeNonUniformDistribution</b> 
+= 1 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Equation: &quot; &amp; 
+CWPressure.<b>Equation</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Coordinate system 
+type as defined in swsCoordinateType_e: &quot; &amp; CWPressure.<b>CoordSystemType</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If CWPressure.<b>CoordSystemType</b> 
+= 1 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; 
+Equation linear units as defined in swsLinearUnit_e: &quot; &amp; CWPressure.<b>EquationLinearUnit</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If CWPressure.<b>CoordSystemType</b> 
+= 2 Or CWPressure.<b>CoordSystemType</b> = 3 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; 
+Equation angular units as defined in &quot; &amp; CWPressure.<b>EquationAngularUnit</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">   &nbsp;&nbsp; ' Mesh<br>
+&nbsp;&nbsp;&nbsp; Set CwMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CwMesh Is Nothing Then ErrorMsg SwApp, &quot;No CWMesh object&quot;<br>
+&nbsp;&nbsp;&nbsp; CwMesh.<b>Quality</b> = 1<br>
+&nbsp;&nbsp;&nbsp; Call CwMesh.<b>GetDefaultElementSizeAndTolerance</b>(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Mesh failed&quot;</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed 
+with error code as defined in swsRunAnalysisError_e: &quot; &amp; errCode<br>
+&nbsp;&nbsp;&nbsp; Set CWResult = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWResult Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWResults 
+object&quot;<br>
+&nbsp;&nbsp;&nbsp; stress = CWResult.<b>GetMinMaxStress</b>(0, 0, 1, Nothing, 0, errCode)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' Get strain and stress results for<br>
+&nbsp;&nbsp;&nbsp; ' first face selected for restraint<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp; Set entity(0) = pointer1</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; i = 0<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Strain value by node:&quot;<br>
+&nbsp;&nbsp;&nbsp; For Each selEntity In CWResult.<b>GetStrainForEntities3</b>(True, swsStrainComponent_e.swsStrainComponentESTRN, 1, Nothing, (entity), status, 0, False, errCode)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp; &quot; &amp; selEntity<br>
+&nbsp;&nbsp;&nbsp; Next</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Debug.Print &quot; &quot;</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Stress value by node:&quot;<br>
+&nbsp;&nbsp;&nbsp; For Each selEntity In CWResult.<b>GetStressForEntities3</b>(True, swsStressComponent_e.swsStressComponentVON, 1, Nothing, (entity), swsStrengthUnitPascal, status, 0, False, errCode)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp; &quot; &amp; selEntity<br>
+&nbsp;&nbsp;&nbsp; Next&nbsp;&nbsp;    </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Create a nodal equivalent strain plot<br>
+&nbsp;&nbsp;&nbsp; Set plot = CWResult.<b>CreatePlot</b>(3, 
+swsStaticNodalStrain_ESTRN, swsUnitSI, False, errorCode)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errorCode = plot.<b>ActivatePlot</b><br>
+&nbsp;&nbsp;&nbsp; errorCode = plot.<b>GetPlotName</b>(plotName)<br>
+&nbsp;&nbsp;&nbsp; errorCode = plot.<b>ApplyNameViewOrientation</b>(&quot;*Front&quot;)<br>
+&nbsp;&nbsp;&nbsp; results = plot.<b>GetMinMaxResultValues</b>(errorCode)<br>
+&nbsp;&nbsp;&nbsp; errorCode = plot.<b>SetPlotTitle</b>(&quot;Nodal Equivalent 
+Strain&quot;)<br>
+&nbsp;&nbsp;&nbsp; plot.<b>SetFOSPlot</b> (False)<br>
+&nbsp;&nbsp;&nbsp; plot.<b>Set2DPlanarRevolveAngle</b> (0#)<br>
+&nbsp;&nbsp;&nbsp; plot.<b>SetNormalizeModeShape</b> (False)<br>
+&nbsp;&nbsp;&nbsp; plot.<b>ShowAs3DPlot</b> (True)<br>
+&nbsp;&nbsp;&nbsp; plot.<b>ShowTensorOrVector</b> (False)<br>
+&nbsp;&nbsp;&nbsp; plot.<b>ShowShellin3D</b> (False)<br>
+&nbsp;&nbsp;&nbsp; plot.<b>ShowNormalizeValuesFrom0To1</b> (True)<br>
+&nbsp;&nbsp;&nbsp; errorCode = plot.<b>ShowDeformedPlot</b>(True, swsAutomatic, 
+0, True)<br>
+&nbsp;&nbsp;&nbsp; plot.<b>ShowBeamProfile</b> (False)<br>
+&nbsp;&nbsp;&nbsp; plot.<b>ShowAvgResultsAcrossBoundaryForParts</b> (False)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Result plot created: &quot; &amp; 
+plotName<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Node &quot; &amp; results(0) &amp; &quot; &quot; &amp; &quot;has minimum strain 
+value: &quot; &amp; results(1)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Node &quot; &amp; results(2) &amp; &quot; &quot; &amp; &quot;has maximum strain 
+value: &quot; &amp; results(3)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Number of plots for these 
+results: &quot; &amp; CWResult.<b>GetPlotCount</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; For Each Name In CWResult.<b>GetPlotNames</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;Plot: &quot; &amp; Name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; errorCode = CWResult.<b>GetPlotColorOptions</b>(Name, 
+nType, nBase, nContour, BFlip, BSpecifyColorLimit, VarColor)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;Plot color options:&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Color map as 
+defined in swsColorChartOptionLegendTypeValue_e: &quot; &amp; nType<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of base 
+colors in color map: &quot; &amp; nBase<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of 
+gradient colors in color map: &quot; &amp; nContour<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Reverse the color 
+mapping? &quot; &amp; BFlip<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Specify a color 
+for values above the yield limit? &quot; &amp; BSpecifyColorLimit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Color for values 
+above the yield limit and user-defined colors (RGB): &quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim rgb As String<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rgb = &quot;{&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim rgbInd As Long<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rgbInd = 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim size As Long<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; size = UBound(VarColor)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim ind As Long<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ind = 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' Create RGB triplet for each color<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; For Each Color In VarColor<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If rgbInd &lt; 3 
+Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+rgb = rgb &amp; Color &amp; &quot;,&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+rgbInd = rgbInd + 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+rgb = rgb &amp; Color &amp; &quot;}&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+rgbInd = 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+If Not ind = size + 1 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+rgb = rgb &amp; &quot;{&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ind = ind + 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Next<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; rgb<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	errorCode = CWResult.<b>GetLegendContourColors</b>(Name, 
+VarColor)<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;Legend colors {R,G,B}: &quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rgb = &quot;{&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rgbInd = 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; size = UBound(VarColor)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ind = 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' Create RGB triplet for each color<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; For Each Color In VarColor<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If rgbInd &lt; 3 
+Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+rgb = rgb &amp; Color &amp; &quot;,&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+rgbInd = rgbInd + 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+rgb = rgb &amp; Color &amp; &quot;}&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+rgbInd = 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+If Not ind = size + 1 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+rgb = rgb &amp; &quot;{&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ind = ind + 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Next<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print rgb</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; vDispOptions = 
+CWResult.<b>GetPlotDisplayOptions</b>(Name, errorCode)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;Plot display options:&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Display the 
+minimum value? &quot; &amp; vDispOptions(0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Display the 
+maximum value? &quot; &amp; vDispOptions(1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Display the plot 
+details? &quot; &amp; vDispOptions(2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Display the 
+legend? &quot; &amp; vDispOptions(3)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Display the 
+minimum/maximum range only for parts? &quot; &amp; vDispOptions(4)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Allow a 
+user-defined minimum/maximum? &quot; &amp; vDispOptions(5)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+User-defined minimum: &quot; &amp; vDispOptions(6)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+User-defined maximum: &quot; &amp; vDispOptions(7)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+vPlotPosFormatOptions = CWResult.<b>GetPlotPositionFormatOptions</b>(Name, 
+errorCode)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;Plot position/format 
+options:&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Percentage of the 
+window width: &quot; &amp; vPlotPosFormatOptions(0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Percentage of the 
+window height: &quot; &amp; vPlotPosFormatOptions(1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Chart thickness 
+option as defined in swsColorChartWidthOptionValue_e: &quot; &amp; 
+vPlotPosFormatOptions(2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Chart number 
+format as defined in swsColorChartNumberFormatOptionValue_e: &quot; &amp; 
+vPlotPosFormatOptions(3)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of decimal 
+places to display: &quot; &amp; vPlotPosFormatOptions(4)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Display chart 
+numbers with a 1000 comma separator? &quot; &amp; vPlotPosFormatOptions(5)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Use different 
+number format for small numbers? &quot; &amp; vPlotPosFormatOptions(6)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+Number format for small numbers as defined in 
+swsColorNumberFormatUseDiffNumberFormatOptionValue_e: &quot; &amp; 
+vPlotPosFormatOptions(7)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; vPlotSettings = 
+CWResult.<b>GetPlotSettings</b>(Name, errorCode)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;Plot settings:&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Display option 
+for active fringe plot as defined in swsPlotFringeSettingsOptionValue_e: &quot; &amp; 
+vPlotSettings(0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Display option 
+for model boundary as defined in swsPlotBoundarySettingsOptionValue_e: &quot; &amp; 
+vPlotSettings(1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; R value for 
+model/mesh color: &quot; &amp; vPlotSettings(2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; G value for 
+model/mesh color: &quot; &amp; vPlotSettings(3)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; B value for 
+model/mesh color: &quot; &amp; vPlotSettings(4)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Superimpose the 
+un-deformed model on the deformed model? &quot; &amp; vPlotSettings(5)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+Deformed plot translucent option as defined in 
+swsPlotDeformedShapeOptionSuperImposeValue_e: &quot; &amp; vPlotSettings(6)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; R value for 
+single translucent color: &quot; &amp; vPlotSettings(7)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; G value for 
+single translucent color: &quot; &amp; vPlotSettings(8)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; B value for 
+single translucent color: &quot; &amp; vPlotSettings(9)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Color intensity 
+[0,1]: &quot; &amp; vPlotSettings(10)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; InputVar1 = Array(True, 0, 255, 0, 0, 
+0.75, True, 0, 0, 0, 255, 0.2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; errorCode = CWResult.<b>SetPlotSettingsOptionForHiddenAndExcludedBody</b>(Name, 
+InputVar1)<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Var = CWResult.<b>GetPlotSettingsOptionForHiddenAndExcludedBody</b>(Name, 
+errorCode)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Show hidden 
+bodies? (1 = true, 0 = false) &quot; &amp; Var(0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+Translucent color option as defined in swsPlotShowHiddenBodiesOptionValue_e: &quot; &amp; 
+Var(1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; R 
+value for single translucent color: &quot; &amp; Var(2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; G 
+value for single translucent color: &quot; &amp; Var(3)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; B 
+value for single translucent color: &quot; &amp; Var(4)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Color 
+intensity [0, 1]: &quot; &amp; Var(5)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Show excluded 
+bodies? (1 = true, 0 = false) &quot; &amp; Var(6)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+Translucent color option as defined in swsPlotShowExcludedBodiesOptionValue_e: &quot; 
+&amp; Var(7)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; R 
+value for single translucent color: &quot; &amp; Var(8)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; G 
+value for single translucent color: &quot; &amp; Var(9)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; B 
+value for single translucent color: &quot; &amp; Var(10)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Color 
+intensity [0, 1]: &quot; &amp; Var(11)</p>
+<p class="APICODE"><br>
+&nbsp;&nbsp;&nbsp; Next</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; 'Hide fixture and force symbols<br>
+&nbsp;&nbsp;&nbsp; Study.<b>ShowOrHideFixtures</b> = False<br>
+&nbsp;&nbsp;&nbsp; Study.<b>ShowOrHideForce</b> = False&nbsp;&nbsp;&nbsp;    
+</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp;    Stop&nbsp;&nbsp;&nbsp;    </p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; 'Show fixture and force symbols<br>
+&nbsp;&nbsp;&nbsp; Study.<b>ShowOrHideFixtures</b> = True<br>
+&nbsp;&nbsp;&nbsp; Study.<b>ShowOrHideForce</b> = True</p>
+<p class="APICODE">    &nbsp;</p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)</p>
+<p class="APICODE"><br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;</p>
+<p class="APICODE"><br>
+End Sub<br>
+<br>
+Sub StringtoArray(inputSTR As String, varEntity As Variant)</p>
+<p class="APICODE"><br>
+&nbsp;&nbsp;&nbsp; Dim PID() As Byte<br>
+&nbsp;&nbsp;&nbsp; Dim i As Integer<br>
+&nbsp;&nbsp;&nbsp; varEntity = Split(inputSTR, &quot;,&quot;)<br>
+&nbsp;&nbsp;&nbsp; ReDim PID(UBound(varEntity))<br>
+&nbsp;&nbsp;&nbsp; For i = 0 To (UBound(varEntity) - 1)<br>
+&nbsp;&nbsp;&nbsp; PID(i) = varEntity(i)<br>
+&nbsp;&nbsp;&nbsp; Next i<br>
+&nbsp;&nbsp;&nbsp; varEntity = PID</p>
+<p class="APICODE"><br>
+End Sub</p>
+
+</body>
+
+</html>

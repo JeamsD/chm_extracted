@@ -1,0 +1,224 @@
+<html>
+
+<head>
+<title>Get and Set Pattern Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,pattern feature">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS API 
+ Help</span></h1>
+<h1>Get and Set Pattern Example (VBA)</h1>
+<p>This example shows how to get and set DimXpert pattern 
+features.</p>
+<p class="APICODE">
+<br>
+'---------------------------------------------------------------------------<br>
+' Preconditions:</p>
+<p class="APICODE">'&nbsp;1. Open <i>public_documents</i><b>\samples\tutorial\dimxpert\bracket_auto_manual.sldprt.</b><br>
+'&nbsp;2. Select one of the CBORE hole faces in the SOLIDWORKS 
+viewer.<br>
+'&nbsp;3. Open an Immediate window .<br>
+'&nbsp;4. Ensure that the latest SOLIDWORKS DimXpert type library 
+is loaded:<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;a. Select <b>Tools &gt; References</b>.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;b. Click Browse.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;c. Find and select <i>install_dir</i><b>\swdimxpert.tlb</b>.<br>
+'<br>
+' Postconditions: Inspect the Immediate Window and the DimXpertManager tab.<br>
+'<br>
+'&nbsp;NOTE: Because this part is used elsewhere, do not save changes.<br>
+'---------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit<br>
+Dim dimXpertPart As dimXpertPart<br>
+Dim swApp As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim swModelDoc As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Dim swModelDocExt As SldWorks.ModelDocExtension<br>
+&nbsp;&nbsp;&nbsp; Dim swSelMgr As SldWorks.SelectionMgr<br>
+&nbsp;&nbsp;&nbsp; Dim swConfig As SldWorks.Configuration<br>
+&nbsp;&nbsp;&nbsp; Dim swFeature As SldWorks.feature<br>
+&nbsp;&nbsp;&nbsp; Dim swAnn As SldWorks.feature<br>
+&nbsp;&nbsp;&nbsp; Dim swSchema As SldWorks.DimXpertManager<br>
+&nbsp;&nbsp;&nbsp; Dim swDXPart As dimXpertPart<br>
+&nbsp;&nbsp;&nbsp; Dim schemeOption As DimXpertAutoDimSchemeOption<br>
+&nbsp;&nbsp;&nbsp; Dim featureType As swDimXpertFeatureType_e<br>
+&nbsp;&nbsp;&nbsp; Dim features As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim appliedFeatures As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim appliedAnnotations As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim appliedAnnotation As DimXpertAnnotation<br>
+&nbsp;&nbsp;&nbsp; Dim feature As DimXpertFeature<br>
+&nbsp;&nbsp;&nbsp; Dim appliedFeature As DimXpertFeature<br>
+&nbsp;&nbsp;&nbsp; Dim msgStr As String<br>
+&nbsp;&nbsp;&nbsp; Dim msgStr2 As String<br>
+&nbsp;&nbsp;&nbsp; Dim msgStr3 As String<br>
+&nbsp;&nbsp;&nbsp; Dim msgStr4 As String<br>
+&nbsp;&nbsp;&nbsp; Dim n As Long<br>
+&nbsp;&nbsp;&nbsp; Dim o As Long<br>
+&nbsp;&nbsp;&nbsp; Dim p As Long<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim boolstatus As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim annoType As Long<br>
+&nbsp;&nbsp;&nbsp; Dim retval As Boolean</p>
+<p class="APICODE">Sub Main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; Set swApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Set swModelDoc = swApp.ActiveDoc</p>
+<p class="APICODE">&nbsp;&nbsp; If swModelDoc Is Nothing Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp; Exit Sub<br>
+&nbsp;&nbsp; End If</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim dimXpertMgr As 
+SldWorks.DimXpertManager<br>
+&nbsp;&nbsp;&nbsp; Set dimXpertMgr = 
+swApp.IActiveDoc2.Extension.DimXpertManager(swApp.IActiveDoc2.IGetActiveConfiguration().Name, 
+True)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Model: &quot; &amp; swApp.IActiveDoc2.GetPathName</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim dimXpertPartObj As dimXpertPart<br>
+&nbsp;&nbsp;&nbsp; Set dimXpertPartObj = dimXpertMgr.dimXpertPart<br>
+&nbsp;&nbsp;&nbsp; Set dimXpertPart = dimXpertPartObj<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim selectMgr As SelectionMgr<br>
+&nbsp;&nbsp;&nbsp; Set selectMgr = swApp.IActiveDoc2.SelectionManager<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim dimOption As DimXpertDimensionOption<br>
+&nbsp;&nbsp;&nbsp; Set dimOption = dimXpertPart.<b>GetDimOption</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim patternType As Long<br>
+&nbsp;&nbsp;&nbsp; patternType = 2 ' collection pattern<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim findall As Boolean<br>
+&nbsp;&nbsp;&nbsp; findall = True ' find all similar features on this face<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim dimarray(0) As Long<br>
+&nbsp;&nbsp;&nbsp; dimarray(0) = -1&nbsp; ' default<br>
+&nbsp;&nbsp;&nbsp; Dim dimvar As Variant<br>
+&nbsp;&nbsp;&nbsp; dimvar = dimarray<br>
+&nbsp;&nbsp;&nbsp; dimOption.<b>FeatureSelectorOptions</b> = dimvar<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Mark the current selection with an index 
+value greater than 50</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; retval = 
+selectMgr.SetSelectedObjectMark(1, 51, swSelectionMarkSet)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Insert the collection pattern feature<br>
+&nbsp;&nbsp;&nbsp; retval = dimXpertPart.<b>InsertPattern</b>(dimOption, patternType, 
+findall)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim featCount As Long<br>
+&nbsp;&nbsp;&nbsp; featCount = dimXpertPart.GetFeatureCount<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp; If Not (featCount = 0) Then</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim patternFeature As 
+IDimXpertPatternFeature<br>
+&nbsp;&nbsp;&nbsp; Set patternFeature = dimXpertPart.GetFeature(&quot;Collection1&quot;)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; msgStr = patternFeature.<b>Name</b> + &quot; is a 
+DimXpert collection pattern feature.&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print msgStr</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; featureType = patternFeature.<b>patternType</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Call GetPatternType(featureType, msgStr2)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim featureCount As Integer</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; featureCount = 
+patternFeature.<b>GetSubFeatureCount</b>()<br>
+&nbsp;&nbsp;&nbsp; msgStr = &quot;&nbsp;&nbsp;&nbsp;&nbsp; Number of &quot;<br>
+&nbsp;&nbsp;&nbsp; msgStr3 = featureCount<br>
+&nbsp;&nbsp;&nbsp; Debug.Print msgStr + msgStr2 + &quot; sub-features in this pattern 
+is &quot; + msgStr3</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim subfeatures As Variant<br>
+&nbsp;&nbsp;&nbsp; subfeatures = patternFeature.<b>GetSubFeatures</b>()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp; 
+Sub-features of Collection1:&quot;<br>
+&nbsp;&nbsp;&nbsp; Dim subFeature As DimXpertCompoundHoleFeature<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; For n = 0 To UBound(subfeatures)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set subFeature = subfeatures(n)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+&quot; + subFeature.Name<br>
+&nbsp;&nbsp;&nbsp; Next</p>
+<p class="APICODE">&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;Please select a CBORE hole face in the 
+viewer and run this macro again.&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; <br>
+</p>
+<p class="APICODE">End Sub<br>
+<br>
+</p>
+<p class="APICODE">Public Sub GetPatternType(ByRef featureType, ByRef msgStr2)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If (featureType = swDimXpertFeature_Plane) 
+Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Plane&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Cylinder) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Cylinder&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Cone) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Cone&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Extrude) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Extrude&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Fillet) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Fillet&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Chamfer) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Chamfer&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_CompoundHole) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;CompoundHole&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_CompoundWidth) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;CompoundWidth&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_CompoundNotch) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;CompoundNotch&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_CompoundClosedSlot3D) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;CompoundClosedSlot3D&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_IntersectPoint) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;IntersectPoint&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_IntersectLine) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;IntersectLine&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_IntersectCircle) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;IntersectCircle&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_IntersectPlane) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;IntersectPlane&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Pattern) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Pattern&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Sphere) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Sphere&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_BestfitPlane) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;Bestfit 
+plane&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Surface) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Surface&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">End Sub</p>
+<p>&nbsp;</p>
+
+</body>
+
+</html>

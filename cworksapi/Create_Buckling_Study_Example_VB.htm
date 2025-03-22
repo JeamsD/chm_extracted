@@ -1,0 +1,307 @@
+<html>
+
+<head>
+<title>Create Buckling Study Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,buckling study">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Create Buckling Study Example (VBA)</h1>
+<p>This example shows how to create and analyze a buckling study.</p>
+<p><span style="font-weight: bold;">NOTE:</span> To get persistent reference 
+ identifiers (PIDs) for model selections, you can use
+<a href="GettingStarted-swsimulationapi.html">pidcollector.exe</a> 
+ or IModelDocExtension::GetPersistReference3.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Ensure that the specified model document exists.<br>
+' 4. Ensure that the specified materials library exists.<br>
+' 5. Open an Immediate window.<br>
+'<br>
+' Postconditions:<br>
+'&nbsp;1. Opens the specified model document.<br>
+'&nbsp;2. Creates new study, <b>Buckling1</b>.<br>
+'&nbsp;3. Prints the study options of <b>Buckling1</b> to the Immediate window.<br>
+'&nbsp;4. Adds AISI 1020 steel to the solid bodies in the model.<br>
+'&nbsp;5. Adds <b>Fixed-1 </b>restraint to <b>Buckling1</b>.<br>
+'&nbsp;6. Adds <b>Pressure-1 </b>load to <b>Buckling1</b>.<br>
+'&nbsp;7. Meshes the bodies in the model.<br>
+' 8. Analyzes <b>Buckling1</b>.<br>
+'&nbsp;9. Inspect the Immediate window, the Simulation study tree, and the<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;graphics area.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+' ---------------------------------------------------------------------------<br>
+Dim SwApp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As SldWorks.SldWorks<br>
+Dim Part&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As SldWorks.ModelDoc2<br>
+Dim COSMOSWORKS&nbsp;&nbsp;&nbsp;&nbsp; As CosmosWorksLib.COSMOSWORKS<br>
+Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+Dim ActDoc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWModelDoc<br>
+Dim StudyMngr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWStudyManager<br>
+Dim Study&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWStudy<br>
+Dim SolidMgr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWSolidManager<br>
+Dim SolidComp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWSolidComponent<br>
+Dim SolidBody&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As CosmosWorksLib.CWSolidBody<br>
+Dim LBCMgr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWLoadsAndRestraintsManager<br>
+Dim CWPressureLoad&nbsp;&nbsp;As CosmosWorksLib.CWPressure<br>
+Dim errCode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Long<br>
+Dim boolstatus&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Boolean<br>
+Dim longstatus&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Long, longwarnings As Long<br>
+Dim StaticOptions&nbsp;&nbsp; As CosmosWorksLib.CWStaticStudyOptions<br>
+Dim DispArray2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Variant<br>
+Dim DispArray3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Variant<br>
+Const MeshEleSize&nbsp;&nbsp; As Double = 4.48279654351123 <br>
+Const MeshTol&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Double = 0.224139827175561 <br>
+Const Tol1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Double = 
+0.05 <br>
+Option Explicit<br>
+Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>OpenDoc6</b>(&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 
+2019\samples\Simulation Examples\Educational Examples\spider.sldasm&quot;, 
+2, 0, &quot;&quot;, longstatus, longwarnings)<br>
+&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>ActiveDoc</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim PIDCollection&nbsp;&nbsp; As New 
+Collection<br>
+&nbsp;&nbsp;&nbsp; Set PIDCollection = PIDInitializer()<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim strMaterialLib&nbsp; As String<br>
+&nbsp;&nbsp;&nbsp; strMaterialLib = SwApp.<b>GetExecutablePath</b> &amp; &quot;\lang\english\sldmaterials\solidworks 
+materials.sldmat&quot;</p>
+<p class="APICODE">&nbsp;<br>
+&nbsp;&nbsp;&nbsp; DispArray2 = Array(SelectByPID(Part, &quot;selection2&quot;, 
+PIDCollection)) ' cylindrical face<br>
+&nbsp;&nbsp;&nbsp; DispArray3 = Array(SelectByPID(Part, &quot;selection3&quot;, 
+PIDCollection)) ' arm<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = 
+SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, &quot;Failed 
+to get Simulation add-in&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;Failed 
+to get COSMOSWORKS&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+active document&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create new buckling study<br>
+&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+the study manager&quot;<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>CreateNewStudy3</b>(&quot;Buckling1&quot;, swsAnalysisStudyType_e.swsAnalysisStudyTypeBuckling, 0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;Failed to create 
+new study&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Buckling study options<br>
+&nbsp;&nbsp;&nbsp; Dim bsOptions As CosmosWorksLib.CWBucklingStudyOptions<br>
+&nbsp;&nbsp;&nbsp; Set bsOptions = Study.<b>BucklingStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Buckling study options&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of buckling modes: &quot; &amp; bsOptions.<b>BucklingModes</b><br>
+&nbsp;&nbsp;&nbsp; Dim zeroStrainTemp As Double<br>
+&nbsp;&nbsp;&nbsp; Dim tempUnit As Long<br>
+&nbsp;&nbsp;&nbsp; bsOptions.<b>GetZeroStrainTemperature</b> zeroStrainTemp, 
+tempUnit<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Flow/Thermal Effects:&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Temperature source as defined 
+in swsThermalOption_e: &quot; &amp; bsOptions.<b>ThermalResults</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Temperature source:&quot;<br>
+&nbsp;&nbsp;&nbsp; If bsOptions.<b>ThermalResults</b> = 1 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Thermal study: &quot; &amp; bsOptions.<b>ThermalStudyName</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Time step of transient thermal study: &quot; &amp; bsOptions.<b>TimeStep</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf bsOptions.<b>ThermalResults</b> = 2 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+SOLIDWORKS Flow Simulation results file: &quot; &amp; bsOptions.<b>FlowTemperatureFile</b><br>
+&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Model&quot;<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Reference temperature at zero 
+strain: &quot; &amp; zeroStrainTemp<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Import 
+fluid pressure loads from SOLIDWORKS Flow Simulation? (1=yes, 0=no): &quot; &amp; 
+bsOptions.<b>CheckFlowPressure</b><br>
+&nbsp;&nbsp;&nbsp; If bsOptions.<b>CheckFlowPressure</b> Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+SOLIDWORKS Flow Simulation results file: &quot; &amp; bsOptions.<b>FlowPressureFile</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Use reference pressure offset from Flow Simulation? (1=yes, 0=no): &quot; &amp; 
+bsOptions.<b>ReferencePressureOption</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If Not bsOptions.<b>ReferencePressureOption</b> 
+Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Reference pressure offset: &quot; &amp; bsOptions.<b>DefinedReferencePressure</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Run as legacy study and import only the normal component of the pressure load? 
+(1=yes, 0=no): &quot; &amp; bsOptions.<b>CheckRunAsLegacy</b><br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Result folder: &quot; &amp; bsOptions.<b>ResultFolder</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Solver type as defined in swsSolverType_e: 
+&quot; &amp; bsOptions.<b>SolverType</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Use soft spring to stabilize the model? 
+(1=yes, 0=no): &quot; &amp; bsOptions.<b>UseSoftSpring</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Add materials<br>
+&nbsp;&nbsp;&nbsp; Set SolidMgr = Study.<b>SolidManager</b><br>
+&nbsp;&nbsp;&nbsp; If SolidMgr Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+solid manager&quot;<br>
+&nbsp;&nbsp;&nbsp; Set SolidComp = SolidMgr.<b>GetComponentAt</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get 
+component&quot;<br>
+&nbsp;&nbsp;&nbsp; Set SolidBody = SolidComp.<b>GetSolidBodyAt</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get solid 
+body&quot;<br>
+&nbsp;&nbsp;&nbsp; boolstatus = SolidBody.<b>SetLibraryMaterial</b>(strMaterialLib, 
+&quot;AISI 1020&quot;)<br>
+&nbsp;&nbsp;&nbsp; If boolstatus = False Then ErrorMsg SwApp, &quot;Failed to apply 
+material&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidComp = SolidMgr.<b>GetComponentAt</b>(1, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get 
+component&quot;<br>
+&nbsp;&nbsp;&nbsp; Set SolidBody = SolidComp.<b>GetSolidBodyAt</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get solid 
+body&quot;<br>
+&nbsp;&nbsp;&nbsp; boolstatus = SolidBody.<b>SetLibraryMaterial</b>(strMaterialLib, &quot;AISI 
+1020&quot;)<br>
+&nbsp;&nbsp;&nbsp; If boolstatus = False Then ErrorMsg SwApp, &quot;Failed to apply 
+material&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidComp = SolidMgr.<b>GetComponentAt</b>(2, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get 
+component&quot;<br>
+&nbsp;&nbsp;&nbsp; Set SolidBody = SolidComp.<b>GetSolidBodyAt</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get solid 
+body&quot;<br>
+&nbsp;&nbsp;&nbsp; boolstatus = SolidBody.<b>SetLibraryMaterial</b>(strMaterialLib, &quot;AISI 
+1020&quot;)<br>
+&nbsp;&nbsp;&nbsp; If boolstatus = False Then ErrorMsg SwApp, &quot;Failed to apply 
+material&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set LBCMgr = 
+Study.<b>LoadsAndRestraintsManager</b><br>
+&nbsp;&nbsp;&nbsp; If LBCMgr Is Nothing Then ErrorMsg SwApp, &quot;Failed to get the 
+loads and restraints manager&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Add a restraint<br>
+&nbsp;&nbsp;&nbsp; Dim restraint As CosmosWorksLib.CWRestraint<br>
+&nbsp;&nbsp;&nbsp; Set restraint = LBCMgr.<b>AddRestraint</b>(swsRestraintTypeFixed, 
+(DispArray2), Nothing, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to add a 
+restraint&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Add a pressure load<br>
+&nbsp;&nbsp;&nbsp; Set CWPressureLoad = LBCMgr.<b>AddPressure</b>(swsPressureTypeNormal, 
+(DispArray3), Nothing, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to create a 
+pressure load&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create mesh<br>
+&nbsp;&nbsp;&nbsp; Dim CWMeshObj As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; Set CWMeshObj = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CWMeshObj Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+the mesh object&quot;<br>
+&nbsp;&nbsp;&nbsp; CWMeshObj.<b>MesherType</b> = 0<br>
+&nbsp;&nbsp;&nbsp; CWMeshObj.<b>Quality</b> = 0<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, MeshEleSize, MeshTol)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to create the 
+mesh&quot;<br>
+&nbsp;&nbsp;&nbsp; Set CWMeshObj = Nothing<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed with 
+error as defined in swsRunAnalysisError_e: &quot; &amp; errCode<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+<p class="APICODE">Function SelectByPID(Part As SldWorks.ModelDoc2, PIDName As 
+String, PIDCollection As Collection) As Object<br>
+&nbsp;&nbsp;&nbsp; Dim PID()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Byte<br>
+&nbsp;&nbsp;&nbsp; Dim PIDVariant&nbsp; As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim PIDString&nbsp;&nbsp; As String<br>
+&nbsp;&nbsp;&nbsp; Dim i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim SelObj&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Object<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get the string from the collection<br>
+&nbsp;&nbsp;&nbsp; PIDString = &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDString = PIDCollection.Item(PIDName)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Parse the string into an array<br>
+&nbsp;&nbsp;&nbsp; PIDVariant = Split(PIDString, &quot;,&quot;)<br>
+&nbsp;&nbsp;&nbsp; ReDim PID(UBound(PIDVariant))<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Change to a byte array<br>
+&nbsp;&nbsp;&nbsp; For i = 0 To (UBound(PIDVariant) - 1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PID(i) = PIDVariant(i)<br>
+&nbsp;&nbsp;&nbsp; Next i<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Select the entity<br>
+&nbsp;&nbsp;&nbsp; Set SelObj = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((PID), 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; Set SelectByPID = SelObj<br>
+&nbsp;&nbsp;&nbsp; Set SelObj = Nothing<br>
+<br>
+End Function</p>
+<p class="APICODE">Function PIDInitializer() As Collection</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim PIDCollection As New Collection<br>
+<br>
+&nbsp;&nbsp;&nbsp; Dim selection2 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection3 As String</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Cylindrical face<br>
+&nbsp;&nbsp;&nbsp; selection2 = 
+&quot;64,31,0,0,3,0,0,0,255,254,255,14,115,0,104,0,97,0,102,0,116,0,45,0,49,0,64,0,115,0,112,0,105,0,100,0,101,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,10,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,97,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,32,0,67,0,111,0,114,0,112,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,92,0,83,0,105,0,109,0,117,0,108,0,97,0,116,0,105,0,111,0,110,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,69,0,100,0,117,0,99,0,97,0,11&quot;<br>
+&nbsp;&nbsp;&nbsp; selection2 = selection2 &amp; 
+&quot;6,0,105,0,111,0,110,0,97,0,108,0,32,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,115,0,104,0,97,0,102,0,116,0,46,0,115,0,108,0,100,0,112,0,114,0,116,0,9,128,255,254,255,5,115,0,104,0,97,0,102,0,116,0,2,0,0,155,126,163,53,0,165,25,208,59,1,0,0,0,0,0,0,0,5,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,63,0,0,0,0,0,0,0,7,50,149,70,12,0,0,0,171,126,163,53,1,0,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,12,0,0,0,171,126,163,53,1,0,0,0,255,255,255,255,0,0,12,128,0,0,5,128,8,0,12,0,0,0,171,126,163,53,0,0,0,0,255,255,255,255,0,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection2 = selection2 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Arm<br>
+&nbsp;&nbsp;&nbsp; selection3 = 
+&quot;64,31,0,0,3,0,0,0,255,254,255,15,115,0,112,0,105,0,100,0,101,0,114,0,45,0,49,0,64,0,115,0,112,0,105,0,100,0,101,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,9,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,8,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,98,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,32,0,67,0,111,0,114,0,112,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,92,0,83,0,105,0,109,0,117,0,108,0,97,0,116,0,105,0,111,0,110,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,69,0,100,0,117,0,99,0,9&quot;<br>
+&nbsp;&nbsp;&nbsp; selection3 = selection3 &amp; 
+&quot;7,0,116,0,105,0,111,0,110,0,97,0,108,0,32,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,115,0,112,0,105,0,100,0,101,0,114,0,46,0,115,0,108,0,100,0,112,0,114,0,116,0,9,128,255,254,255,6,115,0,112,0,105,0,100,0,101,0,114,0,2,0,0,149,119,163,53,0,73,0,71,0,1,0,0,0,0,0,0,0,3,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,142,0,0,0,0,0,0,0,13,50,149,70,28,0,0,0,119,124,163,53,10,0,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,107,0,0,0,227,104,166,53,1,0,0,0,255,255,255,255,255,255,1,0,19,0,109,111,70,105,108,108,101,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,139,0,0,0,68,107,166,53,4,0,0,0,15,128,0,0,5,128,8,0,141,0,0,0,83,107,166,53,4,0,0,0,15,128,0,0,5,128,8,0,139,0,0,0,68,107,166,53,3,0,0,0,0,0,12,128,0,0,5,128,8,0,48,0,0,0,82,125,163,53,1,0,0,0,255,255,255,255,0,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection3 = selection3 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Store constants in a collection<br>
+<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection2, &quot;selection2&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection3, &quot;selection3&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set PIDInitializer = PIDCollection<br>
+<br>
+End Function</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

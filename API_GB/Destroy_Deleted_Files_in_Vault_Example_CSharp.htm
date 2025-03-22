@@ -1,0 +1,430 @@
+<html>
+
+<head>
+<title>Destroy Deleted Files in Vault Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,vaults">
+<meta name=MS-HKWD content="C# examples,files">
+<meta name=MS-HKWD content="C# examples,folders">
+<meta name=MS-HKWD content="C# examples">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Destroy Deleted Files in Vault Example (C#)</h1>
+<font size="1">
+<p><a name="Top"></a>This example shows how to create an application that displays a form 
+in which 
+a user can select the vault in whose root 
+folder and subfolders all deleted files will be permanently destroyed. The user must have permission to delete 
+files.</p>
+<p><b>NOTE</b>: If using the primary interop assembly 
+provided with SOLIDWORKS PDM Professional, see
+<a href="Using_NET_Framework_in_Applications.htm">Using .NET Framework 4.0 in 
+Stand-alone Applications</a>.</p>
+<p><img border="0" src="DestroyDeletedFiles.gif" width="270" height="312"></p>
+<p><font color="#ff0000"><b>IMPORTANT: </b></font>Do not recreate and run this 
+example if you do not want to destroy all deleted files in the root folder and 
+subfolders in the selected vault. Instead, SOLIDWORKS PDM Professional suggests 
+that you review the code to understand how you can programmatically destroy 
+deleted files in the root folder and subfolders of a vault. </p>
+<p class="APICODE"><font face="Courier New" color="#008000" size="2">
+//--------------------------------------------------------------------------------------<br>
+// Preconditions:<br>
+//&nbsp; 1. Start Microsoft Visual Studio.<br>
+//&nbsp; 2. Click <b>File &gt; New &gt; Project &gt; Visual C# &gt; Windows Forms Application</b>.<br>
+//&nbsp; 3. Type <b>DestroyDeletedItemsCSharp</b> in <b>Name</b>.<br>
+//&nbsp; 4. Click the <b>Browse</b> button and browse to the folder where to create 
+<br>
+//&nbsp;&nbsp;&nbsp;&nbsp; the project.<br>
+//&nbsp; 5. Click <b>OK</b>. <br>
+//&nbsp; 6. Create a form similar to the form shown above and change: <br>
+//&nbsp;&nbsp; &nbsp; a. Second label to <b>VaultsLabel</b>.<br>
+//&nbsp;&nbsp; &nbsp; b. Combo box to <b>VaultsComboBox</b>. <br>
+//&nbsp;&nbsp; &nbsp; c. Check box to <b>CheckBox_Recursive</b>.<br>
+//&nbsp;&nbsp; &nbsp; d. Button to <b>DestroyDeletedItemsButton</b>. <br>
+//&nbsp; 7. Replace the code in <b>Form1.cs</b> with <a href="#Form1.cs">this code</a>.<br>
+//&nbsp; 8. Replace the code in <b>Form1.Designer.cs</b> with
+<a href="#Form.Designer.cs">this code</a>.<br>
+//&nbsp; 9. </font><font color="#008000">Add <b>EPDM.Interop.epdm.dll</b> as a reference (right-click the project<br>
+//&nbsp;&nbsp;&nbsp;&nbsp; name in the Solution Explorer, click <b>Add 
+Reference</b>,&nbsp;click <b>Framework</b> <br>
+//&nbsp;&nbsp;&nbsp;&nbsp; in the left-side panel, browse to the top folder of 
+your SOLIDWORKS <br>
+//&nbsp;&nbsp;&nbsp;&nbsp; PDM Professional installation, locate and click <b>
+EPDM.Interop.epdm.dll</b>, <br>
+//&nbsp;&nbsp;&nbsp;&nbsp; click <b>Open</b>, click <b>Add</b>, and click <b>
+Close</b>).</font><font face="Courier New" color="#008000" size="2"><br>
+// 10. Right-click <b>EPDM.Interop.epdm</b> in References, click <b>Properties</b>, and 
+<br>
+//&nbsp;&nbsp;&nbsp;&nbsp; set <b>Embed Interop Types</b> 
+to <b>False</b> to handle methods that pass arrays <br>
+//&nbsp;&nbsp;&nbsp;&nbsp; of structures.<br>
+// 11. Switch back to the <b>Form1.cs</b> code window.<br>
+// 12. Ensure that the namespaces specified in all of the *.<b>cs</b> files match 
+<br>
+//&nbsp;&nbsp;&nbsp;&nbsp; the 
+project name.<br>
+// 13. Click <b>Debug &gt; Start Debugging</b> or press <b>F5</b>.<br>
+//<br>
+// Postconditions: <br>
+//&nbsp; 1. Displays the Destroy Deleted Files dialog.<br>
+//&nbsp; 2. Select a vault.<br>
+//&nbsp; 3. Optionally select the <b>Include all subfolders</b> check box.<br>
+//&nbsp; 4. Click the D<b>estroy deleted files</b> button.<br>
+//&nbsp;&nbsp; &nbsp; A message box pops up informing you that:<br>
+//&nbsp;&nbsp; &nbsp;&nbsp;* No deleted files were found to destroy.<br>
+//&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; - or -<br>
+//&nbsp;&nbsp; &nbsp;&nbsp;* The deleted files were destroyed. <br>
+//&nbsp; 5. Click <b>OK </b>in the message box.<br>
+//&nbsp; 6. Close the Destroy Deleted Files dialog.<br>
+//--------------------------------------------------------------------------------------</font></p>
+<p class="APICODE">&nbsp;</p>
+<p class="APICODE"><font face="Courier New" size="2" color="#008000"><a name="Form1.cs"></a>
+//</font></font><font face="Courier New" size="2" color="#008000">Form1.cs</font></p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE"><span style="color:blue;">using</span>&nbsp;System;<br>
+<span style="color:blue;">using</span>&nbsp;System.Windows.Forms;<br>
+<span style="color:blue;">using</span>&nbsp;EPDM.Interop.epdm;<br>
+<span style="color:blue;">using</span>&nbsp;System.Diagnostics;<br>
+<span style="color:blue;">using</span>&nbsp;System.Runtime.InteropServices;<br>
+&nbsp;<br>
+ 
+<span style="color:blue;">namespace</span>&nbsp;DestroyDeletedItems<br>
+{<br>
+	<span style="color:blue;">&nbsp;&nbsp;&nbsp; public</span>&nbsp;<span style="color:blue;">partial</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Form1</span>&nbsp;:&nbsp;<span style="color:#2b91af;">Form</span><br>
+	&nbsp;&nbsp;&nbsp;
+	{<br>
+		<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public</span>&nbsp;Form1()<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			InitializeComponent();<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		}<br>
+&nbsp;<br>
+		 
+		<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; void</span>&nbsp;DestroyDeletedItems_Load(<span style="color:blue;">object</span>&nbsp;sender,&nbsp;<span style="color:#2b91af;">EventArgs</span>&nbsp;e)<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		{<br>
+			<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; try</span><br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			{<br>
+				<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //Declare&nbsp;and&nbsp;create&nbsp;an&nbsp;instance&nbsp;of&nbsp;IEdmVault5</span><br>
+				<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IEdmVault5</span>&nbsp;vault1&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmVault5</span>();<br>
+&nbsp;<br>
+				 
+				<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //Cast&nbsp;IEdmVault5&nbsp;to&nbsp;IEdmVault8</span><br>
+				<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IEdmVault8</span>&nbsp;vault&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmVault8</span>)vault1;<br>
+&nbsp;<br>
+				 
+				<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+EdmViewInfo</span>[]&nbsp;Views&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+				<br>
+								
+				<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //Populate&nbsp;the&nbsp;form&nbsp;with&nbsp;the&nbsp;names&nbsp;of&nbsp;</span><br>
+				<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //the&nbsp;vaults&nbsp;on&nbsp;the&nbsp;computer</span><br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				vault.<b>GetVaultViews</b>(<span style="color:blue;">out</span>&nbsp;Views,&nbsp;<span style="color:blue;">false</span>);<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				VaultsComboBox.Items.Clear();<br>
+				<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; foreach</span>&nbsp;(<span style="color:#2b91af;">EdmViewInfo</span>&nbsp;View&nbsp;<span style="color:blue;">in</span>&nbsp;Views)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				{<br>
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					VaultsComboBox.Items.Add(View.mbsVaultName);<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				}<br>
+				<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if</span>&nbsp;(VaultsComboBox.Items.Count&nbsp;&gt;&nbsp;0)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				{<br>
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					VaultsComboBox.Text&nbsp;=&nbsp;(<span style="color:blue;">string</span>)VaultsComboBox.Items[0];<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				}<br>
+&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			}<br>
+			<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			{<br>
+				<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;ex.Message);<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			}<br>
+			<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			{<br>
+				<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MessageBox</span>.Show(ex.Message);<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			}<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		}<br>
+&nbsp;<br>
+&nbsp;<br>
+		 
+ 
+		<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; void</span>&nbsp;DestroyDeletedItemsButton_Click(<span style="color:blue;">object</span>&nbsp;sender,&nbsp;<span style="color:#2b91af;">EventArgs</span>&nbsp;e)<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		{<br>
+			<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; try</span><br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			{<br>
+				<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //Declare&nbsp;and&nbsp;create&nbsp;an&nbsp;instance&nbsp;of&nbsp;IEdmVault5&nbsp;</span><br>
+				<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IEdmVault5</span>&nbsp;vault&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmVault5</span>();<br>
+&nbsp;<br>
+				 
+				<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span><br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				vault.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());<br>
+&nbsp;<br>
+				 
+				<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //Check&nbsp;to&nbsp;see&nbsp;if&nbsp;deleted&nbsp;files&nbsp;should&nbsp;be&nbsp;</span><br>
+				<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //destroyed&nbsp;in&nbsp;all&nbsp;the&nbsp;subfolders</span><br>
+				<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bool</span>&nbsp;aRecursive&nbsp;=&nbsp;<span style="color:blue;">false</span>;<br>
+				<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if</span>&nbsp;(CheckBox_Recursive.Checked)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				{<br>
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					aRecursive&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				}<br>
+	<br>
+&nbsp;<br>
+					
+ 
+				<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //Get&nbsp;the&nbsp;current&nbsp;time&nbsp;to&nbsp;pass&nbsp;to&nbsp;IEdmFolder7::DestroyDeletedItems</span><br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				System.<span style="color:#2b91af;">DateTime</span>&nbsp;CurrentTime&nbsp;=&nbsp;<span style="color:blue;">default</span>(System.<span style="color:#2b91af;">DateTime</span>);<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				CurrentTime&nbsp;=&nbsp;System.<span style="color:#2b91af;">DateTime</span>.Now;<br>
+&nbsp;<br>
+				 
+				<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+EdmFileInfo</span>[]&nbsp;ppoDestroyedItems&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+				<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+EdmBatchDelErrInfo</span>[]&nbsp;paErrors&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+				<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IEdmFolder5</span>&nbsp;DeletedFolder1&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmFolder5</span>);<br>
+&nbsp;<br>
+				 
+				<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //Get&nbsp;the&nbsp;root&nbsp;folder&nbsp;of&nbsp;the&nbsp;vault</span><br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				DeletedFolder1&nbsp;=&nbsp;vault.<b>RootFolder</b>;<br>
+				<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IEdmFolder7</span>&nbsp;DeletedFolder&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmFolder7</span>)DeletedFolder1;<br>
+&nbsp;<br>
+				 
+				<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //Destroy&nbsp;all&nbsp;deleted&nbsp;files&nbsp;in&nbsp;the&nbsp;root&nbsp;folder&nbsp;and&nbsp;</span><br>
+				<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //subfolders,&nbsp;if&nbsp;the&nbsp;check&nbsp;box&nbsp;is&nbsp;selected&nbsp;on&nbsp;the&nbsp;form</span><br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				DeletedFolder.<b>DestroyDeletedItems</b>(aRecursive,&nbsp;CurrentTime,&nbsp;<span style="color:blue;">out</span>&nbsp;ppoDestroyedItems,&nbsp;<span style="color:blue;">out</span>&nbsp;paErrors);<br>
+&nbsp;<br>
+				 
+				<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //If&nbsp;any&nbsp;deleted&nbsp;files&nbsp;found,&nbsp;display&nbsp;their&nbsp;names&nbsp;in&nbsp;a&nbsp;message&nbsp;box</span><br>
+				<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; string</span>&nbsp;msg&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+				<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; int</span>&nbsp;idx&nbsp;=&nbsp;0;<br>
+				<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; foreach</span>&nbsp;(<span style="color:#2b91af;">EdmFileInfo</span>&nbsp;ppoDestroyedItem&nbsp;<span style="color:blue;">in</span>&nbsp;ppoDestroyedItems)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				{&nbsp;			<br>
+						<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; string</span>&nbsp;row&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						row&nbsp;=&nbsp;<span style="color:#a31515;">&quot;\nDocumentID:&nbsp;&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(ppoDestroyedItem.<b>mlFileID</b>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;,&nbsp;FolderID:&nbsp;&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(ppoDestroyedItem.<b>mlFolderID</b>)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; +&nbsp;<span style="color:#a31515;">&quot;,&nbsp;File&nbsp;path:&nbsp;&quot;</span>&nbsp;+&nbsp;ppoDestroyedItem.<b>mbsPath</b>;<br>
+&nbsp;<br>
+						 
+						<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if</span>&nbsp;(ppoDestroyedItem.<b>mhResult</b>&nbsp;==&nbsp;0)<br>
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						{<br>
+							&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+							row&nbsp;=&nbsp;row&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\nStatus:&nbsp;OK\n&quot;</span>;<br>
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						}<br>
+						<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; else</span><br>
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						{<br>
+							<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; EdmBatchDelErrInfo</span>[]&nbsp;paError&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+							&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+							row&nbsp;=&nbsp;row&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;status:&nbsp;Failed=&quot;</span>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(paError[idx].<b>mlErrorCode</b>);<br>
+							&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+							idx&nbsp;+=&nbsp;1;<br>
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						}<br>
+&nbsp;<br>
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						msg&nbsp;=&nbsp;msg&nbsp;+&nbsp;row;<br>
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					}<br>
+&nbsp;<br>
+					 
+					<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if</span>&nbsp;(msg&nbsp;==&nbsp;<span style="color:blue;">null</span>)<br>
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					{<br>
+						<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MessageBox</span>.Show(<span style="color:#a31515;">&quot;No&nbsp;deleted&nbsp;files&nbsp;were&nbsp;found&nbsp;in&nbsp;the&nbsp;selected 
+vault's root&nbsp;folder&nbsp;or&nbsp;\n&nbsp;subfolders.&quot;</span>);<br>
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					}<br>
+					<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; else</span><br>
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					{<br>
+						<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MessageBox</span>.Show(<span style="color:#a31515;">&quot;The&nbsp;status&nbsp;for&nbsp;each&nbsp;destroyed&nbsp;file&nbsp;is:\n&quot;</span>&nbsp;+&nbsp;msg);<br>
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br>
+&nbsp;<br>
+			 
+			<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			{<br>
+				<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;ex.Message);<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			}<br>
+			<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			{<br>
+				<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MessageBox</span>.Show(ex.Message);<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			}<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		}<br>
+&nbsp;<br>
+		 
+		<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; void</span>&nbsp;CheckBox_Recursive_CheckedChanged(<span style="color:blue;">object</span>&nbsp;sender,&nbsp;<span style="color:#2b91af;">EventArgs</span>&nbsp;e)<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		{<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		}<br>
+&nbsp;<br>
+		 
+		<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;label1_Click(<span style="color:blue;">object</span>&nbsp;sender,&nbsp;<span style="color:#2b91af;">EventArgs</span>&nbsp;e)<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		{<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		}<br>
+	&nbsp;&nbsp;&nbsp;
+	}<br>
+}</p>
+<p align="center" class="APICODE"><font face="Courier New" size="2"><a href="#Top">Back to top</a></font></p>
+<p class="APICODE"><font face="Courier New" size="2" color="#008000"><a name="Form.Designer.cs">
+</a>//Form1.Designer.cs</font></p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE"><span style="color:blue;">namespace</span>&nbsp;DestroyDeletedItems<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">partial</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Form1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;Required&nbsp;designer&nbsp;variable.</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.ComponentModel.<span style="color:#2b91af;">IContainer</span>&nbsp;components&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;Clean&nbsp;up&nbsp;any&nbsp;resources&nbsp;being&nbsp;used</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;param&nbsp;name=&quot;disposing&quot;&gt;</span><span style="color:green;">true&nbsp;if&nbsp;managed&nbsp;resources&nbsp;should&nbsp;be&nbsp;disposed;&nbsp;otherwise,&nbsp;false</span><span style="color:gray;">.&lt;/param&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">void</span>&nbsp;Dispose(<span style="color:blue;">bool</span>&nbsp;disposing)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(disposing&nbsp;&amp;&amp;&nbsp;(components&nbsp;!=&nbsp;<span style="color:blue;">null</span>))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;components.Dispose();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">base</span>.Dispose(disposing);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+ 
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#region</span>&nbsp;Windows&nbsp;Form&nbsp;Designer&nbsp;generated&nbsp;code<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;Required&nbsp;method&nbsp;for&nbsp;Designer&nbsp;support&nbsp;-&nbsp;do&nbsp;not&nbsp;modify</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;the&nbsp;contents&nbsp;of&nbsp;this&nbsp;method&nbsp;with&nbsp;the&nbsp;code&nbsp;editor.</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;InitializeComponent()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.label1&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ComboBox</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.DestroyDeletedItemsButton&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.CheckBox_Recursive&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">CheckBox</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.SuspendLayout();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;label1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.label1.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(32,&nbsp;19);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.label1.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;label1&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.label1.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(187,&nbsp;79);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.label1.TabIndex&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.label1.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;This&nbsp;application&nbsp;destroys&nbsp;all&nbsp;deleted&nbsp;files&nbsp;in&nbsp;the&nbsp;root&nbsp;folder&nbsp;of&nbsp;the&nbsp;selected&nbsp;va&quot;</span>&nbsp;+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#a31515;">&quot;ult&nbsp;and&nbsp;also&nbsp;allows&nbsp;you&nbsp;to&nbsp;destroy&nbsp;all&nbsp;deleted&nbsp;files&nbsp;in&nbsp;all&nbsp;of&nbsp;the&nbsp;selected&nbsp;vaul&quot;</span>&nbsp;+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#a31515;">&quot;t\'s&nbsp;subfolders.&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.label1.Click&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(<span style="color:blue;">this</span>.label1_Click);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;VaultsLabel</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.AutoSize&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(35,&nbsp;113);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;VaultsLabel&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(75,&nbsp;13);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.TabIndex&nbsp;=&nbsp;1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Select&nbsp;a&nbsp;vault:&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;VaultsComboBox</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.FormattingEnabled&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(35,&nbsp;130);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;VaultsComboBox&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(184,&nbsp;21);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.TabIndex&nbsp;=&nbsp;2;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;DestroyDeletedItemsButton</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.DestroyDeletedItemsButton.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(35,&nbsp;229);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.DestroyDeletedItemsButton.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;DestroyDeletedItemsButton&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.DestroyDeletedItemsButton.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(184,&nbsp;23);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.DestroyDeletedItemsButton.TabIndex&nbsp;=&nbsp;4;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.DestroyDeletedItemsButton.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Destroy&nbsp;deleted&nbsp;files&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.DestroyDeletedItemsButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.DestroyDeletedItemsButton.Click&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(<span style="color:blue;">this</span>.DestroyDeletedItemsButton_Click);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;CheckBox_Recursive</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.CheckBox_Recursive.AutoSize&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.CheckBox_Recursive.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(38,&nbsp;174);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.CheckBox_Recursive.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;CheckBox_Recursive&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.CheckBox_Recursive.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(125,&nbsp;17);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.CheckBox_Recursive.TabIndex&nbsp;=&nbsp;5;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.CheckBox_Recursive.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Include&nbsp;all&nbsp;subfolders&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.CheckBox_Recursive.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.CheckBox_Recursive.CheckedChanged&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(<span style="color:blue;">this</span>.CheckBox_Recursive_CheckedChanged);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Form1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AutoScaleDimensions&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">SizeF</span>(6F,&nbsp;13F);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AutoScaleMode&nbsp;=&nbsp;System.Windows.Forms.<span style="color:#2b91af;">AutoScaleMode</span>.Font;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.ClientSize&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(254,&nbsp;274);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.CheckBox_Recursive);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.DestroyDeletedItemsButton);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.VaultsComboBox);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.VaultsLabel);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.label1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Form1&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Destroy&nbsp;Deleted&nbsp;Files&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Load&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(<span style="color:blue;">this</span>.DestroyDeletedItems_Load);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.ResumeLayout(<span style="color:blue;">false</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.PerformLayout();<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+ 
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#endregion</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>&nbsp;label1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>&nbsp;VaultsLabel;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ComboBox</span>&nbsp;VaultsComboBox;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>&nbsp;DestroyDeletedItemsButton;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">CheckBox</span>&nbsp;CheckBox_Recursive;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}</p>
+<div align="center">
+	<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE" align="center">
+	<font face="Courier New" size="2"><a href="#Top">Back to top</a></font></div>
+
+</body>
+
+</html>

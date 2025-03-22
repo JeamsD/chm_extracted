@@ -1,0 +1,165 @@
+<html>
+
+<head>
+<title>Get External References for Part Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples,external references">
+<meta name=MS-HKWD content="VB.NET examples,parts">
+
+<body>
+
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Document 
+ Manager API Help</span></h1>
+<h1>Get External References for Part Example (VB.NET)</h1>
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p>This example shows how to get all of the external references for a part 
+	document.</div>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE"><span style="color: green">'----------------------------------------------------------------------------&nbsp;</span><br>
+<span style="color: green">'&nbsp;Preconditions:</span><br>
+<span style="color: green">'&nbsp;1.&nbsp;Read&nbsp;the&nbsp;SOLIDWORKS&nbsp;Document&nbsp;Manager&nbsp;API&nbsp;<b>Getting&nbsp;Started</b><i>&nbsp;</i>topic&nbsp;</span><br>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;ensure&nbsp;that&nbsp;the&nbsp;required&nbsp;DLLs&nbsp;are&nbsp;registered.</span><br>
+<span style="color: green">'&nbsp;2.&nbsp;Copy&nbsp;and&nbsp;paste&nbsp;this&nbsp;code&nbsp;into&nbsp;a&nbsp;VB.NET&nbsp;console&nbsp;application</span><br>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;Microsoft&nbsp;Visual&nbsp;Studio.</span><br>
+<span style="color: green">'&nbsp;3.&nbsp;Substitute&nbsp;<i>part_path_and_filename&nbsp;</i>with&nbsp;the&nbsp;filename&nbsp;</span><br>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;a&nbsp;part&nbsp;document&nbsp;containing&nbsp;one&nbsp;or&nbsp;more&nbsp;external&nbsp;references&nbsp;to&nbsp;other&nbsp;</span><br>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;part&nbsp;documents.</span><br>
+<span style="color: green">'&nbsp;4.&nbsp;Add&nbsp;the&nbsp;<b>SolidWorks.Interop.swdocumentmgr.dll</b>&nbsp;</span><br>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;reference&nbsp;to&nbsp;the&nbsp;project:</span><br>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Right-click&nbsp;the&nbsp;solution&nbsp;in&nbsp;Solution&nbsp;Explorer.</span><br>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Click&nbsp;<b>Add&nbsp;Reference</b>.&nbsp;</span><br>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;<b>Browse</b>.</span><br>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click:</span><br>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>install_dir</i><b>\api\redist\SolidWorks.Interop.swdocumentmgr.dll</b></span><br>
+<span style="color: green">'&nbsp;5.&nbsp;Substitute&nbsp;<i>your_license_key&nbsp;</i>with&nbsp;your&nbsp;SOLIDWORKS&nbsp;Document&nbsp;</span><br>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;Manager&nbsp;license&nbsp;key.</span><br>
+<span style="color: green">'&nbsp;6.&nbsp;Ensure&nbsp;that&nbsp;<b>c:\temp&nbsp;</b>exists.</span><br>
+<span style="color: green">'</span><br>
+<span style="color: green">'&nbsp;Postconditions:&nbsp;</span><br>
+<span style="color: green">'&nbsp;1.&nbsp;Examine&nbsp;the&nbsp;Immediate&nbsp;Window&nbsp;for&nbsp;information&nbsp;about&nbsp;the&nbsp;external&nbsp;references.</span><br>
+<span style="color: green">'&nbsp;2.&nbsp;Examine&nbsp;<b>c:\temp\extRefPart.xml</b>&nbsp;for&nbsp;more&nbsp;information&nbsp;about&nbsp;the&nbsp;</span><br>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;external&nbsp;references.</span><br>
+<span style="color: green">'--------------------------------------------------------------------------&nbsp;</span><br>
+&nbsp;<br>
+ 
+<span style="color: blue">Imports</span>&nbsp;SolidWorks.Interop.swdocumentmgr<br>
+<span style="color: blue">Imports</span>&nbsp;System<br>
+<span style="color: blue">Imports</span>&nbsp;System.Diagnostics<br>
+&nbsp;<br>
+ 
+<span style="color: blue">Module</span>&nbsp;<span style="color: #2b91af">Module1</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;dmClassFact&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">SwDMClassFactory</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;dmDocMgr&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">SwDMApplication4</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;dmDoc&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">SwDMDocument18</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;dmDocType&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">SwDmDocumentType</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;dmSearchOpt&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">SwDMSearchOption</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;status&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">SwDmDocumentOpenError</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;dmExtRefOption&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: #2b91af">SwDMExternalReferenceOption2</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;numExtRefs&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Integer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;xmlError&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Integer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;extRefs()&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">String</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;refConfigs()&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">String<br>
+&nbsp;&nbsp;&nbsp; Dim </span>refIDs()<span style="color: blue"> as Integer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;featStatus&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Boolean</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;featNames()&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">String</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;featTypes()&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">String</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;brokenStatus()&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Integer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;numFeat&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Integer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;i&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Integer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;j&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Integer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Const</span>&nbsp;docPath&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">String</span>&nbsp;=&nbsp;<span style="color: #a31515">&quot;</span><span style="color: green"><i>part_path_and_filename&nbsp;</i></span><span style="color: #a31515">&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Const</span>&nbsp;licenseKey&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">String</span>&nbsp;=&nbsp;<span style="color: #a31515">&quot;</span><span style="color: green"><i>your_license_key</i></span><span style="color: #a31515">&quot;</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Sub</span>&nbsp;Main()<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setDocType()<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmClassFact&nbsp;=&nbsp;<b>CreateObject</b>(<span style="color: #a31515">&quot;SwDocumentMgr.SwDMClassFactory&quot;</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDocMgr&nbsp;=&nbsp;dmClassFact.<b>GetApplication</b>(licenseKey)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDoc&nbsp;=&nbsp;dmDocMgr.<b>GetDocument</b>(docPath,&nbsp;dmDocType,&nbsp;<span style="color: blue">True</span>,&nbsp;status)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;<span style="color: blue">Not</span>&nbsp;(dmDoc&nbsp;<span style="color: blue">Is</span>&nbsp;<span style="color: blue">Nothing</span>)&nbsp;<span style="color: blue">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GetReferences()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDoc.<b>GetXmlStream</b>(<span style="color: #a31515">&quot;c:\temp\extRefPart.xml&quot;</span>,&nbsp;xmlError)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDoc.<b>CloseDoc</b>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Else</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;Unable&nbsp;to&nbsp;open&nbsp;document.&nbsp;Check&nbsp;'docPath'&nbsp;variable.&quot;</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Sub</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Sub</span>&nbsp;GetReferences()<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'&nbsp;Get&nbsp;external&nbsp;references</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmExtRefOption&nbsp;=&nbsp;dmDocMgr.<b>GetExternalReferenceOptionObject2</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmExtRefOption.<b>Configuration</b>&nbsp;=&nbsp;<span style="color: #a31515">&quot;Default&quot;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmExtRefOption.<b>NeedSuppress</b>&nbsp;=&nbsp;<span style="color: blue">True</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmSearchOpt&nbsp;=&nbsp;dmDocMgr.<b>GetSearchOptionObject</b>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmSearchOpt.<b>SearchFilters</b>&nbsp;=&nbsp;(<span style="color: #2b91af">SwDmSearchFilters</span>.SwDmSearchExternalReference&nbsp;+&nbsp;<span style="color: #2b91af">SwDmSearchFilters</span>.SwDmSearchForPart)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; dmExtRefOption.<b>SearchOption</b>&nbsp;=&nbsp;dmSearchOpt<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'&nbsp;Gets&nbsp;the&nbsp;paths&nbsp;and&nbsp;filenames&nbsp;of&nbsp;the&nbsp;external&nbsp;references,&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'&nbsp;whether&nbsp;the&nbsp;external&nbsp;references&nbsp;are&nbsp;broken,&nbsp;and&nbsp;the&nbsp;names&nbsp;of&nbsp;their&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'&nbsp;referenced&nbsp;configurations</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numExtRefs&nbsp;=&nbsp;dmDoc.<b>GetExternalFeatureReferences3</b>(dmExtRefOption)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;extRefs&nbsp;=&nbsp;dmExtRefOption.<b>ExternalReferences</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;refConfigs&nbsp;=&nbsp;dmExtRefOption.<b>ReferencedConfigurations</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;brokenStatus&nbsp;=&nbsp;dmExtRefOption.<b>BrokenStatus<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        </b>refIDs = dmExtRefOption.<b>IDs</b><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;(numExtRefs&nbsp;&gt;&nbsp;0)&nbsp;<span style="color: blue">Then</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">For</span>&nbsp;i&nbsp;=&nbsp;0&nbsp;<span style="color: blue">To</span>&nbsp;numExtRefs&nbsp;-&nbsp;1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;External&nbsp;reference:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;extRefs(i))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;Broken&nbsp;reference&nbsp;(1=broken,&nbsp;2=not&nbsp;broken,&nbsp;0&nbsp;=&nbsp;older&nbsp;version&nbsp;or&nbsp;N/A):&nbsp;&quot;</span>&nbsp;&amp;&nbsp;brokenStatus(i))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;Configuration&nbsp;name:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;refConfigs(i))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;ID:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;refIDs(i))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&quot;</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Next</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'&nbsp;Get&nbsp;the&nbsp;referenced&nbsp;feature&nbsp;names&nbsp;and&nbsp;types in the part document</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;featStatus&nbsp;=&nbsp;dmExtRefOption.<b>ReferencedFeatures</b>(featNames,&nbsp;featTypes)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;Referenced&nbsp;feature&nbsp;names&nbsp;and&nbsp;types&nbsp;in&nbsp;part&nbsp;document:&nbsp;&quot;</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numFeat&nbsp;=&nbsp;0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;(featStatus&nbsp;<span style="color: blue">And</span>&nbsp;(featNames&nbsp;<span style="color: blue">IsNot</span>&nbsp;<span style="color: blue">Nothing</span>))&nbsp;<span style="color: blue">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">For</span>&nbsp;j&nbsp;=&nbsp;LBound(extRefs)&nbsp;<span style="color: blue">To</span>&nbsp;UBound(extRefs)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;Feature&nbsp;name:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;featNames(numFeat))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;Feature&nbsp;type:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;featTypes(numFeat))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&quot;</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numFeat&nbsp;=&nbsp;numFeat&nbsp;+&nbsp;1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Next</span>&nbsp;j<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Else</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;No&nbsp;referenced&nbsp;features&nbsp;in&nbsp;model&nbsp;document.&quot;</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Else</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;No&nbsp;external&nbsp;references&nbsp;in&nbsp;the&nbsp;part&nbsp;document.&quot;</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Sub</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Sub</span>&nbsp;setDocType()<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;typeStr&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">String</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typeStr&nbsp;=&nbsp;Mid$(docPath,&nbsp;(Len(docPath)&nbsp;+&nbsp;1&nbsp;-&nbsp;6),&nbsp;6)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typeStr&nbsp;=&nbsp;UCase$(typeStr)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;(typeStr&nbsp;=&nbsp;<span style="color: #a31515">&quot;SLDPRT&quot;</span>)&nbsp;<span style="color: blue">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDocType&nbsp;=&nbsp;<span style="color: #2b91af">SwDmDocumentType</span>.swDmDocumentPart<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">ElseIf</span>&nbsp;(typeStr&nbsp;=&nbsp;<span style="color: #a31515">&quot;SLDASM&quot;</span>)&nbsp;<span style="color: blue">Then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDocType&nbsp;=&nbsp;<span style="color: #2b91af">SwDmDocumentType</span>.swDmDocumentAssembly<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Sub</span><br>
+&nbsp;<br>
+ 
+<span style="color: blue">End</span>&nbsp;<span style="color: blue">Module</span></p>
+
+</body>
+
+</html>

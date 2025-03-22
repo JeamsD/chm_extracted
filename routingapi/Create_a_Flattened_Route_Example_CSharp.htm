@@ -1,0 +1,130 @@
+<html>
+
+<head>
+<title>Create a Flattened Route Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,flattened route">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Routing 
+ API Help</span></h1>
+<h1>Create a Flattened Route Example (C#)</h1>
+<p>This example shows how to create an annotation type flattened route and its 
+drawing.</p>
+
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p class="APICODE"><span style="color:Green">&nbsp;<br>
+	<font size="2">
+	//---------------------------------------------------------------------------<br>
+	// Preconditions: <br>
+	//&nbsp;1. Add SOLIDWORKS Routing as an add-in<br>
+	</font> 
+	</span><font size="2" color="#008000">//&nbsp;&nbsp; </font>
+	<span style="color:Green"><font size="2">(in SOLIDWORKS select <b>Tools 
+	&gt; Add-Ins &gt; SOLIDWORKS Routing</b>). <br>
+	//&nbsp;2. Add <b>SOLIDWORKS.interop.SwRoutingLib.dll</b> as a reference<br>
+	</font> 
+	</span><font size="2" color="#008000">//&nbsp;&nbsp; </font>
+	<span style="color:Green"><font size="2">(in 
+	the IDE right-click the project, </font> 
+	</span><font size="2" color="#008000"><br>
+	//&nbsp;&nbsp;&nbsp;
+	</font><span style="color:Green"><font size="2">select <b>Add Reference</b>, and browse 
+	<i>
+	install_dir</i><b>\api\redist</b>). 
+	<br>
+	//&nbsp;3. In <b>Tools &gt; Options &gt; System Options &gt; Routing &gt; Routing File 
+	Locations</b>,  
+	</font> 
+	</span><font size="2" color="#008000"><br>
+	//&nbsp;&nbsp;&nbsp;
+	</font><span style="color:Green"><font size="2">add locations of your SOLIDWORKS Routing files. </font>
+	</span><font size="2"><span style="color:Green"> <br>
+	//&nbsp;4. Open <i>public_documents</i><b>\samples\tutorial\api\5connector.sldasm</b>.
+	<br>
+	//&nbsp;5. Ensure that the specified templates exist. <br>
+	//&nbsp;6. Rename the namespace to match the name of your C# project.<br>
+	// <br>
+	// Postconditions: <br>
+	//&nbsp;1. FeatureManager design tree shows <b>AnnotateFlattenedRoute1 </b>and hides 
+	<b>Route1</b>. <br>
+	//&nbsp;2. Sheet1 of 5connector.SLDDRW has the a2 - landscape format and 
+	contains: <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;* drawing view <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;* five electrical connector tables <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;* circuit-summary table <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;* electrical BOM table. <br>
+	// <br>
+	//&nbsp;<b>NOTE</b>:&nbsp;Because this assembly is used elsewhere,</span></font><font size="2" color="#008000"><br>
+	// </font><font size="2">
+	<span style="color:Green"> do not 
+	save any changes to it. <br>
+	//---------------------------------------------------------------------------<br>
+	<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	SolidWorks.Interop.sldworks;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	SolidWorks.Interop.swconst;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	SolidWorks.Interop.SWRoutingLib;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	System;<br>
+	</span><span style="color:Blue">namespace</span><span style="color:Black"> 
+	CreateFlattenedRoute_CSharp.csproj<br>
+	{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">partial</span><span style="color:Black">
+	</span><span style="color:Blue">class</span><span style="color:Black">
+	</span><span style="color:#2b91af">SolidWorksMacro<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ModelDoc2</span><span style="color:Black"> 
+	PartDoc;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">AssemblyDoc</span><span style="color:Black"> 
+	AssemblyDoc;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">bool</span><span style="color:Black"> 
+	boolstatus;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000FF">int</span><span style="color:Black"> 
+	longstatus;<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black">
+	</span><span style="color:Blue">void</span><span style="color:Black"> Main()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PartDoc = (</span><span style="color:#2b91af">ModelDoc2</span><span style="color:Black">)swApp.ActiveDoc;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;boolstatus = PartDoc.Extension.SelectByID2(</span><span style="color:#a31515">&quot;5connector.SLDASM&quot;</span><span style="color:Black">,
+	</span><span style="color:#a31515">&quot;COMPONENT&quot;</span><span style="color:Black">, 
+	0, 0, 0, </span><span style="color:Blue">false</span><span style="color:Black">, 
+	0, </span><span style="color:Blue">null</span><span style="color:Black">, 
+	0);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">RouteManager</span><span style="color:Black"> 
+	RouteMgr = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">RouteManager</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AssemblyDoc = (</span><span style="color:#2b91af">AssemblyDoc</span><span style="color:Black">)PartDoc;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RouteMgr = (</span><span style="color:#2b91af">RouteManager</span><span style="color:Black">)AssemblyDoc.<b>GetRouteManager</b>();<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;longstatus = RouteMgr.<b>CreateFlattenRoute</b>(1, 1, 0.0, 0.0, 
+	1, </span><span style="color:Blue">true</span><span style="color:Black">,
+	</span><span style="color:#a31515">&quot;<i>install_dir</i>\\lang\\english\\sheetformat\\a2 
+	- landscape.slddrt&quot;</span><span style="color:Black">, </span>
+	<span style="color:#a31515">&quot;</span><span style="color: #a31515"><i>install_dir</i></span><span style="color:#a31515">\\lang\\english\\bom-standard.sldbomtbt&quot;</span><span style="color:Black">,
+	</span><span style="color:#a31515">&quot;</span><span style="color: #a31515"><i>install_dir</i></span><span style="color:#a31515">\\lang\\english\\bom-circuit-summary.sldbomtbt&quot;</span><span style="color:Black">,
+	</span><span style="color:#a31515">&quot;</span><span style="color: #a31515"><i>install_dir</i></span><span style="color:#a31515">\\lang\\english\\connector-table.sldtbt&quot;</span><span style="color:Black">,<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">true</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black">
+	</span><span style="color:#2b91af">SldWorks</span><span style="color:Black"> 
+	swApp;<br>
+	<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	}</span>
+</font>
+</div>
+
+</body>
+
+</html>

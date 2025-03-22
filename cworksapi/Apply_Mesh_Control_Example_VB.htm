@@ -1,0 +1,340 @@
+<html>
+
+<head>
+<title>Apply Mesh Control Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,mesh controls">
+<meta name=MS-HKWD content="VBA examples,meshes">
+
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Apply Mesh Control Example (VBA)</h1>
+<p>This example shows how to get and set beams and joints, create a mesh, and 
+apply a mesh control.</p>
+
+<pre>'----------------------------------------------------------------------------
+' Preconditions:
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, 
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS Simulation </b><i>version</i><b> type library</b>).
+' 3. Ensure that the specified part and material library exist.
+' 4. Open the Immediate window.
+'
+' Postconditions:
+' 1. Creates a static study named <b>frame</b>.
+' 2. Gets beam information.
+' 3. Applies Plain Carbon Steel material to all beams.
+' 4. Calculates joints for all beams, gets a neutral axis for each beam,  
+'    and gets the pinball tolerance value and unit.
+' 5. Sets the mesher type to alternate curvature based.
+' 6. Applies a mesh control and gets its values.
+' 7. Creates a mixed mesh and gets its type and state.
+'    NOTE: This can take several seconds to complete.
+' 8. Inspect the Immediate window.
+'
+' NOTES:
+' *  Beam elements are created by default for parts with structural members.
+' *  Because the part is used elsewhere, do not save changes.
+'----------------------------------------------------------------------------</pre>
+<p class="APICODE">Option Explicit<br>
+&nbsp;</p>
+<p class="APICODE">Sub main()<br>
+&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks<br>
+&nbsp;&nbsp; Dim swModel As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp; Dim swModelDocExt As SldWorks.ModelDocExtension<br>
+&nbsp;&nbsp; Dim swSelMgr As SldWorks.SelectionMgr<br>
+&nbsp;&nbsp; Dim COSMOSWORKS As CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp; Dim COSMOSObject As CosmosWorksLib.CwAddincallback<br>
+&nbsp;&nbsp; Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp; Dim Study As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp; Dim BeamMgr As CosmosWorksLib.CWBeamManager<br>
+&nbsp;&nbsp; Dim BeamBody As CosmosWorksLib.CWBeamBody<br>
+&nbsp;&nbsp; Dim Joints As CosmosWorksLib.CWJoints<br>
+&nbsp;&nbsp; Dim Mesh As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp; Dim MeshControl As CosmosWorksLib.CWMeshControl<br>
+&nbsp;&nbsp; Dim nbrBeamBodies As Long<br>
+&nbsp;&nbsp; Dim beamBodyType As Long<br>
+&nbsp;&nbsp; Dim ElementSize As Double<br>
+&nbsp;&nbsp; Dim Tolerance As Double<br>
+&nbsp;&nbsp; Dim errors As Long, warnings As Long<br>
+&nbsp;&nbsp; Dim errCode As Long<br>
+&nbsp;&nbsp; Dim j As Integer<br>
+&nbsp;&nbsp; Dim bApp As Boolean<br>
+&nbsp;&nbsp; Dim keepJointUpdates As Boolean<br>
+&nbsp;&nbsp; Dim status As Boolean<br>
+&nbsp;&nbsp; Dim selEntity As Object<br>
+&nbsp;&nbsp; Dim selEntities(7) As Object<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Set SwApp = 
+Application.SldWorks<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set COSMOSObject = SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; If COSMOSObject Is Nothing Then ErrorMsg SwApp, &quot;COSMOSObject 
+object not found&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = COSMOSObject.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;COSMOSWORKS 
+object not found&quot;<br>
+&nbsp;&nbsp;&nbsp; <br>
+</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set swModel = SwApp.<b>OpenDoc6</b>(&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 
+2018\samples\tutorial\weldments\weldment_box2.sldprt&quot;, 
+swDocPART, swOpenDocOptions_Silent, &quot;&quot;, errors, warnings)<br>
+&nbsp;&nbsp;&nbsp; Set swModelDocExt = swModel.<b>Extension</b><br>
+&nbsp;&nbsp;&nbsp; Set swSelMgr = swModel.<b>SelectionManager</b><br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWStudyManager object&quot;<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>CreateNewStudy3</b>(&quot;frame&quot;, 
+swsAnalysisStudyTypeStatic, 0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;Study not created&quot;<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set BeamMgr = Study.<b>BeamManager</b><br>
+&nbsp;&nbsp;&nbsp; nbrBeamBodies = BeamMgr.<b>BeamCount</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Beams...&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of beams: &quot; &amp; nbrBeamBodies<br>
+&nbsp;&nbsp;&nbsp; Set BeamBody = Nothing<br>
+&nbsp;&nbsp;&nbsp; For j = 0 To (nbrBeamBodies - 1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set BeamBody = BeamMgr.<b>GetBeamBodyAt</b>(j, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, 
+&quot;No beam body&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Name 
+of beam body: &quot; &amp; BeamBody.<b>BeamBodyName</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; beamBodyType = BeamBody.<b>BeamType</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If beamBodyType = 0 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Type of beam body: beam&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Type of beam body: truss&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bApp = BeamBody.<b>SetLibraryMaterial</b>(&quot;C:\Program 
+Files\SOLIDWORKS Corp\SOLIDWORKS\lang\english\sldmaterials\solidworks 
+materials.sldmat&quot;, &quot;Plain Carbon Steel&quot;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If bApp = False Then ErrorMsg SwApp, 
+&quot;No material applied&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set BeamBody = Nothing<br>
+&nbsp;&nbsp;&nbsp; Next j<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Calculate joints<br>
+&nbsp;&nbsp;&nbsp; Set Joints = BeamMgr.<b>GetJointGroup</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot; &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Joints...&quot;<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No joint group&quot;<br>
+&nbsp;&nbsp;&nbsp; Joints.<b>JointsBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; Joints.<b>IncludeAllSelectedBeam</b> = True<br>
+&nbsp;&nbsp;&nbsp; Joints.<b>IncludeDisplayNeutralAxis</b> = True<br>
+&nbsp;&nbsp;&nbsp; Joints.<b>CalculateJoints</b><br>
+&nbsp;&nbsp;&nbsp; Joints.<b>JointsEndEdit</b><br>
+&nbsp;&nbsp;&nbsp; keepJointUpdates = Joints.<b>IncludeKeepModifiedJointOnUpdate</b><br>
+&nbsp;&nbsp;&nbsp; If (keepJointUpdates = True) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp; Keep joint 
+updates? yes&quot;)<br>
+&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp; Keep joint 
+updates? no&quot;)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Overwrite the pinball value: &quot; &amp; Joints.<b>IncludeTreatAsJointForClearanceLessThan</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Pinball radius: &quot; &amp; Joints.<b>PinBallRadius</b> 
+* 0.001<br>
+&nbsp;&nbsp;&nbsp; Select Case Joints.<b>PinBallRadiusUnit</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; 
+Pinball radius unit: mm&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; 
+Pinball radius unit: cm&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; 
+Pinball radius unit: m&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 3<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; 
+Pinball radius unit: in&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 4<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; 
+Pinball radius unit: ft&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 5<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; 
+Pinball radius unit: ft-in&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 6<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; 
+Pinball radius unit: am&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 7<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; 
+Pinball radius unit: nm&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 8<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; 
+Pinball radius unit: micron&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 9<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; 
+Pinball radius unit: mil&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 10<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; 
+Pinball radius unit: micronIn&quot;<br>
+&nbsp;&nbsp;&nbsp; End Select<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; Set Mesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If Mesh Is Nothing Then ErrorMsg SwApp, &quot;No mesh object&quot;<br>
+&nbsp;&nbsp;&nbsp; Mesh.<b>Quality</b> = swsMeshQualityHigh<br>
+&nbsp;&nbsp;&nbsp; Mesh.<b>MesherType</b> = swsMesherTypeAlternateCB<br>
+&nbsp;&nbsp;&nbsp; Mesh.<b>GetDefaultElementSizeAndTolerance</b> 
+swsLinearUnitMillimeters, ElementSize, Tolerance<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Select structural members for mesh 
+control<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Mesh control...&quot;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; status = swModelDocExt.<b>SelectByID2</b>(&quot;Square 
+tube 30 X 30 X 2.6(1)[4]&quot;, &quot;SOLIDBODY&quot;, 0, 0, 0, False, 0, Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = swSelMgr.<b>GetSelectedObject6</b>(1, -1)<br>
+&nbsp;&nbsp;&nbsp; Set selEntities(0) = selEntity<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = Nothing<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; status = swModelDocExt.<b>SelectByID2</b>(&quot;Square 
+tube 30 X 30 X 2.6(1)[3]&quot;, &quot;SOLIDBODY&quot;, 0, 0, 0, False, 0, Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = swSelMgr.<b>GetSelectedObject6</b>(1, -1)<br>
+&nbsp;&nbsp;&nbsp; Set selEntities(1) = selEntity<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = Nothing<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; status = swModelDocExt.<b>SelectByID2</b>(&quot;Square 
+tube 30 X 30 X 2.6(1)[2]&quot;, &quot;SOLIDBODY&quot;, 0, 0, 0, False, 0, Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = swSelMgr.<b>GetSelectedObject6</b>(1, -1)<br>
+&nbsp;&nbsp;&nbsp; Set selEntities(2) = selEntity<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = Nothing<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; status = swModelDocExt.<b>SelectByID2</b>(&quot;Square 
+tube 30 X 30 X 2.6(1)[1]&quot;, &quot;SOLIDBODY&quot;, 0, 0, 0, False, 0, Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = swSelMgr.<b>GetSelectedObject6</b>(1, -1)<br>
+&nbsp;&nbsp;&nbsp; Set selEntities(3) = selEntity<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = Nothing<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; status = swModelDocExt.<b>SelectByID2</b>(&quot;Square 
+tube 30 X 30 X 2.6(1)[8]&quot;, &quot;SOLIDBODY&quot;, 0, 0, 0, False, 0, Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = swSelMgr.<b>GetSelectedObject6</b>(1, -1)<br>
+&nbsp;&nbsp;&nbsp; Set selEntities(4) = selEntity<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = Nothing<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; status = swModelDocExt.<b>SelectByID2</b>(&quot;Square 
+tube 30 X 30 X 2.6(1)[6]&quot;, &quot;SOLIDBODY&quot;, 0, 0, 0, False, 0, Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = swSelMgr.<b>GetSelectedObject6</b>(1, -1)<br>
+&nbsp;&nbsp;&nbsp; Set selEntities(5) = selEntity<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = Nothing<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; status = swModelDocExt.<b>SelectByID2</b>(&quot;Sb 
+beam 80 X 6(1)[2]&quot;, &quot;SOLIDBODY&quot;, 0, 0, 0, False, 0, Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = swSelMgr.<b>GetSelectedObject6</b>(1, -1)<br>
+&nbsp;&nbsp;&nbsp; Set selEntities(6) = selEntity<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = Nothing<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; status = swModelDocExt.<b>SelectByID2</b>(&quot;Sb 
+beam 80 X 6(1)[1]&quot;, &quot;SOLIDBODY&quot;, 0, 0, 0, False, 0, Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = swSelMgr.<b>GetSelectedObject6</b>(1, -1)<br>
+&nbsp;&nbsp;&nbsp; Set selEntities(7) = selEntity<br>
+&nbsp;&nbsp;&nbsp; Set selEntity = Nothing<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set MeshControl = Mesh.<b>ApplyMeshControl</b>(selEntities, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; MeshControl.<b>MeshControlBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; MeshControl.<b>BeamSelected</b> = 0<br>
+&nbsp;&nbsp;&nbsp; MeshControl.<b>MinimumElementSize_BlendedCurved</b> = 4<br>
+&nbsp;&nbsp;&nbsp; MeshControl.<b>MinNumOfElementsPerCircle_BlendedCurved</b> = 
+8<br>
+&nbsp;&nbsp;&nbsp; MeshControl.<b>MeshControlEndEdit</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Name of mesh control: &quot; &amp; MeshControl.<b>Name</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Beam selected? (1 = yes; 0 = no) &quot; &amp; 
+MeshControl.<b>BeamSelected</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Element size for mesh control (m): &quot; &amp; 
+MeshControl.<b>ElementSize</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of entities in mesh control: &quot; &amp; 
+MeshControl.<b>EntityCount</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of elements for beams: &quot; &amp; 
+MeshControl.<b>NumofElementsforBeams</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Ratio of the average element size (layer 
+i)/(layer i-1): &quot; &amp; MeshControl.<b>Ratio</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; State of mesh control (0 = suppressed; 1 
+= not suppressed): &quot; &amp; MeshControl.<b>State</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Minimum element size for boundaries with 
+highest curvature: &quot; &amp; MeshControl.<b>MinimumElementSizeForBlendedCurveMesher</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Minimum number of elements in a circle to 
+determine the maximum angle: &quot; &amp; MeshControl.<b>MinNumOfElementsPerCircleForBlendedCurveMesher</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of mesh 
+controls: &quot; &amp; Mesh.<b>MeshControlCount</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMeshForMeshControl</b>(MeshControl.<b>Name</b>)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Mesh the part<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot; &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;*** Creating a mesh next, which can take several 
+seconds. Please wait. ***&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(swsLinearUnitMillimeters, 
+ElementSize, Tolerance)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Mesh failed&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot; &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Mesh...&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Time to create (hh:mm:ss): &quot; &amp; Mesh.<b>TimeToCompleteMesh</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Type: &quot;<br>
+&nbsp;&nbsp;&nbsp; Select Case Mesh.<b>MeshType</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+Solid&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+Midsurface&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+Surface&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 3<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+Mixed&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 4<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+Beam&quot;<br>
+&nbsp;&nbsp;&nbsp; End Select<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; State: &quot;<br>
+&nbsp;&nbsp;&nbsp; Select Case Mesh.<b>MeshState</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+No mesh&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+Exists and is current&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+Exists and is not current&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 3<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+Failed&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case 4<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; 
+Interrupted&quot;<br>
+&nbsp;&nbsp;&nbsp; End Select<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Sub<br>
+Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

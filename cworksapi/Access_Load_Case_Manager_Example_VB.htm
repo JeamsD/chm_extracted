@@ -1,0 +1,308 @@
+<html>
+
+<head>
+<title>Access Load Case Manager Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,Load Case Manager">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Access Load Case Manager Example (VBA)</h1>
+<p>This example shows how to access the Load Case Manager to define load cases 
+and load case combinations.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Ensure that the specified model exists.<br>
+'<br>
+' Postconditions:<br>
+' 1. Gets the <b>Ready</b> study.<br>
+' 2. Opens the Load Case Manager.<br>
+' 3. Adds primary load cases and load case combinations.<br>
+' 4. Analyzes <b>Ready</b> using all primary load cases and load case 
+combinations.<br>
+' 5. Creates a results displacement plot.<br>
+' 6. Click on each primary load case and load case combination in the<br>
+'&nbsp;&nbsp;&nbsp; Results View tab of the Load Case Manager. Inspect the 
+result data<br>
+'&nbsp;&nbsp;&nbsp; in the graphics area after each click.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+' ---------------------------------------------------------------------------<br>
+Option Explicit</p>
+<p class="APICODE">Dim SwApp As SldWorks.SldWorks<br>
+Dim Part As SldWorks.ModelDoc2<br>
+Dim COSMOSWORKS As CosmosWorksLib.COSMOSWORKS<br>
+Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+Dim Study As CosmosWorksLib.CWStudy<br>
+Dim LoadCaseManager As CosmosWorksLib.CWLoadCaseManager<br>
+Dim CWResult As CosmosWorksLib.CWResults&nbsp;<br>
+Dim CWCFf As CosmosWorksLib.CWPlot&nbsp; <br>
+Dim bLoaded As Long&nbsp;&nbsp; <br>
+Dim errCode As Long<br>
+Dim longstatus As Long, longwarnings As Long<br>
+Dim bSuccess As Boolean<br>
+Dim PrimaryCases As Variant, SecondaryCases As Variant<br>
+Dim varBOOLVals As Variant, varLoadVals As Variant<br>
+Dim varRetBOOLVals As Variant, varRetLoadVals As Variant<br>
+Dim strCombination As String, retStrCombination As String</p>
+<p class="APICODE"><br>
+</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>OpenDoc6</b>(&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 
+2019\samples\Simulation Examples<br>
+\Tutor1.sldprt&quot;, swDocPART, 
+1, &quot;&quot;, longstatus, longwarnings)<br>
+&nbsp;&nbsp;&nbsp; If Part Is Nothing Then ErrorMsg SwApp, &quot;Failed to open 
+Tutor1.sldprt&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = SwApp.<b>GetAddInObject</b>(&quot;CosmosWorks.CosmosWorks&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, 
+&quot;Simulation add-in not loaded&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;No 
+COSMOSWORKS object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWStudyManager object&quot;<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(0)<br>
+&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 0<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;No study&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set LoadCaseManager = Study.<b>LoadCaseManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If LoadCaseManager Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWLoadCaseManager object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>OpenLoadCaseManager</b>()<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>AddNewPrimaryLoadCase</b>(&quot;My 
+Load Case1&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Primary load case 
+not created&quot;<br>
+&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>AddNewPrimaryLoadCase</b>(&quot;My 
+Load Case2&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Primary load case 
+not created&quot;<br>
+&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>AddNewPrimaryLoadCase</b>(&quot;My 
+Load Case3&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Primary load case 
+not created&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>DeletePrimaryLoadCase</b>(&quot;My 
+Load Case3&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Primary load case 
+not deleted&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>SuppressOrUnSuppressPrimaryLoadCase</b>(&quot;My 
+Load Case2&quot;, True)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Primary load case 
+not suppressed&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>SuppressOrUnSuppressPrimaryLoadCase</b>(&quot;My 
+Load Case2&quot;, False)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Primary load case 
+not unsuppressed&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>RenamePrimaryLoadCase</b>(&quot;My 
+Load Case2&quot;, &quot;Live Load2&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Primary load case 
+not renamed&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; varBOOLVals = Array(False)<br>
+&nbsp;&nbsp;&nbsp; varLoadVals = Array(3.5)<br>
+&nbsp;&nbsp;&nbsp; errCode = LoadCaseManager.<b>SetLoadDataForPrimaryLoadCase</b>(&quot;My 
+Load Case1&quot;, &quot;Pressure-1&quot;, (varBOOLVals), (varLoadVals))<br>
+&nbsp;&nbsp;&nbsp; If errCode &gt; 0 Then ErrorMsg SwApp, &quot;Load data of Pressure-1 
+not applied to My Load Case1&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; varBOOLVals = Array(True)<br>
+&nbsp;&nbsp;&nbsp; varLoadVals = Array(-1)<br>
+&nbsp;&nbsp;&nbsp; errCode = LoadCaseManager.<b>SetLoadDataForPrimaryLoadCase</b>(&quot;My 
+Load Case1&quot;, &quot;Restraint-1&quot;, (varBOOLVals), (varLoadVals))<br>
+&nbsp;&nbsp;&nbsp; If errCode &gt; 0 Then ErrorMsg SwApp, &quot;Load data of Restraint-1 
+not applied to My Load Case1&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; varBOOLVals = Array(False)<br>
+&nbsp;&nbsp;&nbsp; varLoadVals = Array(-1)<br>
+&nbsp;&nbsp;&nbsp; errCode = LoadCaseManager.<b>SetLoadDataForPrimaryLoadCase</b>(&quot;My 
+Load Case1&quot;, &quot;Restraint-1&quot;, (varBOOLVals), (varLoadVals))<br>
+&nbsp;&nbsp;&nbsp; If errCode &gt; 0 Then ErrorMsg SwApp, &quot;Load data of Restraint-1 
+not applied to My Load Case1&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; varBOOLVals = Array(False)<br>
+&nbsp;&nbsp;&nbsp; varLoadVals = Array(6.5)<br>
+&nbsp;&nbsp;&nbsp; errCode = LoadCaseManager.<b>SetLoadDataForPrimaryLoadCase</b>(&quot;Live 
+Load2&quot;, &quot;Pressure-1&quot;, (varBOOLVals), (varLoadVals))<br>
+&nbsp;&nbsp;&nbsp; If errCode &gt; 0 Then ErrorMsg SwApp, &quot;Load data of Pressure-1 
+not applied to Live Load2&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; varRetLoadVals = LoadCaseManager.<b>GetLoadDataForPrimaryLoadCase</b>(&quot;Live 
+Load2&quot;, &quot;Pressure-1&quot;, varRetBOOLVals)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; strCombination = &quot;&quot;&quot;My Load Case1&quot;&quot; + 
+&quot;&quot;Live Load2&quot;&quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; errCode = LoadCaseManager.<b>AddNewLoadCaseCombination</b>(&quot;Load 
+Case Combination1&quot;, strCombination)<br>
+&nbsp;&nbsp;&nbsp; If errCode &gt; 0 Then ErrorMsg SwApp, &quot;Load Case Combination1 
+not added&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; strCombination = &quot;2*(sin(30)*&quot;&quot;My Load 
+Case1&quot;&quot;*(1 + 1) + (4 - 2)*&quot;&quot;Live Load2&quot;&quot;*cos(60))&quot;<br>
+&nbsp;&nbsp;&nbsp; errCode = LoadCaseManager.<b>AddNewLoadCaseCombination</b>(&quot;Load 
+Case Combination2&quot;, strCombination)<br>
+&nbsp;&nbsp;&nbsp; If errCode &gt; 0 Then ErrorMsg SwApp, &quot;Load Case Combination2 
+not added&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; strCombination = &quot;&quot;&quot;My Load Case1&quot;&quot; + 
+&quot;&quot;Live Load2&quot;&quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; errCode = LoadCaseManager.<b>AddNewLoadCaseCombination</b>(&quot;Load 
+Case Combination3&quot;, strCombination)<br>
+&nbsp;&nbsp;&nbsp; If errCode &gt; 0 Then ErrorMsg SwApp, &quot;Load Case Combination3 
+not added&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; strCombination = &quot;&quot;&quot;My Load Case1&quot;&quot; + 
+&quot;&quot;Live Load2&quot;&quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; errCode = LoadCaseManager.<b>AddNewLoadCaseCombination</b>(&quot;Load 
+Case Combination4&quot;, strCombination)<br>
+&nbsp;&nbsp;&nbsp; If errCode &gt; 0 Then ErrorMsg SwApp, &quot;Load Case Combination4 
+not added&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>DeleteLoadCaseCombination</b>(&quot;Load 
+Case Combination3&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Load Case 
+Combination3 not deleted&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>DeleteLoadCaseCombination</b>(&quot;Load 
+Case Combination4&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Load Case 
+Combination4 cannot be deleted&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; strCombination = &quot;&quot;&quot;My Load Case1&quot;&quot; + 
+&quot;&quot;Live Load2&quot;&quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; errCode = LoadCaseManager.AddNewLoadCaseCombination(&quot;Load 
+Case Combination3&quot;, strCombination)<br>
+&nbsp;&nbsp;&nbsp; If errCode &gt; 0 Then ErrorMsg SwApp, &quot;Load Case Combination3 
+not added&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>SuppressOrUnSuppressLoadCaseCombination</b>(&quot;Load 
+Case Combination2&quot;, True)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Load Case 
+Combination2 not suppressed&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>SuppressOrUnSuppressLoadCaseCombination</b>(&quot;Load 
+Case Combination2&quot;, False)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Load Case 
+Combination2 not unsuppressed&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>SuppressOrUnSuppressLoadCaseCombination</b>(&quot;Load 
+Case Combination3&quot;, True)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Load Case 
+Combination3 not suppressed&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>RenameLoadCaseCombination</b>(&quot;Load 
+Case Combination2&quot;, &quot;My Combination2&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Load Case 
+Combination2 not renamed&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>RenameLoadCaseCombination</b>(&quot;My 
+Combination2&quot;, &quot;Load Case Combination2&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Load Case 
+Combination2 not renamed&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; strCombination = &quot;&quot;&quot;My Load Case1&quot;&quot; * 
+&quot;&quot;Live Load2&quot;&quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; errCode = LoadCaseManager.<b>SetEquationForLoadCaseCombination</b>(&quot;Load 
+Case Combination1&quot;, strCombination)<br>
+&nbsp;&nbsp;&nbsp; If errCode = 0 Then ErrorMsg SwApp, &quot;Load Case Combination1 
+equation not set&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; strCombination = &quot;(&quot;&quot;My Load Case1&quot;&quot;*2 + 
+&quot;&quot;Live Load2&quot;&quot;*2)/2&quot;<br>
+&nbsp;&nbsp;&nbsp; errCode = LoadCaseManager.<b>SetEquationForLoadCaseCombination</b>(&quot;Load 
+Case Combination1&quot;, strCombination)<br>
+&nbsp;&nbsp;&nbsp; If errCode &gt; 0 Then ErrorMsg SwApp, &quot;Load Case Combination1 
+equation not set&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; retStrCombination = LoadCaseManager.<b>GetEquationForLoadCaseCombination</b>(&quot;Load 
+Case Combination1&quot;)<br>
+&nbsp;&nbsp;&nbsp; errCode = StrComp(retStrCombination, strCombination)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt; 0 Or errCode &gt; 0 Then ErrorMsg SwApp, &quot;Load Case 
+Combination1 equation not returned&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; PrimaryCases = LoadCaseManager.<b>GetAllPrimaryLoadCaseNames</b>()<br>
+&nbsp;&nbsp;&nbsp; SecondaryCases = LoadCaseManager.<b>GetAllLoadCaseCombinationNames</b>()<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = LoadCaseManager.<b>RunLoadCases</b>(True, 
+True)<br>
+&nbsp;&nbsp;&nbsp; If errCode &gt; 0 Then ErrorMsg SwApp, &quot;Load cases failed to 
+run&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; LoadCaseManager.<b>ShowLoadCaseViewTab</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>ShowResultsViewTab</b>()<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Cannot display 
+Results View tab&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>LoadResultsOfPrimaryLoadCase</b>(&quot;My 
+Load Case1&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;My Load Case1 
+results not loaded&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWResult = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWResult Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWResults 
+object&quot;<br>
+<br>
+&nbsp;&nbsp;&nbsp; Set CWCFf = CWResult.<b>CreatePlot</b>(swsResultDisplacementOrAmplitude, 
+swsStaticDisplacement_URES, swsUnitSI, False, errCode)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>LoadResultsOfPrimaryLoadCase</b>(&quot;Live 
+Load2&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Live Load2 results 
+not loaded&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>LoadResultsOfLoadCaseCombination</b>(&quot;Load 
+Case Combination1&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Load Case 
+Combination1 results not loaded&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bSuccess = LoadCaseManager.<b>LoadResultsOfLoadCaseCombination</b>(&quot;Load 
+Case Combination2&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bSuccess = False Then ErrorMsg SwApp, &quot;Load Case 
+Combination2 results not loaded&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'LoadCaseManager.<b>CloseLoadCaseManager</b><br>
+&nbsp;&nbsp;&nbsp; 'LoadCaseManager.<b>DeleteAllDataAndClose</b></p>
+<p class="APICODE">End Sub<br>
+&nbsp;</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

@@ -1,0 +1,457 @@
+<html>
+
+<head>
+<title>Create Fatigue Study for Dynamic Random Vibration Study Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,dynamic study">
+<meta name=MS-HKWD content="VBA examples,random vibration study">
+<meta name=MS-HKWD content="VBA examples,fatigue study">
+<meta name=MS-HKWD content="VBA examples,fatigue study options">
+<meta name=MS-HKWD content="VBA examples,fatigue event">
+<meta name=MS-HKWD content="VBA examples,fatigue study result options">
+
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Create Fatigue Study for Dynamic Random Vibration Study Example (VBA)</h1>
+<p>This example shows how to create a fatigue study for a linear dynamic random 
+vibration study.</p>
+
+<p class="APICODE">
+'---------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+'&nbsp;3. Ensure that the specified part and material library exist.<br>
+'&nbsp;4. Open an Immediate window.<br>
+'<br>
+' Postconditions:<br>
+'&nbsp; 1. Opens the specified file.<br>
+'&nbsp; 2. Creates and analyzes study, <b>Dynamic_Random_Vibration</b>.<br>
+'&nbsp; 3. Creates a default fatigue study damage plot.<br>
+'&nbsp; 4. Creates study, <b>RandomVibrationFatigue</b>.<br>
+'&nbsp; 5. Adds a fatigue event of duration 60 seconds to <b>
+RandomVibrationFatigue</b>.<br>
+'&nbsp; 6. Modifies the fatigue S-N curve equation for the model's material.<br>
+'&nbsp; 7. Analyzes <b>RandomVibrationFatigue</b> and displays message boxes 
+with damage<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; percentage errors for each of the following 
+computational methods:<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * Narrow Band<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * Steinberg<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * Wirsching<br>
+'&nbsp; 8. Click <b>OK</b> to close each message box.<br>
+'&nbsp; 9. Inspect the Immediate window for the Narrow Band method<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; minimum and maximum fatigue.<br>
+' 10. Inspect the damage plot.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save any changes.<br>
+'---------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim Part As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS As CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim SolidMat As CosmosWorksLib.CWMaterial<br>
+&nbsp;&nbsp;&nbsp; Dim LBCMgr As CosmosWorksLib.CWLoadsAndRestraintsManager<br>
+&nbsp;&nbsp;&nbsp; Dim DynStudyOptions As CosmosWorksLib.CWDynamicStudyOptions<br>
+&nbsp;&nbsp;&nbsp; Dim CWDirectionEntity As Object<br>
+&nbsp;&nbsp;&nbsp; Dim CWBaseExcitationEntity as Object<br>
+&nbsp;&nbsp;&nbsp; Dim longstatus As Long<br>
+&nbsp;&nbsp;&nbsp; Dim longwarnings As Long<br>
+&nbsp;&nbsp;&nbsp; Dim errCode As Long<br>
+&nbsp;&nbsp;&nbsp; Dim boolstatus As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim pDisp5 As Object<br>
+&nbsp;&nbsp;&nbsp; Dim DispArray1 As Variant, DispArray3 As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim sStudyName As String<br>
+&nbsp;&nbsp;&nbsp; Dim ResultOptions As CosmosWorksLib.CWStudyResultOptions<br>
+&nbsp;&nbsp;&nbsp; Dim DampingOptions As CosmosWorksLib.CWDampingOptions<br>
+&nbsp;&nbsp;&nbsp; Dim DampingRatios As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim freqOption As Long<br>
+&nbsp;&nbsp;&nbsp; Dim freqValue As Double<br>
+&nbsp;&nbsp;&nbsp; Dim bChecked As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim CWFeatObj As Object<br>
+&nbsp;&nbsp;&nbsp; Dim CWFeatObj2 As CosmosWorksLib.CWPressure<br>
+&nbsp;&nbsp;&nbsp; Dim CWFeatObj3 As CosmosWorksLib.CWRestraint<br>
+&nbsp;&nbsp;&nbsp; Dim CWFeatObj4 As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; Dim CWFeatObj5 As CosmosWorksLib.CWResults<br>
+&nbsp;&nbsp;&nbsp; Dim param As Long<br>
+&nbsp;&nbsp;&nbsp; Dim dParam As Double<br>
+&nbsp;&nbsp;&nbsp; Dim inRadius As Double<br>
+&nbsp;&nbsp;&nbsp; Dim outRadius As Double<br>
+&nbsp;&nbsp;&nbsp; Dim FatigueOptions As CosmosWorksLib.CWFatigueStudyOptions<br>
+&nbsp;&nbsp;&nbsp; Dim FatigueEvent As CosmosWorksLib.CWFatigueEvent<br>
+&nbsp;&nbsp;&nbsp; Dim Damage As Variant<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Const Tol As Double = 0.05 '5% - damage 
+tolerance<br>
+&nbsp;&nbsp;&nbsp; Const DamageMax_NarrowBand As Double = 1305.36&nbsp; 
+'baseline percentage<br>
+&nbsp;&nbsp;&nbsp; Const DamageMax_Steinberg As Double = 741.951&nbsp; 'baseline 
+percentage<br>
+&nbsp;&nbsp;&nbsp; Const DamageMax_Wirsching As Double = 907.23&nbsp; 'baseline 
+percentage<br>
+&nbsp;&nbsp;&nbsp; Const MeshEleSize As Double = 26.5868077635828 'mm<br>
+&nbsp;&nbsp;&nbsp; Const MeshTol As Double = 1.32934038817914 'mm</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Exit Sub<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>OpenDoc6</b>(&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 
+2018\samples\tutorial\api\block.SLDPRT&quot;, swDocPART, 
+swOpenDocOptions_Silent, &quot;&quot;, longstatus, longwarnings)<br>
+&nbsp;&nbsp;&nbsp; If Part Is Nothing Then ErrorMsg SwApp, &quot;Failed to open 
+block.SLDPRT&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = SwApp.<b>GetAddInObject</b>(&quot;CosmosWorks.CosmosWorks&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+get CwAddincallback object&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+CosmosWorks object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+active document&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Create a dynamic random vibration study<br>
+&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+CWStudyManager object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; sStudyName = &quot;Dynamic_Random_Vibration&quot;<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>CreateNewStudy3</b>(sStudyName, 
+swsAnalysisStudyTypeDynamic, swsDynamicAnalysisSubTypeRandom, errCode)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Linear dynamic study with 
+random vibration analysis&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Study configuration name is &quot; &amp; Study.<b>ConfigurationName</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Dynamic analysis subtype as defined in 
+swsAnalysisStudyType_e is &quot; &amp; Study.<b>DynamicAnalysisSubType</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Dynamic study options...&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set DynStudyOptions = Study.<b>DynamicStudyOptions</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>GetFrequencyOption2</b>(freqOption, 
+freqValue)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Frequency option (0=number of 
+frequencies, 1=upper bound): &quot; &amp; freqOption<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; No. of frequencies or upper-bound 
+frequency: &quot; &amp; freqValue<br>
+&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>GetFrequencyShiftOption2</b>(bChecked, 
+freqValue)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Is frequency shift enabled (0=no, 1=yes)? 
+&quot; &amp; bChecked<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Frequency shift: &quot; &amp; freqValue</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>SetIncompatibleBondingOption2</b>(swsIncompatibleBondingOption_Automatic)
+<br>
+&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>SetUseSoftSpring2</b>(0) ' Not 
+using soft spring to stabilize model<br>
+&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>SetResultFolderPath2</b>(&quot;c:\temp&quot;)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; DynStudyOptions.<b>SolverType</b> = 
+swsSolverTypeFFEPlus </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>GetRandomVibrationAnalysisMethod2</b>(param)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Analysis method as defined in 
+swsRandomVibrationAnalysisMethod_e: &quot; &amp; param<br>
+&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>GetRandomVibrationBiasingParameter2</b>(dParam)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Biasing parameter: &quot; &amp; param<br>
+&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>GetRandomVibrationCorrelationOption2</b>(param)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Correlation option as defined in 
+swsRandomVibrationCorrelationOption_e: &quot; &amp; param<br>
+&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>GetRandomVibrationCrossModeCutOffRatio2</b>(dParam)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Cross-mode cut-off ratio: &quot; &amp; param<br>
+&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>GetRandomVibrationFrequencyLowerLimit2</b>(dParam)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Operating frequency lower limit: &quot; &amp; 
+param<br>
+&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>GetRandomVibrationFrequencyUnits2</b>(param)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Units of operating frequency as defined 
+in swsFrequencyUnit_e: &quot; &amp; param<br>
+&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>GetRandomVibrationFrequencyUpperLimit2</b>(dParam)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Operating frequency upper limit: &quot; &amp; 
+param<br>
+&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>GetRandomVibrationGaussIntegrationOrder2</b>(param)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Gauss integration order as defined in 
+swsGaussIntegrationOrder_e: &quot; &amp; param<br>
+&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>GetRandomVibrationNoOfFrequencyPoints2</b>(param)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of frequency points: &quot; &amp; param<br>
+&nbsp;&nbsp;&nbsp; errCode = DynStudyOptions.<b>GetRandomVibrationPartialCorrelationDetails2</b>(param, 
+inRadius, outRadius)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Partially correlated units as defined in 
+swsLinearUnit_e: &quot; &amp; param<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Inside radius: &quot; &amp; inRadius<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Outside radius: &quot; &amp; outRadius</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Set study result options<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Study result options...&quot;<br>
+&nbsp;&nbsp;&nbsp; Set ResultOptions = Study.<b>StudyResultOptions</b><br>
+&nbsp;&nbsp;&nbsp; ResultOptions.<b>SaveResultsForSolutionStepsOption</b> = 
+swsSaveResultsOption_ForAllSolutionSteps <br>
+&nbsp;&nbsp;&nbsp; ResultOptions.<b>SaveDisplacementsAndVelocitiesOption</b> = 
+swsResultsDisplacementAndVelocityOption_Absolute<br>
+&nbsp;&nbsp;&nbsp; ResultOptions.<b>SaveStresses</b> = 1 ' Save stress results<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Set damping options<br>
+&nbsp;&nbsp;&nbsp; Set DampingOptions = Study.<b>DampingOptions</b><br>
+&nbsp;&nbsp;&nbsp; DampingOptions.<b>DampingType</b> = swsDampingType_Modal<br>
+&nbsp;&nbsp;&nbsp; DampingRatios = Array(1, 5, 3.45, 6, 15, 15, 16, 25, 34.5)<br>
+&nbsp;&nbsp;&nbsp; errCode = DampingOptions.<b>SetDampingRatios</b>(3, (DampingRatios))<br>
+&nbsp;&nbsp;&nbsp; DampingOptions.<b>ComputeFromMaterialDamping</b> = 0 ' Not 
+using the material damping ratio to calculate modal damping ratios</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim PID&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim SelObj&nbsp;&nbsp;&nbsp; As Object<br>
+&nbsp;&nbsp;&nbsp; Dim obj&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Object<br>
+&nbsp;&nbsp;&nbsp; Dim fixtureEntity As Object</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get a face to which to apply a pressure<br>
+&nbsp;&nbsp;&nbsp; boolstatus = Part.<b>Extension</b>.<b>SelectByID2</b>(&quot;&quot;, 
+&quot;FACE&quot;, -7.95509158535879E-03, 0, -1.13043904061669E-02, False, 0, Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; Set obj = Part.<b>SelectionManager</b>.<b>GetSelectedObject6</b>(1, 
+-1)<br>
+&nbsp;&nbsp;&nbsp; PID = Part.<b>Extension</b>.<b>GetPersistReference3</b>(obj)<br>
+&nbsp;&nbsp;&nbsp; Set SelObj = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((PID), 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; DispArray1 = Array(SelObj) </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get a face to use as a fixture<br>
+&nbsp;&nbsp;&nbsp; boolstatus = Part.<b>Extension</b>.<b>SelectByID2</b>(&quot;&quot;, 
+&quot;FACE&quot;, -2.07435908961884E-02, -1.34200983288792E-02, -9.99045700837087E-03, 
+False, 0, Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; Set obj = Part.<b>SelectionManager</b>.<b>GetSelectedObject6</b>(1, 
+-1)<br>
+&nbsp;&nbsp;&nbsp; PID = Part.<b>Extension</b>.<b>GetPersistReference3</b>(obj)<br>
+&nbsp;&nbsp;&nbsp; Set fixtureEntity = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((PID), 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; DispArray3 = Array(fixtureEntity) <br>
+<br>
+&nbsp;&nbsp;&nbsp; ' Get a face to use as a reference entity<br>
+&nbsp;&nbsp;&nbsp; boolstatus = Part.<b>Extension</b>.<b>SelectByID2</b>(&quot;&quot;, 
+&quot;FACE&quot;, 1.80913769526114E-02, -1.29337958455835E-02, -1.01226987114842E-02, 
+False, 0, Nothing, 0)<br>
+&nbsp;&nbsp;&nbsp; Set obj = Part.<b>SelectionManager</b>.<b>GetSelectedObject6</b>(1, 
+-1)<br>
+&nbsp;&nbsp;&nbsp; PID = Part.<b>Extension</b>.<b>GetPersistReference3</b>(obj)<br>
+&nbsp;&nbsp;&nbsp; Set CWDirectionEntity = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((PID), 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; Set pDisp5 = CWDirectionEntity</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Add a material<br>
+&nbsp;&nbsp;&nbsp; Dim SolidMgr As CosmosWorksLib.CWSolidManager<br>
+&nbsp;&nbsp;&nbsp; Dim SolidComponent As CosmosWorksLib.CWSolidComponent<br>
+&nbsp;&nbsp;&nbsp; Dim SName As String<br>
+&nbsp;&nbsp;&nbsp; Dim SolidBody As CosmosWorksLib.CWSolidBody<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidMgr = Study.<b>SolidManager</b><br>
+&nbsp;&nbsp;&nbsp; Set SolidComponent = SolidMgr.<b>GetComponentAt</b>(0, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; SName = SolidComponent.<b>ComponentName</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidBody = SolidComponent.<b>GetSolidBodyAt</b>(0, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No solid body&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; boolstatus = SolidBody.<b>SetLibraryMaterial</b>(&quot;C:\Program 
+Files\SOLIDWORKS Corp\SOLIDWORKS\lang\english\sldmaterials\solidworks 
+materials.sldmat&quot;, &quot;Ductile Iron (SN)&quot;)<br>
+&nbsp;&nbsp;&nbsp; If boolstatus = False Then ErrorMsg SwApp, &quot;No material 
+applied&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get loads and restraints manager<br>
+&nbsp;&nbsp;&nbsp; Set LBCMgr = Study.<b>LoadsAndRestraintsManager</b><br>
+&nbsp;&nbsp;&nbsp; If LBCMgr Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+loads and restraints manager&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Apply pressure normal to the selected 
+face<br>
+&nbsp;&nbsp;&nbsp; Set CWFeatObj2 = LBCMgr.<b>AddPressure</b>(swsPressureTypeNormal, 
+(DispArray1), Nothing, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to create normal 
+pressure&quot;<br>
+&nbsp;&nbsp;&nbsp; Call CWFeatObj2.<b>PressureBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Normal pressure values...&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp; Pressure unit in swsStrengthUnit_e 
+units: &quot; &amp; CWFeatObj2.<b>Unit</b>)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp; Pressure value: &quot; &amp; CWFeatObj2.<b>Value</b>)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp; Pressure phase angle (-1 if not set): &quot; 
+&amp; CWFeatObj2.<b>PhaseAngle</b>)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp; Pressure phase angle unit in 
+swsPhaseAngleUnit_e units: &quot; &amp; CWFeatObj2.<b>PhaseAngleUnit</b>)<br>
+&nbsp;&nbsp;&nbsp; errCode = CWFeatObj2.<b>PressureEndEdit</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to apply normal 
+pressure value&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot; &quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Add a fixture<br>
+&nbsp;&nbsp;&nbsp; Set CWFeatObj3 = LBCMgr.<b>AddRestraint</b>(swsRestraintTypeFixed, 
+(DispArray3), pDisp5, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to create 
+restraint&quot;<br>
+&nbsp;&nbsp;&nbsp; Call CWFeatObj3.<b>RestraintBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; Call CWFeatObj3.<b>SetTranslationComponentsValues</b>(0, 0, 
+1, 0#, 0#, 0#)<br>
+&nbsp;&nbsp;&nbsp; Call CWFeatObj3.<b>SetRotationComponentsValues</b>(0, 0, 0, 
+0#, 0#, 0#)<br>
+&nbsp;&nbsp;&nbsp; CWFeatObj3.<b>Unit</b> = swsLinearUnitMeters<br>
+&nbsp;&nbsp;&nbsp; errCode = CWFeatObj3.<b>RestraintEndEdit</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Restraint end-edit 
+failed&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Create mesh<br>
+&nbsp;&nbsp;&nbsp; Set CWFeatObj4 = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CWFeatObj4 Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+create mesh object&quot;<br>
+&nbsp;&nbsp;&nbsp; CWFeatObj4.<b>MesherType</b> = swsMesherTypeStandard<br>
+&nbsp;&nbsp;&nbsp; CWFeatObj4.<b>Quality</b> = swsMeshQualityHigh</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(swsLinearUnitMillimeters, 
+MeshEleSize, MeshTol)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to create mesh&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Worst Jacobian ratio for the mesh: &quot; &amp; 
+CWFeatObj4.<b>GetWorstJacobianRatio</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Run analysis<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Running the analysis&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed with 
+error code as defined in swsRunAnalysisError_e:&quot; &amp; errCode<br>
+&nbsp;&nbsp;&nbsp; Set CWFeatObj5 = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWFeatObj5 Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+results object&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Add default fatigue study results plot<br>
+&nbsp;&nbsp;&nbsp; errCode = ActDoc.<b>AddDefaultFatigueStudyPlot</b>(swsFatigueStudy_DamagePlot)<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+CWStudyManager object&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Create random vibration fatigue study<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Creating RandomVibrationFatigue study...&quot;<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>CreateNewStudy3</b>(&quot;RandomVibrationFatigue&quot;, 
+swsAnalysisStudyTypeFatigue, 3, errCode)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;Failed to create 
+new study&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study.<b>SetFatigueResultOptions</b>(swsFatigueCalculationsOption_SurfaceOnly, 
+Nothing)<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set FatigueOptions = Study.<b>FatigueStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; If FatigueOptions Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+get CWFatigueStudyOptions object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set FatigueEvent = FatigueOptions.<b>AddFatigueEventForRandomVibration</b>(&quot;Dynamic_Random_Vibration&quot;, 
+60, 0, errCode)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidMgr = Study.<b>SolidManager</b><br>
+&nbsp;&nbsp;&nbsp; Set SolidComponent = SolidMgr.<b>GetComponentAt</b>(0, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; SName = SolidComponent.<b>ComponentName</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidBody = SolidComponent.<b>GetSolidBodyAt</b>(0, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No solid body&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; boolstatus = SolidBody.<b>SetLibraryMaterial</b>(&quot;C:\Program 
+Files\SOLIDWORKS Corp\SOLIDWORKS\lang\english\sldmaterials\solidworks 
+materials.sldmat&quot;, &quot;Ductile Iron (SN)&quot;)<br>
+&nbsp;&nbsp;&nbsp; If boolstatus = False Then ErrorMsg SwApp, &quot;No material 
+applied&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidMat = SolidBody.<b>GetSolidBodyMaterial</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; SolidMat.<b>SNCurveSource</b> = 
+swsMaterialSNCurveSourceEquation<br>
+&nbsp;&nbsp;&nbsp; SolidMat.<b>SNCurveEstimateConstants</b> = 0 ' Specify 
+Basquin Equation constants, B and m<br>
+&nbsp;&nbsp;&nbsp; SolidMat.<b>SNCurveSpecificConstantBUnit</b> = 3 ' N/mm^2<br>
+&nbsp;&nbsp;&nbsp; SolidMat.<b>SNCurveSpecificConstantB</b> = 2E+20 ' B constant<br>
+&nbsp;&nbsp;&nbsp; SolidMat.<b>SNCurveSlopeM</b> = 0.5 ' Slope m<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = SolidBody.<b>SetSolidBodyMaterial</b>(SolidMat)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to apply 
+material&quot;<br>
+&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; FatigueOptions.<b>RandomVibrationComputationalMethod</b> = 0 
+' Narrow Band computational method</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Narrow Band analysis 
+failed with error code as defined in swsRunAnalysisError_e: &quot; &amp; errCode<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWFeatObj = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWFeatObj Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+CWResults object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get minimum and maximum damage<br>
+&nbsp;&nbsp;&nbsp; Damage = CWFeatObj.<b>GetMinMaxFatigue</b>(swsFatigueComponent_Damage, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get Narrow 
+Band minimum and maximum damage. Error code as defined in swsResultsError_e: &quot; &amp; 
+errCode<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Compare maximum damage percentage with 
+baseline and report errors<br>
+&nbsp;&nbsp;&nbsp; If (Damage(3) &lt; (1 - Tol) * DamageMax_NarrowBand) Or 
+(Damage(3) &gt; (1 + Tol) * DamageMax_NarrowBand) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;Narrow Band damage % 
+error = &quot; &amp; (((Damage(3) - DamageMax_NarrowBand) / DamageMax_NarrowBand) * 100)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Narrow Band computational method...&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Minimum fatigue is &quot; &amp; Damage(1) &amp; &quot; at 
+node &quot; &amp; Damage(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Maximum fatigue is &quot; &amp; Damage(3) &amp; &quot; at 
+node &quot; &amp; Damage(2)<br>
+&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; FatigueOptions.<b>RandomVibrationComputationalMethod</b> = 1 
+' Steinberg computational method<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Steinberg analysis 
+failed with error code as defined in swsRunAnalysisError_e: &quot; &amp; errCode<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWFeatObj = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWFeatObj Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+CWResults object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get minimum and maximum damage<br>
+&nbsp;&nbsp;&nbsp; Damage = CWFeatObj.<b>GetMinMaxFatigue</b>(swsFatigueComponent_Damage, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get Steinberg 
+minimum and maximum damage. Error code as defined in swsResultsError_e: &quot; &amp; 
+errCode<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Compare maximum damage percentage with 
+baseline and report errors<br>
+&nbsp;&nbsp;&nbsp; If (Damage(3) &lt; (1 - Tol) * DamageMax_Steinberg) Or 
+(Damage(3) &gt; (1 + Tol) * DamageMax_Steinberg) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;Steinberg damage % 
+error = &quot; &amp; (((Damage(3) - DamageMax_Steinberg) / DamageMax_Steinberg) * 100)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; FatigueOptions.<b>RandomVibrationComputationalMethod</b> = 2 
+' Wirsching computational method<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Wirsching analysis 
+failed with error code as defined in swsRunAnalysisError_e: &quot; &amp; errCode<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWFeatObj = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWFeatObj Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+CWResults object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get minimum and maximum damage<br>
+&nbsp;&nbsp;&nbsp; Damage = CWFeatObj.<b>GetMinMaxFatigue</b>(swsFatigueComponent_Damage, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get Wirsching 
+minimum and maximum damage. Error code as defined in swsResultsError_e: &quot; &amp; 
+errCode<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Compare maximum damage percentage with 
+baseline and report errors<br>
+&nbsp;&nbsp;&nbsp; If (Damage(3) &lt; (1 - Tol) * DamageMax_Wirsching) Or 
+(Damage(3) &gt; (1 + Tol) * DamageMax_Wirsching) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;Wirsching damage % 
+error = &quot; &amp; (((Damage(3) - DamageMax_Wirsching) / DamageMax_Wirsching) * 100)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

@@ -1,0 +1,719 @@
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<html>
+
+<!--(==============================================================)-->
+<!--(Document created with RoboEditor. )============================-->
+<!--(==============================================================)-->
+
+<head>
+
+<title>Analyze Part Example (C#)</title>
+
+<!--(Meta)==========================================================-->
+
+<meta http-equiv=content-type content="text/html; charset=windows-1252">
+<meta name=MS-HKWD content="C# examples,analysis">
+<meta name=MS-HKWD content="C# examples,stresses">
+<meta name=MS-HKWD content="C# examples,strains">
+<meta name=MS-HKWD content="C# examples,fixtures">
+<meta name=MS-HKWD content="C# examples,forces">
+<meta name=MS-HKWD content="C# examples,result plots">
+<meta name=generator content="RoboHELP by eHelp Corporation - www.ehelp.com">
+<meta name=generator-major-version content=0.1>
+<meta name=generator-minor-version content=1>
+<meta name=filetype content=kadov>
+<meta name=filetype-version content=1>
+<meta name=page-count content=1>
+<meta name=layout-height content=5402>
+<meta name=layout-width content=6933>
+
+
+<!--(Links)=========================================================-->
+
+<link rel="StyleSheet" href="ApiHelp.css">
+
+
+
+</head>
+
+<!--(Body)==========================================================-->
+
+
+<body>
+
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation 
+ API Help</span></h1>
+
+<h1>Analyze Part Example (C#)</h1>
+
+<p>This example shows how to perform a static analysis of a part and plot nodal 
+strain results.</p>
+
+<p><span style="font-weight: bold;">NOTE:</span> To get persistent reference 
+ identifiers (PIDs) for model selections, you can use
+<a href="GettingStarted-swsimulationapi.html">pidcollector.exe</a> 
+ or IModelDocExtension::GetPersistReference3.</p>
+
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p class="APICODE"><span style="color:Green">
+	//--------------------------------------------------------------------------
+	<br>
+	// Preconditions: <br>
+	</span><span style="color: #008000">//</span><span style="color:green;">&nbsp; 1.&nbsp;Add&nbsp;the&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;as&nbsp;an&nbsp;add-in (in&nbsp;SOLIDWORKS,&nbsp;click&nbsp;<b><br>
+</b>//<b>&nbsp;&nbsp;&nbsp;&nbsp; Tools&nbsp;&gt;&nbsp;Add-ins&nbsp;&gt;&nbsp;SOLIDWORKS&nbsp;Simulation 
+&gt; OK</b>).</span><br>
+<span style="color:green;">//&nbsp; 2.&nbsp;Add&nbsp;the&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;primary&nbsp;interop&nbsp;assembly&nbsp;as&nbsp;a&nbsp;reference</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp; (in&nbsp;the&nbsp;IDE,&nbsp;click&nbsp;<b>Project&nbsp;&gt;&nbsp;Add&nbsp;Reference&nbsp;&gt;&nbsp;.NET&nbsp;&gt;&nbsp;<br>
+</b>//<b>&nbsp;&nbsp;&nbsp;&nbsp; SolidWorks.Interop.cosworks&nbsp;&gt;&nbsp;OK</b>).</span><span style="color:Green">&nbsp;&nbsp;<br>
+	//&nbsp; 3. Modify the path to <b>solidworks materials.sldmat</b> as needed.<br>
+	//&nbsp; 4. Ensure that the specified part exists.<br>
+	//&nbsp; 5. Open the Immediate window.<br>
+	//<br>
+	</span><font SIZE="2" COLOR="#008000">// Postconditions: <br>
+	//&nbsp; 1.&nbsp;Adds a default static study results plot.<br>
+	//&nbsp; 2.&nbsp;Creates study, <b>Static_solid</b>.<br>
+	//&nbsp; 3.&nbsp;Applies a material to the model. <br>
+	//&nbsp; 4.&nbsp;Applies restraints and pressure to the selected faces. <br>
+	//&nbsp; 5.&nbsp;Creates a mesh.<br>
+	//&nbsp; 6.&nbsp;Runs the analysis. <br>
+	//&nbsp; 7.&nbsp;Prints strain and stress results to the Immediate window.<br>
+	//&nbsp; 8.&nbsp;Creates a nodal equivalent strain plot of the results.<br>
+	//&nbsp; 9.&nbsp;Prints plot data to the Immediate window.<br>
+	// 10. Hides fixture and force symbols. Examine the graphics area<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp; to verify.<br>
+	// 11. Press F5 to continue.<br>
+	// 12. Shows fixture and force symbols. Examine the graphics area<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp; to verify.<br>
+	// 13. Inspect the plots.<br>
+	</font><span style="color:Green">
+	// <br>
+	// NOTE: Because this model is used elsewhere, do not save any changes.<br>
+	//-------------------------------------------------------------------------</span>
+</div>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:blue;">using</span>&nbsp;SolidWorks.Interop.sldworks;<br>
+<span style="color:blue;">using</span>&nbsp;SolidWorks.Interop.swconst;<br>
+<span style="color:blue;">using</span>&nbsp;SolidWorks.Interop.cosworks;<br>
+<span style="color:blue;">using</span>&nbsp;System;<br>
+<span style="color:blue;">using</span>&nbsp;System.Diagnostics;<br>
+<span style="color:blue;">using</span>&nbsp;System.Runtime.InteropServices;<br>&nbsp;<br>
+<span style="color:blue;">namespace</span>&nbsp;AnalyzePartCSharp.csproj<br>{<br>&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">partial</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">SolidWorksMacro</span><br>&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;Main()<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CosmosWorks&nbsp;COSMOSWORKS&nbsp;=&nbsp;<span style="color:blue;">default</span>(CosmosWorks);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CwAddincallback&nbsp;CWObject&nbsp;=&nbsp;<span style="color:blue;">default</span>(CwAddincallback);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWModelDoc&nbsp;ActDoc&nbsp;=&nbsp;<span style="color:blue;">default</span>(CWModelDoc);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWStudyManager&nbsp;StudyMngr&nbsp;=&nbsp;<span style="color:blue;">default</span>(CWStudyManager);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWStudy&nbsp;Study&nbsp;=&nbsp;<span style="color:blue;">default</span>(CWStudy);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWSolidManager&nbsp;SolidMgr&nbsp;=&nbsp;<span style="color:blue;">default</span>(CWSolidManager);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWSolidComponent&nbsp;SolidComponent&nbsp;=&nbsp;<span style="color:blue;">default</span>(CWSolidComponent);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWSolidBody&nbsp;SolidBody&nbsp;=&nbsp;<span style="color:blue;">default</span>(CWSolidBody);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWMesh&nbsp;CwMesh&nbsp;=&nbsp;<span style="color:blue;">default</span>(CWMesh);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWResults&nbsp;CWResult&nbsp;=&nbsp;<span style="color:blue;">default</span>(CWResults);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">object</span>&nbsp;stress&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ModelDoc2&nbsp;Part&nbsp;=&nbsp;<span style="color:blue;">default</span>(ModelDoc2);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWLoadsAndRestraintsManager&nbsp;LBCMgr&nbsp;=&nbsp;<span style="color:blue;">default</span>(CWLoadsAndRestraintsManager);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWPressure&nbsp;CWPressure&nbsp;=&nbsp;<span style="color:blue;">default</span>(CWPressure);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWRestraint&nbsp;CWRes1&nbsp;=&nbsp;<span style="color:blue;">default</span>(CWRestraint);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">object</span>&nbsp;pointer1&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">object</span>&nbsp;pointer2&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">object</span>&nbsp;pointer3&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:blue;">object</span>&nbsp;pointer4&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWMaterial&nbsp;CWMat&nbsp;=&nbsp;<span style="color:blue;">default</span>(CWMaterial);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">byte</span>[]&nbsp;var1&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">byte</span>[]&nbsp;var2&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">byte</span>[]&nbsp;var3&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:blue;">byte</span>[]&nbsp;var4&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;returnValue&nbsp;=&nbsp;0;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;selection1&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;selection2&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;selection3&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:blue;">string</span>&nbsp;selection4&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;status&nbsp;=&nbsp;0;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;warnings&nbsp;=&nbsp;0;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;errCode&nbsp;=&nbsp;0;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;NSource&nbsp;=&nbsp;0;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">double</span>&nbsp;el&nbsp;=&nbsp;0;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">double</span>&nbsp;tl&nbsp;=&nbsp;0;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; int</font><font SIZE="2"> errorCode = 0;<br>
+</font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; object</font><font SIZE="2">[] 
+		results = </font><font SIZE="2" COLOR="#0000ff">null</font><font SIZE="2">;<br>
+</font><font SIZE="2" COLOR="#2b91af">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CWPlot</font><font SIZE="2"> 
+		plot = </font><font SIZE="2" COLOR="#0000ff">default</font><font SIZE="2">(</font><font SIZE="2" COLOR="#2b91af">CWPlot</font><font SIZE="2">);<br>
+</font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; string</font><font SIZE="2"> 
+		plotName = </font><font SIZE="2" COLOR="#a31515">&quot;&quot;</font><font SIZE="2">;<br>
+</font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; int</font><font SIZE="2"> 
+		i = 0;<br>
+</font><font SIZE="2" COLOR="#2b91af">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Entity</font><font SIZE="2">[] 
+		entity = </font><font SIZE="2" COLOR="#0000ff">new</font><font SIZE="2">
+</font><font SIZE="2" COLOR="#2b91af">Entity</font><font SIZE="2">[1];<br>
+</font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; int</font><font SIZE="2"> 
+		nType = 0;<br>
+</font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; int</font><font SIZE="2"> 
+		nBase = 0;<br>
+</font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; int</font><font SIZE="2"> 
+		nContour = 0;<br>
+</font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bool</font><font SIZE="2"> 
+		BFlip = </font><font SIZE="2" COLOR="#0000ff">false</font><font SIZE="2">;<br>
+</font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bool</font><font SIZE="2"> 
+		BSpecifyColorLimit = </font><font SIZE="2" COLOR="#0000ff">false</font><font SIZE="2">;<br>
+</font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; object</font><font SIZE="2"> 
+		VarColor = </font><font SIZE="2" COLOR="#0000ff">null</font><font SIZE="2">;<br>
+</font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; object</font><font SIZE="2">[] 
+		vDispOptions = </font><font SIZE="2" COLOR="#0000ff">null</font><font SIZE="2">;<br>
+</font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; object</font><font SIZE="2">[] 
+		vPlotPosFormatOptions = </font><font SIZE="2" COLOR="#0000ff">null</font><font SIZE="2">;<br>
+</font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; object</font><font SIZE="2">[] 
+		vPlotSettings = </font><font SIZE="2" COLOR="#0000ff">null</font><font SIZE="2">;<br>
+</font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; string</font><font SIZE="2"> 
+		Name = </font><font SIZE="2" COLOR="#a31515">&quot;&quot;</font><font SIZE="2">;<br>
+</font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; object</font><font SIZE="2"> Color = 
+</font><font SIZE="2" COLOR="#0000ff">null</font><font SIZE="2">;</font></p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:blue;">	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; object</span>[]&nbsp;Var;</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+object</span>&nbsp;oSelect2&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">bool</span>&nbsp;boolstatus&nbsp;=&nbsp;<span style="color:blue;">false</span>;</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<br>
+<br>&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Open&nbsp;SOLIDWORKS&nbsp;part&nbsp;document&nbsp;</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Part&nbsp;=&nbsp;(ModelDoc2)swApp.<b>OpenDoc6</b>(<span style="color:#a31515;">&quot;C:\\Users\\Public\\Documents\\SOLIDWORKS\\SOLIDWORKS 2017\\Simulation Examples\\Tutor1.SLDPRT&nbsp;&quot;</span>,&nbsp;(<span style="color:blue;">int</span>)swDocumentTypes_e.swDocPART,&nbsp;(<span style="color:blue;">int</span>)swOpenDocOptions_e.swOpenDocOptions_Silent,&nbsp;<span style="color:#a31515;">&quot;&quot;</span>,&nbsp;<span style="color:blue;">ref</span>&nbsp;status,&nbsp;<span style="color:blue;">ref</span>&nbsp;warnings);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(Part&nbsp;==&nbsp;<span style="color:blue;">null</span>)&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;Failed&nbsp;to&nbsp;open&nbsp;C:\\Users\\Public\\Documents\\SOLIDWORKS\\SOLIDWORKS 2017\\Simulation Examples\\Tutor1.SLDPRT.&quot;</span>);<br>
+&nbsp;</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+//&nbsp;Insert&nbsp;a&nbsp;coordinate&nbsp;system</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;boolstatus&nbsp;=&nbsp;Part.<b>Extension</b>.<b>SelectByID2</b>(<span style="color:#a31515;">&quot;&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;FACE&quot;</span>,&nbsp;0.170849242404917,&nbsp;0.0898492424049175,&nbsp;-0.031,&nbsp;<span style="color:blue;">false</span>,&nbsp;1,&nbsp;<span style="color:blue;">null</span>,&nbsp;0);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;boolstatus&nbsp;=&nbsp;Part.<b>Extension</b>.<b>SelectByID2</b>(<span style="color:#a31515;">&quot;&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;EDGE&quot;</span>,&nbsp;0.101612421576135,&nbsp;0.0102144219597449,&nbsp;-0.000303238444132603,&nbsp;<span style="color:blue;">true</span>,&nbsp;2,&nbsp;<span style="color:blue;">null</span>,&nbsp;0);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;boolstatus&nbsp;=&nbsp;Part.<b>Extension</b>.<b>SelectByID2</b>(<span style="color:#a31515;">&quot;&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;EDGE&quot;</span>,&nbsp;0.16010192941178,&nbsp;0.0163935978611676,&nbsp;-0.0391019294117427,&nbsp;<span style="color:blue;">true</span>,&nbsp;4,&nbsp;<span style="color:blue;">null</span>,&nbsp;0);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;boolstatus&nbsp;=&nbsp;Part.<b>Extension</b>.<b>SelectByID2</b>(<span style="color:#a31515;">&quot;&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;EDGE&quot;</span>,&nbsp;0.160121414911089,&nbsp;0.00991414669255164,&nbsp;-0.0284339843419161,&nbsp;<span style="color:blue;">true</span>,&nbsp;8,&nbsp;<span style="color:blue;">null</span>,&nbsp;0);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;boolstatus&nbsp;=&nbsp;Part.<b>InsertCoordinateSystem</b>(<span style="color:blue;">false</span>,&nbsp;<span style="color:blue;">false</span>,&nbsp;<span style="color:blue;">false</span>);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selection1&nbsp;=&nbsp;<span style="color:#a31515;">&quot;233,35,0,0,1,0,0,0,255,254,255,0,0,0,0,0,131,0,0,0&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StringtoArray(selection1,&nbsp;<span style="color:blue;">ref</span>&nbsp;var2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;oSelect2&nbsp;=&nbsp;Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var2),&nbsp;<span style="color:blue;">out</span>&nbsp;status);</p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<br>&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Get&nbsp;SOLIDWORKS&nbsp;Simulation&nbsp;object&nbsp;</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWObject&nbsp;=&nbsp;(CwAddincallback)swApp.<b>GetAddInObject</b>(<span style="color:#a31515;">&quot;SldWorks.Simulation&quot;</span>);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(CWObject&nbsp;==&nbsp;<span style="color:blue;">null</span>)&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No 
+CwAddincallback&nbsp;object&quot;</span>);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COSMOSWORKS&nbsp;=&nbsp;(CosmosWorks)CWObject.<b>CosmosWorks</b>;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(COSMOSWORKS&nbsp;==&nbsp;<span style="color:blue;">null</span>)&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No 
+CosmosWorks object&quot;</span>);<br>&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Get&nbsp;active&nbsp;document&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ActDoc&nbsp;=&nbsp;(CWModelDoc)COSMOSWORKS.<b>ActiveDoc</b>;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(ActDoc&nbsp;==&nbsp;<span style="color:blue;">null</span>)&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No&nbsp;active&nbsp;document&quot;</span>);</p>
+</p>
+<p style="font-family: Consolas; font-size: 13; color: black; background: white" class="APICODE">
+	   <font face="Courier New">	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+	   <font face="Courier New" SIZE="2" COLOR="#008000">// Add default static study results plot<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	   </font><font face="Courier New"><font SIZE="2">errCode = ActDoc.<b>AddDefaultStaticStudyPlot</b>((</font><font SIZE="2" COLOR="#0000ff">int</font><font SIZE="2">)</font><font SIZE="2" COLOR="#2b91af">swsDefaultStaticResultTypes_e</font><font SIZE="2">.swsStaticResultElementalStrain, (</font><font SIZE="2" COLOR="#0000ff">int</font><font SIZE="2">)</font><font SIZE="2" COLOR="#2b91af">&nbsp; swsStaticResultElementalStrainComponentTypes_e</font><font SIZE="2">.swsStaticElementalStrain_ENERGY);<br>
+&nbsp;</font></font></p>
+<p style="font-family: Courier New'; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+//&nbsp;Set&nbsp;default&nbsp;plot&nbsp;boundary&nbsp;color</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode&nbsp;=&nbsp;ActDoc.<b>SetSimulationOptionDefaultPlotsBoundaryColorInRGB</b>((<span style="color:blue;">int</span>)swsSimulationOptionDefaultPlotsBoundaryColorInRGBBoundaryOption_e.swsSimulationOptionDefaultPlotsBoundaryColorInRGBBoundaryOption_ModelOrMesh,&nbsp;0,&nbsp;0,&nbsp;255);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode&nbsp;=&nbsp;ActDoc.<b>SetSimulationOptionDefaultPlotsBoundaryColorInRGB</b>((<span style="color:blue;">int</span>)swsSimulationOptionDefaultPlotsBoundaryColorInRGBBoundaryOption_e.swsSimulationOptionDefaultPlotsBoundaryColorInRGBBoundaryOption_TranslucentSingleColor,&nbsp;255,&nbsp;0,&nbsp;0);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Get&nbsp;default&nbsp;plot&nbsp;model&nbsp;or&nbsp;mesh&nbsp;boundary&nbsp;color</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">object</span>[]&nbsp;colorObj&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colorObj&nbsp;=&nbsp;(<span style="color:blue;">object</span>[])ActDoc.<b>GetSimulationOptionDefaultPlotsBoundaryColorInRGB</b>((<span style="color:blue;">int</span>)swsSimulationOptionDefaultPlotsBoundaryColorInRGBBoundaryOption_e.swsSimulationOptionDefaultPlotsBoundaryColorInRGBBoundaryOption_ModelOrMesh,&nbsp;<span style="color:blue;">out</span>&nbsp;errCode);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(<span style="color:#a31515;">&quot;RGB&nbsp;values&nbsp;for&nbsp;model&nbsp;or&nbsp;mesh:&quot;</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">for</span>&nbsp;(i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;=&nbsp;colorObj.GetUpperBound(0);&nbsp;i++)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(colorObj[i].ToString());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<font face="Courier New"><br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Create&nbsp;new&nbsp;static&nbsp;study&nbsp;</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StudyMngr&nbsp;=&nbsp;(CWStudyManager)ActDoc.<b>StudyManager</b>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(StudyMngr&nbsp;==&nbsp;<span style="color:blue;">null</span>)&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No 
+		CWStudyManager object&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Study&nbsp;=&nbsp;(CWStudy)StudyMngr.<b>CreateNewStudy3</b>(<span style="color:#a31515;">&quot;Static_solid&quot;</span>,&nbsp;(<span style="color:blue;">int</span>)swsAnalysisStudyType_e.swsAnalysisStudyTypeStatic,&nbsp;(<span style="color:blue;">int</span>)swsMeshType_e.swsMeshTypeSolid,&nbsp;<span style="color:blue;">out</span>&nbsp;errCode);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(Study&nbsp;==&nbsp;<span style="color:blue;">null</span>)&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No 
+		study object&quot;</span>);<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Set&nbsp;material&nbsp;from&nbsp;the&nbsp;SOLIDWORKS&nbsp;material&nbsp;library&nbsp;</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SolidMgr&nbsp;=&nbsp;(CWSolidManager)Study.<b>SolidManager</b>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(SolidMgr&nbsp;==&nbsp;<span style="color:blue;">null</span>)&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No 
+		CWSolidManager object&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SolidComponent&nbsp;=&nbsp;(CWSolidComponent)SolidMgr.<b>GetComponentAt</b>(0,&nbsp;<span style="color:blue;">out</span>&nbsp;errCode);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(errCode&nbsp;!=&nbsp;0)&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No&nbsp;solid&nbsp;component&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SolidBody&nbsp;=&nbsp;(CWSolidBody)SolidComponent.<b>GetSolidBodyAt</b>(0,&nbsp;<span style="color:blue;">out</span>&nbsp;errCode);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(errCode&nbsp;!=&nbsp;0)&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No&nbsp;solid&nbsp;body&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;returnValue&nbsp;=&nbsp;SolidBody.<b>SetLibraryMaterial</b>(<span style="color:#a31515;">&quot;c:\\Program&nbsp;Files\\SOLIDWORKS&nbsp;Corp\\SOLIDWORKS\\lang\\english\\sldmaterials\\solidworks&nbsp;materials.sldmat&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;Ductile&nbsp;Iron&nbsp;(SN)&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(returnValue&nbsp;==&nbsp;0)&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No&nbsp;material&nbsp;applied&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWMat&nbsp;=&nbsp;(CWMaterial)SolidBody.<b>GetDefaultMaterial</b>();<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NSource&nbsp;=&nbsp;CWMat.<b>Source</b>;<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Get&nbsp;the&nbsp;PIDs&nbsp;of&nbsp;the&nbsp;faces&nbsp;</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;First&nbsp;two&nbsp;selections&nbsp;are&nbsp;the&nbsp;faces&nbsp;for&nbsp;restraints&nbsp;</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Third&nbsp;selection&nbsp;is&nbsp;the&nbsp;face&nbsp;where&nbsp;pressure&nbsp;is&nbsp;applied&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Fourth 
+selection is the direction reference face</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selection1&nbsp;=&nbsp;<span style="color:#a31515;">&quot;216,14,0,0,3,0,0,0,255,254,255,0,0,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,21,0,109,111,76,80,97,116,116,101,114,110,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,14,0,109,111,79,98,106,70,105,108,101,68,101,102,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,6,84,0,117,0,116,0,111,0,114,0,49,0,123,228,186,50,11,128,255,254,255,62,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,111,0,108,0,105,0,100,0,87,0,111,0,114,0,107,0,115,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,87,0,111,0,114,0,107,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,84,0,117,0,116,0,111,0,114,0,49,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,97,23,28,65,0,0,0,0&quot;</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selection1&nbsp;=&nbsp;selection1&nbsp;+&nbsp;<span style="color:#a31515;">&quot;,2,0,1,0,0,0,0,0,0,0,1,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,0,0,0,0,17,0,0,0,156,231,186,50,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,14,0,0,0,88,231,186,50,3,0,0,0,1,0,0,0,0,0,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,6,0,0,0,211,228,186,50,1,0,0,0,255,255,255,255,0,0,17,128,0,0,5,128,8,0,6,0,0,0,211,228,186,50,0,0,0,0,255,255,255,255,0,0,0,0,0,0&quot;</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StringtoArray(selection1,&nbsp;<span style="color:blue;">ref</span>&nbsp;var1);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pointer1&nbsp;=&nbsp;Part.Extension.<b>GetObjectByPersistReference3</b>((var1),&nbsp;<span style="color:blue;">out</span>&nbsp;status);<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selection2&nbsp;=&nbsp;<span style="color:#a31515;">&quot;216,14,0,0,3,0,0,0,255,254,255,0,0,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,14,0,109,111,79,98,106,70,105,108,101,68,101,102,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,6,84,0,117,0,116,0,111,0,114,0,49,0,123,228,186,50,11,128,255,254,255,62,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,111,0,108,0,105,0,100,0,87,0,111,0,114,0,107,0,115,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,87,0,111,0,114,0,107,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,84,0,117,0,116,0,111,0,114,0,49,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,97,23,28,&quot;</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selection2&nbsp;=&nbsp;selection2&nbsp;+&nbsp;<span style="color:#a31515;">&quot;65,0,0,0,0,2,0,1,0,0,0,0,0,0,0,1,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,0,0,0,0,14,0,0,0,88,231,186,50,3,0,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,6,0,0,0,211,228,186,50,1,0,0,0,255,255,255,255,0,0,14,128,0,0,5,128,8,0,6,0,0,0,211,228,186,50,0,0,0,0,255,255,255,255,0,0,0,0,0,0&quot;</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StringtoArray(selection2,&nbsp;<span style="color:blue;">ref</span>&nbsp;var2);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pointer2&nbsp;=&nbsp;Part.Extension.<b>GetObjectByPersistReference3</b>((var2),&nbsp;<span style="color:blue;">out</span>&nbsp;status);<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selection3&nbsp;=&nbsp;<span style="color:#a31515;">&quot;216,14,0,0,3,0,0,0,255,254,255,0,0,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,8,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,14,0,109,111,79,98,106,70,105,108,101,68,101,102,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,6,84,0,117,0,116,0,111,0,114,0,49,0,123,228,186,50,11,128,255,254,255,62,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,111,0,108,0,105,0,100,0,87,0,111,0,114,0,107,0,115,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,87,0,111,0,114,0,107,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,84,0,117,0,116,0,111,0,114,0,49,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,97,23,28,65,0,0,0,0,2,0,&quot;</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selection3&nbsp;=&nbsp;selection3&nbsp;+&nbsp;<span style="color:#a31515;">&quot;1,0,0,0,0,0,0,0,1,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,0,0,0,0,11,0,0,0,51,230,186,50,1,0,0,0,255,255,255,255,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,8,0,0,0,218,229,186,50,4,0,0,0,0,0,255,255,1,0,18,0,109,111,80,76,105,110,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,31,0,0,0,210,195,223,50,17,128,0,0,5,128,8,0,23,0,0,0,160,192,223,50,14,128,0,0,5,128,8,0,19,0,0,0,181,233,186,50,1,0,0,0,1,0,0,0,2,0,0,0,17,128,0,0,5,128,8,0,31,0,0,0,210,195,223,50,17,128,0,0,5,128,8,0,23,0,0,0,160,192,223,50,14,128,0,0,5,128,8,0,19,0,0,0,181,233,186,50,1,0,0,0,1,0,0,0,1,0,0,0,17,128,0,0,5,128,8,0,31,0,0,0,210,195,223,50,17,128,0,0,5,128,8,0,23,0,0,0,160,192,223,50,14,128,0,0,5,128,8,0,19,0,0,0,181,233,186,50,1,0,0,0,2,0,0,0,3,0,0,0,17,128,0,0,5,128,8,0,31,0,0,0,210,195,223,50,17,128,0,0,5,128,8,0,23,0,0,0,160,192,223,50,14,&quot;</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selection3&nbsp;=&nbsp;selection3&nbsp;+&nbsp;<span style="color:#a31515;">&quot;128,0,0,5,128,8,0,19,0,0,0,181,233,186,50,1,0,0,0,2,0,0,0,4,0,0,0,0,0,0,0,0,0&quot;</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StringtoArray(selection3,&nbsp;<span style="color:blue;">ref</span>&nbsp;var3);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pointer3&nbsp;=&nbsp;Part.Extension.<b>GetObjectByPersistReference3</b>((var3),&nbsp;<span style="color:blue;">out</span>&nbsp;status);<br>
+</font>&nbsp; &nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; selection4 =
+<span style="color:#a31515;">
+&quot;189,35,0,0,3,0,0,0,255,254,255,0,0,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,10,0,0,0,0,2,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,77,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,32,0,67,0,111,0,114,0,112,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,92,0,83,0,105,0,109,0,117,0,108,0,97,0,116,0,105,0,111,0,110,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,92,0,116,0,117,0,116,0,111,0,114,0,49,0,46,0,115,0,108,0,100,0,112,0,114,0,116,0,9,128,255,254,255,6,116,0,117,0,116,0,111,0,114,0,49,0,2,0,0,123,228,186,50,255&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selection4&nbsp;=&nbsp;selection4&nbsp;+&nbsp;<span style="color:#a31515;">&quot;,254,255,0,0,97,23,28,65,1,0,0,0,0,0,0,0,1,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,97,23,28,65,6,0,0,0,211,228,186,50,1,0,0,0,255,255,255,255,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,13,0,0,0,1,231,186,50,1,0,0,0,3,128,0,0,5,128,8,0,8,0,0,0,218,229,186,50,1,0,0,0,255,255,255,255,12,128,0,0,5,128,8,0,6,0,0,0,211,228,186,50,2,0,0,0,12,128,0,0,5,128,8,0,6,0,0,0,211,228,186,50,3,0,0,0,12,128,0,0,5,128,8,0,6,0,0,0,211,228,186,50,4,0,0,0,12,128,0,0,5,128,8,0,6,0,0,0,211,228,186,50,5,0,0,0,12,128,0,0,5,128,8,0,6,0,0,0,211,228,186,50,6,0,0,0,12,128,0,0,5,128,8,0,13,0,0,0,1,231,186,50,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StringtoArray(selection4,&nbsp;<span style="color:blue;">ref</span>&nbsp;var4);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pointer4&nbsp;=&nbsp;Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var4),&nbsp;<span style="color:blue;">out</span>&nbsp;status);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">object</span>[]&nbsp;varArray1&nbsp;=&nbsp;{&nbsp;pointer1,&nbsp;pointer2&nbsp;};<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">object</span>[]&nbsp;varArray2&nbsp;=&nbsp;{&nbsp;pointer3&nbsp;};<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Add&nbsp;a&nbsp;restraint&nbsp;that&nbsp;uses&nbsp;reference&nbsp;geometry</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LBCMgr&nbsp;=&nbsp;Study.<b>LoadsAndRestraintsManager</b>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(LBCMgr&nbsp;==&nbsp;<span style="color:blue;">null</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No&nbsp;CWLoadsAndRestraintsManager 
+object&quot;</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWRes1&nbsp;=&nbsp;LBCMgr.<b>AddRestraint</b>(5,&nbsp;(varArray1),&nbsp;pointer4,&nbsp;<span style="color:blue;">out</span>&nbsp;errCode);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(errCode&nbsp;!=&nbsp;0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No&nbsp;restraint&nbsp;created&quot;</span>);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWRes1.<b>RestraintBeginEdit</b>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWRes1.<b>SetTranslationComponentsValues</b>(1,&nbsp;1,&nbsp;1,&nbsp;1,&nbsp;1,&nbsp;1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode&nbsp;=&nbsp;CWRes1.<b>RestraintEndEdit</b>();<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Coordinate&nbsp;system&nbsp;type&nbsp;as&nbsp;defined&nbsp;in&nbsp;swsCoordinateType_e:&nbsp;&quot;</span>&nbsp;+&nbsp;CWRes1.<b>GetCoordinateType</b>());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Restraint&nbsp;type&nbsp;as&nbsp;defined&nbsp;in&nbsp;swsRestraintType_e:&nbsp;&quot;</span>&nbsp;+&nbsp;CWRes1.<b>RestraintType</b>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Units&nbsp;of&nbsp;translation&nbsp;as&nbsp;defined&nbsp;in&nbsp;swsLinearUnit_e:&nbsp;&quot;</span>&nbsp;+&nbsp;CWRes1.<b>Unit</b>);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;bval1&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;bval2&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;bval3&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;brev1&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;brev2&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;brev3&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;brev4&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;brev5&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;brev6&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">double</span>&nbsp;dval1&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">double</span>&nbsp;dval2&nbsp;=&nbsp;0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">double</span>&nbsp;dval3&nbsp;=&nbsp;0;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWRes1.<b>GetReverseDirections</b>(<span style="color:blue;">out</span>&nbsp;brev1,&nbsp;<span style="color:blue;">out</span>&nbsp;brev2,&nbsp;<span style="color:blue;">out</span>&nbsp;brev3,&nbsp;<span style="color:blue;">out</span>&nbsp;brev4,&nbsp;<span style="color:blue;">out</span>&nbsp;brev5,&nbsp;<span style="color:blue;">out</span>&nbsp;brev6);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWRes1.<b>GetTranslationComponentsValues</b>(<span style="color:blue;">out</span>&nbsp;bval1,&nbsp;<span style="color:blue;">out</span>&nbsp;bval2,&nbsp;<span style="color:blue;">out</span>&nbsp;bval3,&nbsp;<span style="color:blue;">out</span>&nbsp;dval1,&nbsp;<span style="color:blue;">out</span>&nbsp;dval2,&nbsp;<span style="color:blue;">out</span>&nbsp;dval3);<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(bval1&nbsp;==&nbsp;1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;Translation&nbsp;along&nbsp;plane&nbsp;direction&nbsp;1:&nbsp;&quot;</span>&nbsp;+&nbsp;dval1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reverse?&nbsp;(1=yes,&nbsp;0=no):&nbsp;&quot;</span>&nbsp;+&nbsp;brev4);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(bval2&nbsp;==&nbsp;1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;Translation&nbsp;along&nbsp;plane&nbsp;direction&nbsp;2:&nbsp;&quot;</span>&nbsp;+&nbsp;dval2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reverse?&nbsp;(1=yes,&nbsp;0=no):&nbsp;&quot;</span>&nbsp;+&nbsp;brev5);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(bval3&nbsp;==&nbsp;1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;Translation&nbsp;along&nbsp;direction&nbsp;normal&nbsp;to&nbsp;the&nbsp;plane:&nbsp;&quot;</span>&nbsp;+&nbsp;dval3);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reverse?&nbsp;(1=yes,&nbsp;0=no):&nbsp;&quot;</span>&nbsp;+&nbsp;brev6);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<font face="Courier New"><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font></p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+//&nbsp;Apply&nbsp;a&nbsp;nonuniform&nbsp;pressure&nbsp;normal&nbsp;to&nbsp;the&nbsp;selected&nbsp;face</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWPressure&nbsp;=&nbsp;LBCMgr.<b>AddPressure</b>(0,&nbsp;(varArray2),&nbsp;<span style="color:blue;">null</span>,&nbsp;<span style="color:blue;">out</span>&nbsp;errCode);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(errCode&nbsp;!=&nbsp;0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No&nbsp;CWPressure&nbsp;object&quot;</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWPressure.<b>PressureBeginEdit</b>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWPressure.<b>Unit</b>&nbsp;=&nbsp;1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWPressure.<b>Value</b>&nbsp;=&nbsp;1000;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWPressure.<b>IncludeNonUniformDistribution</b>&nbsp;=&nbsp;1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWPressure.<b>SetCoordinateSystem</b>(oSelect2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWPressure.<b>CoordSystemType</b>&nbsp;=&nbsp;(<span style="color:blue;">int</span>)swsCoordinateType_e.swsCoordinateTypeCartesian;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWPressure.<b>Equation</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;.4*\&quot;x\&quot;&nbsp;+&nbsp;.8*&nbsp;\&quot;y\&quot;&nbsp;+&nbsp;.6*&nbsp;\&quot;z\&quot;&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode&nbsp;=&nbsp;CWPressure.<b>PressureEndEdit</b>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(errCode&nbsp;!=&nbsp;0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;Pressure&nbsp;not&nbsp;set&nbsp;with&nbsp;error&nbsp;code&nbsp;as&nbsp;defined&nbsp;in&nbsp;swsPressureEndEditError_e:&nbsp;&quot;</span>&nbsp;+&nbsp;errCode);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Pressure&nbsp;type&nbsp;as&nbsp;defined&nbsp;in&nbsp;swsPressureType_e:&nbsp;&quot;</span>&nbsp;+&nbsp;CWPressure.<b>PressureType</b>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Pressure:&nbsp;&quot;</span>&nbsp;+&nbsp;CWPressure.<b>Value</b>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;Reverse&nbsp;direction?&nbsp;(1=yes,&nbsp;0=no)&nbsp;&quot;</span>&nbsp;+&nbsp;CWPressure.<b>ReverseDirection</b>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;Include&nbsp;nonuniform&nbsp;distribution&nbsp;of&nbsp;pressure?&nbsp;(1=yes,&nbsp;0=no)&nbsp;&quot;</span>&nbsp;+&nbsp;CWPressure.<b>IncludeNonUniformDistribution</b>);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(CWPressure.<b>IncludeNonUniformDistribution</b>&nbsp;==&nbsp;1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;Equation:&nbsp;&quot;</span>&nbsp;+&nbsp;CWPressure.<b>Equation</b>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;Coordinate&nbsp;system&nbsp;type&nbsp;as&nbsp;defined&nbsp;in&nbsp;swsCoordinateType_e:&nbsp;&quot;</span>&nbsp;+&nbsp;CWPressure.<b>CoordSystemType</b>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(CWPressure.<b>CoordSystemType</b>&nbsp;==&nbsp;1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;Equation&nbsp;linear&nbsp;units&nbsp;as&nbsp;defined&nbsp;in&nbsp;swsLinearUnit_e:&nbsp;&quot;</span>&nbsp;+&nbsp;CWPressure.<b>EquationLinearUnit</b>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(CWPressure.<b>CoordSystemType</b>&nbsp;==&nbsp;2&nbsp;|&nbsp;CWPressure.<b>CoordSystemType</b>&nbsp;==&nbsp;3)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;Equation&nbsp;angular&nbsp;units&nbsp;as&nbsp;defined&nbsp;in&nbsp;&quot;</span>&nbsp;+&nbsp;CWPressure.<b>EquationAngularUnit</b>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</p>
+<p style="font-family: Courier New'; font-size: 13; color: black; background: white" class="APICODE">
+<font face="Courier New"><br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Mesh&nbsp;</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CwMesh&nbsp;=&nbsp;(CWMesh)Study.<b>Mesh</b>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(CwMesh&nbsp;==&nbsp;<span style="color:blue;">null</span>)&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No&nbsp;mesh&nbsp;object&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CwMesh.<b>Quality</b>&nbsp;=&nbsp;1;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CwMesh.<b>GetDefaultElementSizeAndTolerance</b>(0,&nbsp;<span style="color:blue;">out</span>&nbsp;el,&nbsp;<span style="color:blue;">out</span>&nbsp;tl);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode&nbsp;=&nbsp;Study.<b>CreateMesh</b>(0,&nbsp;el,&nbsp;tl);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(errCode&nbsp;!=&nbsp;0)&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;Mesh&nbsp;failed&quot;</span>);<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">// Run&nbsp;analysis&nbsp;</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errCode&nbsp;=&nbsp;Study.<b>RunAnalysis</b>();<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(errCode&nbsp;!=&nbsp;0)&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;Analysis&nbsp;failed 
+with error code as defined in swsRunAnalysisError_e: &quot; + errCode</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CWResult&nbsp;=&nbsp;(CWResults)Study.<b>Results</b>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(CWResult&nbsp;==&nbsp;<span style="color:blue;">null</span>)&nbsp;ErrorMsg(swApp,&nbsp;<span style="color:#a31515;">&quot;No&nbsp;CWResults&nbsp;object&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stress&nbsp;=&nbsp;CWResult.<b>GetMinMaxStress</b>(0,&nbsp;0,&nbsp;1,&nbsp;<span style="color:blue;">null</span>,&nbsp;0,&nbsp;<span style="color:blue;">out</span>&nbsp;errCode);<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Get&nbsp;strain&nbsp;and&nbsp;stress&nbsp;values&nbsp;for&nbsp;</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;first&nbsp;face&nbsp;selected&nbsp;for&nbsp;restraint&nbsp;</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">DispatchWrapper</span>[]&nbsp;dispWrapper&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">DispatchWrapper</span>[1];<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dispWrapper[0]&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">DispatchWrapper</span>((Entity)pointer1);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;resultsString&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;Strain&nbsp;value&nbsp;by&nbsp;node:&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;results&nbsp;=&nbsp;(<span style="color:blue;">object</span>[])CWResult.<b>GetStrainForEntities3</b>(<span style="color:blue;">true</span>,&nbsp;(<span style="color:blue;">int</span>)swsStrainComponent_e.swsStrainComponentESTRN,&nbsp;1,&nbsp;<span style="color:blue;">null</span>,&nbsp;dispWrapper,&nbsp;status, 0, <span style="color:blue;">false</span>, <span style="color:blue;">out</span>&nbsp;errCode);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">for</span>&nbsp;(i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;results.Length;&nbsp;i++)<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resultsString&nbsp;=&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(results[i]);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;&quot;</span>&nbsp;+&nbsp;resultsString);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;Stress&nbsp;value&nbsp;by&nbsp;node:&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;results&nbsp;=&nbsp;(<span style="color:blue;">object</span>[])CWResult.<b>GetStressForEntities3</b>(<span style="color:blue;">true</span>,&nbsp;(<span style="color:blue;">int</span>)swsStressComponent_e.swsStressComponentVON,&nbsp;1,&nbsp;<span style="color:blue;">null</span>,&nbsp;dispWrapper,&nbsp;(<span style="color:blue;">int</span>)swsStrengthUnit_e.swsStrengthUnitPascal,&nbsp;status, 0, <span style="color:blue;">false</span>,<span style="color:blue;"> out</span>&nbsp;errCode);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">for</span>&nbsp;(i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;results.Length;&nbsp;i++)<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resultsString&nbsp;=&nbsp;<span style="color:#2b91af;">Convert</span>.ToString(results[i]);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;&quot;</span>&nbsp;+&nbsp;resultsString);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</font></p>
+<font SIZE="2" COLOR="#008000">
+<blockquote>
+	<blockquote>
+		<p class="APICODE">// Create a nodal equivalent strain plot<br>
+		</font><font SIZE="2">
+		plot = CWResult.<b>CreatePlot</b>(3, 
+		(</font><font SIZE="2" COLOR="#0000ff">int</font><font SIZE="2">)</font><font SIZE="2" COLOR="#2b91af">swsStaticResultNodalStrainComponentTypes_e</font><font SIZE="2">.swsStaticNodalStrain_ESTRN, 
+		(</font><font SIZE="2" COLOR="#0000ff">int</font><font SIZE="2">)</font><font SIZE="2" COLOR="#2b91af">swsUnit_e</font><font SIZE="2">.swsUnitSI,
+		</font><font SIZE="2" COLOR="#0000ff">false</font><font SIZE="2">,
+		</font><font SIZE="2" COLOR="#0000ff">out</font><font SIZE="2"> 
+		errorCode);<br>
+		errorCode = plot.<b>ActivatePlot</b>();<br>
+		errorCode = plot.<b>GetPlotName</b>(</font><font SIZE="2" COLOR="#0000ff">out</font><font SIZE="2"> 
+		plotName);<br>
+		errorCode = plot.<b>ApplyNameViewOrientation</b>(</font><font SIZE="2" COLOR="#a31515">&quot;*Front&quot;</font><font SIZE="2">);<br>
+		results = (</font><font SIZE="2" COLOR="#0000ff">object</font><font SIZE="2">[])plot.<b>GetMinMaxResultValues</b>(</font><font SIZE="2" COLOR="#0000ff">out</font><font SIZE="2"> 
+		errorCode);<br>
+		errorCode = plot.<b>SetPlotTitle</b>(</font><font SIZE="2" COLOR="#a31515">&quot;Nodal 
+		Equivalent Strain&quot;</font><font SIZE="2">);<br>
+		plot.<b>SetFOSPlot</b>(</font><font SIZE="2" COLOR="#0000ff">false</font><font SIZE="2">);<br>
+		plot.<b>Set2DPlanarRevolveAngle</b>(0.0);<br>
+		plot.<b>SetNormalizeModeShape</b>(</font><font SIZE="2" COLOR="#0000ff">false</font><font SIZE="2">);<br>
+		plot.<b>ShowAs3DPlot</b>(</font><font SIZE="2" COLOR="#0000ff">true</font><font SIZE="2">);<br>
+		plot.<b>ShowTensorOrVector</b>(</font><font SIZE="2" COLOR="#0000ff">false</font><font SIZE="2">);<br>
+		plot.<b>ShowShellin3D</b>(</font><font SIZE="2" COLOR="#0000ff">false</font><font SIZE="2">);<br>
+		plot.<b>ShowNormalizeValuesFrom0To1</b>(</font><font SIZE="2" COLOR="#0000ff">true</font><font SIZE="2">);<br>
+		errorCode = plot.<b>ShowDeformedPlot</b>(</font><font SIZE="2" COLOR="#0000ff">true</font><font SIZE="2">, 
+		(</font><font SIZE="2" COLOR="#0000ff">int</font><font SIZE="2">)</font><font SIZE="2" COLOR="#2b91af">swsDeformType_e</font><font SIZE="2">.swsAutomatic, 
+		0.0, </font><font SIZE="2" COLOR="#0000ff">true</font><font SIZE="2">);<br>
+		plot.<b>ShowBeamProfile</b>(</font><font SIZE="2" COLOR="#0000ff">false</font><font SIZE="2">);<br>
+		plot.<b>ShowAvgResultsAcrossBoundaryForParts</b>(</font><font SIZE="2" COLOR="#0000ff">false</font><font SIZE="2">);</p>
+		<p class="APICODE"></font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot;Result 
+		plot created: &quot;</font><font SIZE="2"> + plotName);<br>
+		</font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot;Node 
+		&quot;</font><font SIZE="2"> + results[0] + </font>
+		<font SIZE="2" COLOR="#a31515">&quot; &quot;</font><font SIZE="2"> + </font>
+		<font SIZE="2" COLOR="#a31515">&quot;has minimum strain value: &quot;</font><font SIZE="2"> 
+		+ results[1]);<br>
+		</font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot;Node 
+		&quot;</font><font SIZE="2"> + results[2] + </font>
+		<font SIZE="2" COLOR="#a31515">&quot; &quot;</font><font SIZE="2"> + </font>
+		<font SIZE="2" COLOR="#a31515">&quot;has maximum strain value: &quot;</font><font SIZE="2"> 
+		+ results[3]);</p>
+		<p class="APICODE"></font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot;Number 
+		of plots for these results: &quot;</font><font SIZE="2"> + 
+		CWResult.<b>GetPlotCount</b>());<br>
+		</font><font SIZE="2" COLOR="#0000ff">foreach</font><font SIZE="2"> 
+		(</font><font SIZE="2" COLOR="#0000ff">string</font><font SIZE="2"> 
+		Name_loopVariable </font><font SIZE="2" COLOR="#0000ff">in</font><font SIZE="2"> 
+		(</font><font SIZE="2" COLOR="#0000ff">string</font><font SIZE="2">[])CWResult.<b>GetPlotNames</b>())<br>
+		{</p>
+		<p class="APICODE">&nbsp;&nbsp;&nbsp; Name = Name_loopVariable;<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot;&quot;</font><font SIZE="2">);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot;Plot: 
+		&quot;</font><font SIZE="2"> + Name);<br>
+&nbsp;&nbsp;&nbsp; errorCode = CWResult.<b>GetPlotColorOptions</b>(Name, </font>
+		<font SIZE="2" COLOR="#0000ff">out</font><font SIZE="2"> nType, </font>
+		<font SIZE="2" COLOR="#0000ff">out</font><font SIZE="2"> nBase, </font>
+		<font SIZE="2" COLOR="#0000ff">out</font><font SIZE="2"> nContour,
+		</font><font SIZE="2" COLOR="#0000ff">out</font><font SIZE="2"> BFlip,
+		</font><font SIZE="2" COLOR="#0000ff">out</font><font SIZE="2"> 
+		BSpecifyColorLimit, </font><font SIZE="2" COLOR="#0000ff">out</font><font SIZE="2"> 
+		VarColor);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot;Plot 
+		color options:&quot;</font><font SIZE="2">);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Color map as defined in swsColorChartOptionLegendTypeValue_e: &quot;</font><font SIZE="2"> 
+		+ nType);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Number of base colors in color map: &quot;</font><font SIZE="2"> + nBase);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Number of gradient colors in color map: &quot;</font><font SIZE="2"> + 
+		nContour);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Reverse the color mapping? &quot;</font><font SIZE="2"> + BFlip);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Specify a color for values above the yield limit? &quot;</font><font SIZE="2"> 
+		+ BSpecifyColorLimit);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Color for values above the yield limit and user-defined colors (RGB): &quot;</font><font SIZE="2">);</p>
+		<p class="APICODE"></p>
+		<p class="APICODE"></font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp; string</font><font SIZE="2"> 
+		rgb = </font><font SIZE="2" COLOR="#a31515">&quot;{&quot;</font><font SIZE="2">;<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#0000ff">int</font><font SIZE="2"> 
+		rgbInd = 1;<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#0000ff">int</font><font SIZE="2"> 
+		ind = 1;<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#0000ff">object</font><font SIZE="2">[] 
+		ColorObj = (</font><font SIZE="2" COLOR="#0000ff">object</font><font SIZE="2">[])VarColor;<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#0000ff">int</font><font SIZE="2"> 
+		size = ColorObj.Length;<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#0000ff">int</font><font SIZE="2">[] 
+		intColor = </font><font SIZE="2" COLOR="#0000ff">new</font><font SIZE="2">
+		</font><font SIZE="2" COLOR="#0000ff">int</font><font SIZE="2">[size];</p>
+		<p class="APICODE"></font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp; for</font><font SIZE="2"> 
+		(i=0; i&lt;size; i++){<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; intColor[i] = (</font><font SIZE="2" COLOR="#0000ff">int</font><font SIZE="2">)ColorObj[i];<br>
+&nbsp;&nbsp;&nbsp; }</p>
+		<p class="APICODE"></p>
+		<p class="APICODE"></p>
+		<p class="APICODE"></font><font SIZE="2" COLOR="#008000">&nbsp;&nbsp;&nbsp; // Create RGB 
+		triplet for each color<br>
+		</font><font SIZE="2">&nbsp;&nbsp;&nbsp;
+		</font><font SIZE="2" COLOR="#0000ff">foreach</font><font SIZE="2"> 
+		(</font><font SIZE="2" COLOR="#0000ff">int</font><font SIZE="2"> 
+		Color_loopVariable </font><font SIZE="2" COLOR="#0000ff">in</font><font SIZE="2"> 
+		intColor)<br>
+&nbsp;&nbsp;&nbsp; {</p>
+		<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Color = Color_loopVariable;</p>
+		<p class="APICODE"></font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if</font><font SIZE="2"> 
+		(rgbInd &lt; 3){<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rgb = rgb + Color + </font>
+		<font SIZE="2" COLOR="#a31515">&quot;,&quot;</font><font SIZE="2">;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rgbInd = rgbInd + 1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</p>
+		<p class="APICODE"></font><font SIZE="2" COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; else
+		</font><font SIZE="2">
+		{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rgb = rgb + Color + </font>
+		<font SIZE="2" COLOR="#a31515">&quot;}&quot;</font><font SIZE="2">;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rgbInd = 1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+		<font SIZE="2" COLOR="#0000ff">if</font><font SIZE="2"> 
+		(!(ind == size)){<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rgb = rgb + </font><font SIZE="2" COLOR="#a31515">&quot;{&quot;</font><font SIZE="2">;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ind = ind + 1;<br>
+&nbsp;&nbsp;&nbsp; }&nbsp;&nbsp;&nbsp; </p>
+		<p class="APICODE"></font><font SIZE="2" COLOR="#2b91af">&nbsp;&nbsp;&nbsp; Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		&quot;</font><font SIZE="2"> + rgb);<br>
+&nbsp;</font></p>
+		<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">&nbsp;&nbsp;&nbsp; 
+		errorCode&nbsp;=&nbsp;CWResult.<b>GetLegendContourColors</b>(Name,&nbsp;<span style="color:blue;">out</span>&nbsp;VarColor);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;<font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font>.Print(<span style="color:#a31515;">&quot;&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;<font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font>.Print(<span style="color:#a31515;">&quot;Legend&nbsp;colors&nbsp;{R,G,B}:&nbsp;&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;rgb&nbsp;=&nbsp;<span style="color:#a31515;">&quot;{&quot;</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;rgbInd&nbsp;=&nbsp;1;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;ind&nbsp;=&nbsp;1;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;ColorObj&nbsp;=&nbsp;(<span style="color:blue;">object</span>[])VarColor;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;ColorObj.Length;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;intColor&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:blue;">int</span>[size];<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">for</span>&nbsp;(i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;size;&nbsp;i++)<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intColor[i]&nbsp;=&nbsp;(<span style="color:blue;">int</span>)ColorObj[i];<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp; <br>
+		&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Create&nbsp;RGB&nbsp;triplet&nbsp;for&nbsp;each&nbsp;color</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">foreach</span>&nbsp;(<span style="color:blue;">int</span>&nbsp;Color_loopVariable&nbsp;<span style="color:blue;">in</span>&nbsp;intColor)<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Color&nbsp;=&nbsp;Color_loopVariable;<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(rgbInd&nbsp;&lt;&nbsp;3)<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rgb&nbsp;=&nbsp;rgb&nbsp;+&nbsp;Color&nbsp;+&nbsp;<span style="color:#a31515;">&quot;,&quot;</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rgbInd&nbsp;=&nbsp;rgbInd&nbsp;+&nbsp;1;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">else</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rgb&nbsp;=&nbsp;rgb&nbsp;+&nbsp;Color&nbsp;+&nbsp;<span style="color:#a31515;">&quot;}&quot;</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rgbInd&nbsp;=&nbsp;1;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(!(ind&nbsp;==&nbsp;size))<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rgb&nbsp;=&nbsp;rgb&nbsp;+&nbsp;<span style="color:#a31515;">&quot;{&quot;</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ind&nbsp;=&nbsp;ind&nbsp;+&nbsp;1;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp; <font SIZE="2"> 
+			<span style="color:Green">
+			<span style="color:#2b91af;">Debug</span></span></font>.Print(<span style="color:#a31515;">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;rgb);</p>
+		<p class="APICODE"><font SIZE="2"> <br>
+&nbsp;&nbsp;&nbsp; vDispOptions = (</font><font SIZE="2" COLOR="#0000ff">object</font><font SIZE="2">[])CWResult.<b>GetPlotDisplayOptions</b>(Name,
+		</font><font SIZE="2" COLOR="#0000ff">out</font><font SIZE="2"> 
+		errorCode);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot;&quot;</font><font SIZE="2">);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot;Plot 
+		display options:&quot;</font><font SIZE="2">);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Display the minimum value? &quot;</font><font SIZE="2"> + vDispOptions[0]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Display the maximum value? &quot;</font><font SIZE="2"> + vDispOptions[1]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Display the plot details? &quot;</font><font SIZE="2"> + vDispOptions[2]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Display the legend? &quot;</font><font SIZE="2"> + vDispOptions[3]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Display the minimum/maximum range only for parts? &quot;</font><font SIZE="2"> 
+		+ vDispOptions[4]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Allow a user-defined minimum/maximum? &quot;</font><font SIZE="2"> + 
+		vDispOptions[5]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		User-defined minimum: &quot;</font><font SIZE="2"> + vDispOptions[6]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		User-defined maximum: &quot;</font><font SIZE="2"> + vDispOptions[7]);</p>
+		<p class="APICODE">&nbsp;&nbsp;&nbsp; vPlotPosFormatOptions = (</font><font SIZE="2" COLOR="#0000ff">object</font><font SIZE="2">[])CWResult.<b>GetPlotPositionFormatOptions</b>(Name,
+		</font><font SIZE="2" COLOR="#0000ff">out</font><font SIZE="2"> 
+		errorCode);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot;&quot;</font><font SIZE="2">);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot;Plot 
+		position/format options:&quot;</font><font SIZE="2">);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Percentage of the window width: &quot;</font><font SIZE="2"> + 
+		vPlotPosFormatOptions[0]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Percentage of the window height: &quot;</font><font SIZE="2"> + 
+		vPlotPosFormatOptions[1]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Chart thickness option as defined in swsColorChartWidthOptionValue_e: &quot;</font><font SIZE="2"> 
+		+ vPlotPosFormatOptions[2]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Chart number format as defined in swsColorChartNumberFormatOptionValue_e: 
+		&quot;</font><font SIZE="2"> + vPlotPosFormatOptions[3]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Number of decimal places to display: &quot;</font><font SIZE="2"> + 
+		vPlotPosFormatOptions[4]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Display chart numbers with a 1000 comma separator? &quot;</font><font SIZE="2"> 
+		+ vPlotPosFormatOptions[5]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Use different number format for small numbers? &quot;</font><font SIZE="2"> + 
+		vPlotPosFormatOptions[6]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Number format for small numbers as defined in 
+		swsColorNumberFormatUseDiffNumberFormatOptionValue_e: &quot;</font><font SIZE="2"> 
+		+ vPlotPosFormatOptions[7]);</p>
+		<p class="APICODE">&nbsp;&nbsp;&nbsp; vPlotSettings = (</font><font SIZE="2" COLOR="#0000ff">object</font><font SIZE="2">[])CWResult.<b>GetPlotSettings</b>(Name,
+		</font><font SIZE="2" COLOR="#0000ff">out</font><font SIZE="2"> 
+		errorCode);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot;&quot;</font><font SIZE="2">);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot;Plot 
+		settings:&quot;</font><font SIZE="2">);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Display option for active fringe plot as defined in 
+		swsPlotFringeSettingsOptionValue_e: &quot;</font><font SIZE="2"> + 
+		vPlotSettings[0]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Display option for model boundary as defined in 
+		swsPlotBoundarySettingsOptionValue_e: &quot;</font><font SIZE="2"> + 
+		vPlotSettings[1]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		R value for model/mesh color: &quot;</font><font SIZE="2"> + 
+		vPlotSettings[2]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		G value for model/mesh color: &quot;</font><font SIZE="2"> + 
+		vPlotSettings[3]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		B value for model/mesh color: &quot;</font><font SIZE="2"> + 
+		vPlotSettings[4]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Superimpose the un-deformed model on the deformed model? &quot;</font><font SIZE="2"> 
+		+ vPlotSettings[5]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Deformed plot translucent option as defined in 
+		swsPlotDeformedShapeOptionSuperImposeValue_e: &quot;</font><font SIZE="2"> + 
+		vPlotSettings[6]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		R value for single translucent color: &quot;</font><font SIZE="2"> + 
+		vPlotSettings[7]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		G value for single translucent color: &quot;</font><font SIZE="2"> + 
+		vPlotSettings[8]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		B value for single translucent color: &quot;</font><font SIZE="2"> + 
+		vPlotSettings[9]);<br>
+&nbsp;&nbsp;&nbsp; </font><font SIZE="2" COLOR="#2b91af">Debug</font><font SIZE="2">.Print(</font><font SIZE="2" COLOR="#a31515">&quot; 
+		Color intensity [0,1]: &quot;</font><font SIZE="2"> + vPlotSettings[10]);<br>
+&nbsp;</font></p>
+		<p style="font-family: Consolas; font-size: 13; color: black; background: white" class="APICODE">
+		&nbsp;<font face="Courier New"><span style="color:blue;">&nbsp;&nbsp;&nbsp; 
+		object</span>[]&nbsp;InputVar1&nbsp;=&nbsp;{<span style="color:blue;">true</span>,0,255,0,0,0.75,<span style="color:blue;">true</span>,0,0,0,255,0.2};<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errorCode&nbsp;=&nbsp;CWResult.<b>SetPlotSettingsOptionForHiddenAndExcludedBody</b>(Name,&nbsp;InputVar1);<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Var&nbsp;=&nbsp;(<span style="color:blue;">object</span>[])CWResult.<b>GetPlotSettingsOptionForHiddenAndExcludedBody</b>(Name,&nbsp;<span style="color:blue;">out</span>&nbsp;errorCode);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font><font face="Courier New">.Print(<span style="color:#a31515;">&quot;&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font><font face="Courier New">.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;Show&nbsp;hidden&nbsp;bodies?&nbsp;(1&nbsp;=&nbsp;true,&nbsp;0&nbsp;=&nbsp;false)&nbsp;&quot;</span>&nbsp;+&nbsp;Var[0]);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font><font face="Courier New">.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Translucent&nbsp;color 
+		option&nbsp;as&nbsp;defined&nbsp;in&nbsp;swsPlotShowHiddenBodiesOptionValue_e:&nbsp;&quot;</span>&nbsp;+&nbsp;Var[1]);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font><font face="Courier New">.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;R&nbsp;value&nbsp;for&nbsp;single&nbsp;translucent&nbsp;color:&nbsp;&quot;</span>&nbsp;+&nbsp;Var[2]);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font><font face="Courier New">.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;G&nbsp;value&nbsp;for&nbsp;single&nbsp;translucent&nbsp;color:&nbsp;&quot;</span>&nbsp;+&nbsp;Var[3]);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font><font face="Courier New">.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;B&nbsp;value&nbsp;for&nbsp;single&nbsp;translucent&nbsp;color:&nbsp;&quot;</span>&nbsp;+&nbsp;Var[4]);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font><font face="Courier New">.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Color&nbsp;intensity&nbsp;[0,&nbsp;1]:&nbsp;&quot;</span>&nbsp;+&nbsp;Var[5]);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font><font face="Courier New">.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;Show&nbsp;excluded&nbsp;bodies?&nbsp;(1&nbsp;=&nbsp;true,&nbsp;0&nbsp;=&nbsp;false)&nbsp;&quot;</span>&nbsp;+&nbsp;Var[6]);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font><font face="Courier New">.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Translucent&nbsp;color 
+		option&nbsp;as&nbsp;defined&nbsp;in&nbsp;swsPlotShowExcludedBodiesOptionValue_e:&nbsp;&quot;</span>&nbsp;+&nbsp;Var[7]);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font><font face="Courier New">.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;R&nbsp;value&nbsp;for&nbsp;single&nbsp;translucent&nbsp;color:&nbsp;&quot;</span>&nbsp;+&nbsp;Var[8]);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font><font face="Courier New">.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;G&nbsp;value&nbsp;for&nbsp;single&nbsp;translucent&nbsp;color:&nbsp;&quot;</span>&nbsp;+&nbsp;Var[9]);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font><font face="Courier New">.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;B&nbsp;value&nbsp;for&nbsp;single&nbsp;translucent&nbsp;color:&nbsp;&quot;</span>&nbsp;+&nbsp;Var[10]);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font SIZE="2" face="Courier New"><span style="color:#2b91af;">Debug</span></font><font face="Courier New">.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Color&nbsp;intensity&nbsp;[0,&nbsp;1]:&nbsp;&quot;</span>&nbsp;+&nbsp;Var[11]);</font></p>
+		<p class="APICODE"><font SIZE="2"> <br>
+		}</font></p>
+	</blockquote>
+</blockquote>
+<p style="font-family: Consolas; font-size: 13; color: black; background: white" class="APICODE">
+	   <font face="Courier New"><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">// Hide&nbsp;fixture&nbsp;and&nbsp;force symbols</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Study.<b>ShowOrHideFixtures</b>&nbsp;=&nbsp;<span style="color:blue;">false</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Study.<b>ShowOrHideForce</b>&nbsp;=&nbsp;<span style="color:blue;">false</span>;<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.Diagnostics.<span style="color:#2b91af;">Debugger</span>.Break();<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">// Show&nbsp;fixture&nbsp;and&nbsp;force symbols</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Study.<b>ShowOrHideFixtures</b>&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Study.<b>ShowOrHideForce</b>&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;ErrorMsg(SldWorks&nbsp;SwApp,&nbsp;<span style="color:blue;">string</span>&nbsp;Message)<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>SendMsgToUser2</b>(Message,&nbsp;0,&nbsp;0);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>RecordLine</b>(<span style="color:#a31515;">&quot;'***&nbsp;WARNING&nbsp;-&nbsp;General&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>RecordLine</b>(<span style="color:#a31515;">&quot;'***&nbsp;&quot;</span>&nbsp;+&nbsp;Message);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>RecordLine</b>(<span style="color:#a31515;">&quot;&quot;</span>);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;StringtoArray(<span style="color:blue;">string</span>&nbsp;inputSTR,&nbsp;<span style="color:blue;">ref</span>&nbsp;<span style="color:blue;">byte</span>[]&nbsp;varEntity)<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>[]&nbsp;PIDArray&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">byte</span>[]&nbsp;PID&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;i;<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Parse&nbsp;string&nbsp;into&nbsp;an&nbsp;array</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PIDArray&nbsp;=&nbsp;inputSTR.Split(<span style="color:blue;">new</span>&nbsp;<span style="color:blue;">char</span>[]&nbsp;{&nbsp;<span style="color:#a31515;">','</span>&nbsp;});<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Convert&nbsp;string&nbsp;array&nbsp;to&nbsp;byte&nbsp;array</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;sizeArray&nbsp;=&nbsp;PIDArray.Length;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PID&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:blue;">byte</span>[sizeArray];<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">for</span>&nbsp;(i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;PIDArray.Length;&nbsp;i++)<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PID[i]&nbsp;=&nbsp;<span style="color:#2b91af;">Convert</span>.ToByte(PIDArray[i]);<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;varEntity&nbsp;=&nbsp;PID;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span><span style="color:green;">&nbsp;</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;The&nbsp;SldWorks&nbsp;swApp&nbsp;variable&nbsp;is&nbsp;pre-assigned&nbsp;for&nbsp;you.&nbsp;</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span><span style="color:green;">&nbsp;</span><br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;SldWorks&nbsp;swApp;<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+		}<br>
+ </font>
+</p>
+
+</body>
+
+</html>

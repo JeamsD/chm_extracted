@@ -1,0 +1,148 @@
+<html>
+
+<head>
+<title>Copy Mesh and Generate Report Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,result plots">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Copy Mesh and Generate Report Example (VBA)</h1>
+<p>This example shows how to copy the mesh from one study to another and 
+generate a report.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions: <br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Open <i>public_documents</i><b>\samples\Simulation Examples\Verification\buckling2.sldprt</b>.<br>
+'<br>
+' Postconditions:<br>
+' 1. Meshes the <b>Quality</b> and <b>Draft</b> studies.<br>
+' 2. Copies the mesh from the <b>Quality</b> study to the <b>Draft</b> study.<br>
+' 3. Click <b>OK</b> to close any dialog boxes.<br>
+' 4. Generates a report for the <b>Draft</b> study in <b>c:\temp</b>.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+' ---------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS As 
+CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim CWMesh As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim errCode As Long, n As Long<br>
+&nbsp;&nbsp;&nbsp; Dim el As Double, tl As Double<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Const NoOfElements1 As Double = 712&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<br>
+&nbsp;&nbsp;&nbsp; Const NoOfElements2 As Double = 2686<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Set SwApp = 
+Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = SwApp.<b>GetAddInObject</b>(&quot;CosmosWorks.CosmosWorks&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, &quot;No CwAddincallback 
+object&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;No 
+CosmosWorks object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get active document<br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get the first study<br>
+&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWStudyManager object&quot;<br>
+&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 0<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(0)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;No CWStudy object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Mesh the first study<br>
+&nbsp;&nbsp;&nbsp; Set CWMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CWMesh Is Nothing Then ErrorMsg SwApp, &quot;No CWMesh object&quot;<br>
+&nbsp;&nbsp;&nbsp; CWMesh.<b>Quality</b> = 1<br>
+&nbsp;&nbsp;&nbsp; Call CWMesh.<b>GetDefaultElementSizeAndTolerance</b>(0, el, 
+tl)<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Mesh failed&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; n = CWMesh.<b>NodeCount</b><br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If (n &lt; 0.95 * NoOfElements2) Or (n &gt; 1.05 
+* NoOfElements2) Then<br>
+&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot; % error = &quot; &amp; (((n - NoOfElements2) / 
+NoOfElements2) * 100)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get the second study<br>
+&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 1<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(1)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;No CWStudy object&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Mesh the second study<br>
+&nbsp;&nbsp;&nbsp; Set CWMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CWMesh Is Nothing Then ErrorMsg SwApp, &quot;No CWMesh object&quot;<br>
+&nbsp;&nbsp;&nbsp; CWMesh.<b>Quality</b> = 0<br>
+&nbsp;&nbsp;&nbsp; Call CWMesh.<b>GetDefaultElementSizeAndTolerance</b>(0, el, 
+tl)<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Mesh failed&quot;<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; n = CWMesh.<b>NodeCount</b><br>
+&nbsp;&nbsp;&nbsp; If (n &lt; 0.95 * NoOfElements1) Or (n &gt; 1.05 * NoOfElements1) 
+Then<br>
+&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot; % error = &quot; &amp; (((n - NoOfElements1) / 
+NoOfElements1) * 100)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Copy mesh from the first study to the second 
+study<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CopyMeshFromStudy</b>(&quot;Quality&quot;)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Mesh failed to 
+copy&quot;<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; n = CWMesh.<b>NodeCount</b><br>
+&nbsp;&nbsp;&nbsp; If (n &lt; 0.95 * NoOfElements2) Or (n &gt; 1.05 * NoOfElements2) 
+Then<br>
+&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot; % error = &quot; &amp; (((n - NoOfElements2) / 
+NoOfElements2) * 100)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Generate Report<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>GenerateReport</b>(&quot;C:\temp&quot;, 
+&quot;report&quot;, False)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 1 Then ErrorMsg SwApp, &quot;Failed to 
+generate report&quot;<br>
+&nbsp;</p>
+<p class="APICODE">End Sub<br>
+&nbsp;</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

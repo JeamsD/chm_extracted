@@ -1,0 +1,230 @@
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<html>
+
+<!--(==============================================================)-->
+<!--(Document created with RoboEditor. )============================-->
+<!--(==============================================================)-->
+
+<head>
+
+<title>Simultaneously Edit Multiple Contact Sets Example (VBA)</title>
+
+<!--(Meta)==========================================================-->
+
+<meta http-equiv=content-type content="text/html; charset=windows-1252">
+<meta name=MS-HKWD content="VBA examples,frequency study">
+<meta name=MS-HKWD content="VBA examples,contact sets">
+<meta name=MS-HKWD content="VBA examples,meshes">
+<meta name=generator content="RoboHELP by eHelp Corporation - www.ehelp.com">
+<meta name=generator-major-version content=0.1>
+<meta name=generator-minor-version content=1>
+<meta name=filetype content=kadov>
+<meta name=filetype-version content=1>
+<meta name=page-count content=1>
+<meta name=layout-height content=6517>
+<meta name=layout-width content=6926>
+
+
+<!--(Links)=========================================================-->
+
+<link rel="StyleSheet" href="ApiHelp.css">
+
+
+
+</head>
+
+<!--(Body)==========================================================-->
+
+
+<body>
+
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation 
+ API Help</span></h1>
+
+<h1>Simultaneously Edit Multiple Contact Sets Example (VBA)</h1>
+
+<p>This example shows how to add multiple contact sets to a frequency study and 
+simultaneously edit them.</p>
+
+<p><span style="font-weight: bold;">NOTE:</span> To get persistent reference 
+ identifiers (PIDs) for model selections, you can use
+<a href="GettingStarted-swsimulationapi.html">pidcollector.exe</a> 
+ or IModelDocExtension::GetPersistReference3.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Ensure that the specified model document exists.<br>
+' 4. Open the Immediate window.<br>
+'<br>
+' Postconditions:<br>
+' 1. Opens the model.<br>
+' 2. Gets the <b>Ready</b> study.<br>
+' 3. Adds two contact sets.<br>
+' 4. Simultaneously edits the contact sets to change types<br>
+'&nbsp;&nbsp;&nbsp; from <b>Bonded</b> to <b>Allow Penetration</b>.<br>
+' 5. Creates a mesh.<br>
+' 6. Runs an analysis.<br>
+' 7. Inspect the Immediate window and the Simulation Study tree.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+'----------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS As CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim COSMOSObject As CosmosWorksLib.CwAddincallback<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim CWMesh As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; Dim CWResult As CosmosWorksLib.CWResults<br>
+&nbsp;&nbsp;&nbsp; Dim Part As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Dim ContactMgr As CosmosWorksLib.CWContactManager<br>
+&nbsp;&nbsp;&nbsp; Dim CWContactSet As CosmosWorksLib.CWContactSet<br>
+&nbsp;&nbsp;&nbsp; Dim pDisp1 As Object, pDisp2 As Object, pDisp3 As Object<br>
+&nbsp;&nbsp;&nbsp; Dim var8 As Variant, var9 As Variant, var10 As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim varArray3 As Variant, varArray4 As Variant, varArray5 As 
+Variant<br>
+&nbsp;&nbsp;&nbsp; Dim Freq As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim str1 As String, str2 As String, str3 As String<br>
+&nbsp;&nbsp;&nbsp; Dim longstatus As Long, longwarnings As Long<br>
+&nbsp;&nbsp;&nbsp; Dim errCode As Long<br>
+&nbsp;&nbsp;&nbsp; Dim el As Double, tl As Double<br>
+&nbsp;&nbsp;&nbsp; Dim i As Long<br>
+</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>OpenDoc6</b> &quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2019\samples\Simulation Examples\shaft.sldasm&quot;, 
+swDocASSEMBLY, swOpenDocOptions_Silent, &quot;&quot;, longstatus, longwarnings<br>
+&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>ActiveDoc</b>()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set COSMOSObject = SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; If COSMOSObject Is Nothing Then ErrorMsg SwApp, &quot;COSMOSObject 
+object not found&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = COSMOSObject.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;COSMOSWORKS 
+object not found&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Gets the Ready study<br>
+&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWStudyManager object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(0)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;No study found&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get selections for multiple contact sets<br>
+<br>
+&nbsp;&nbsp;&nbsp; ' Shaft source<br>
+&nbsp;&nbsp;&nbsp; str1 = 
+&quot;189,35,0,0,3,0,0,0,255,254,255,23,111,0,118,0,101,0,114,0,101,0,110,0,100,0,101,0,114,0,32,0,115,0,104,0,97,0,102,0,116,0,45,0,49,0,64,0,115,0,104,0,97,0,102,0,116,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,13,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,58,67,0,58,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,68,0,111,0,99,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,95,0,102,0,111,0,114,0,67,0,117,0,115,0,116,0,111,0,109,0,101,0,114,0,115,0,92,0,111,0,118,0,101,0,114,0,101,0,110,0,100,0,101,0,114,0,32,0,115,0,104,0,97,0,102,0,116,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,&quot;<br>
+&nbsp;&nbsp;&nbsp; str1 = str1 &amp; 
+&quot;9,128,255,254,255,15,111,0,118,0,101,0,114,0,101,0,110,0,100,0,101,0,114,0,32,0,115,0,104,0,97,0,102,0,116,0,2,0,0,5,73,58,52,255,254,255,0,0,123,22,28,65,1,0,0,0,0,0,0,0,35,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,45,0,0,0,0,0,0,0,123,22,28,65,10,0,0,0,65,73,58,52,1,0,0,0,255,255,1,0,19,0,109,111,70,105,108,108,101,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,13,0,0,0,97,73,58,52,1,0,0,0,0,0,12,128,0,0,5,128,8,0,14,0,0,0,108,73,58,52,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; str1 = str1 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray str1, var8<br>
+&nbsp;&nbsp;&nbsp; Set pDisp1 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var8), 
+longstatus)<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Bore 1 target<br>
+&nbsp;&nbsp;&nbsp; str2 = 
+&quot;189,35,0,0,3,0,0,0,255,254,255,28,112,0,98,0,32,0,98,0,101,0,97,0,114,0,105,0,110,0,103,0,95,0,49,0,46,0,53,0,48,0,32,0,98,0,111,0,114,0,101,0,45,0,50,0,64,0,115,0,104,0,97,0,102,0,116,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,21,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,63,67,0,58,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,68,0,111,0,99,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,95,0,102,0,111,0,114,0,67,0,117,0,115,0,116,0,111,0,109,0,101,0,114,0,115,0,92,0,112,0,98,0,32,0,98,0,101,0,97,0,114,0,105,0,110,0,103,0,95,0,49,0,46,0,53,0,48,0,32,0,98,0,111,0,114,0,101,0,46,0,8&quot;<br>
+&nbsp;&nbsp;&nbsp; str2 = str2 &amp; 
+&quot;3,0,76,0,68,0,80,0,82,0,84,0,9,128,255,254,255,20,112,0,98,0,32,0,98,0,101,0,97,0,114,0,105,0,110,0,103,0,95,0,49,0,46,0,53,0,48,0,32,0,98,0,111,0,114,0,101,0,2,0,0,130,66,58,52,255,254,255,0,0,144,22,28,65,1,0,0,0,0,0,0,0,34,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,52,0,0,0,0,0,0,0,144,22,28,65,15,0,0,0,58,68,58,52,1,0,0,0,255,255,255,255,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,15,0,0,0,58,68,58,52,1,0,0,0,0,0,12,128,0,0,5,128,8,0,19,0,0,0,141,68,58,52,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; str2 = str2 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray str2, var9<br>
+&nbsp;&nbsp;&nbsp; Set pDisp2 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var9), 
+longstatus)<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Bore 2 target<br>
+&nbsp;&nbsp;&nbsp; str3 = 
+&quot;189,35,0,0,3,0,0,0,255,254,255,28,112,0,98,0,32,0,98,0,101,0,97,0,114,0,105,0,110,0,103,0,95,0,49,0,46,0,53,0,48,0,32,0,98,0,111,0,114,0,101,0,45,0,49,0,64,0,115,0,104,0,97,0,102,0,116,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,20,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,63,67,0,58,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,68,0,111,0,99,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,95,0,102,0,111,0,114,0,67,0,117,0,115,0,116,0,111,0,109,0,101,0,114,0,115,0,92,0,112,0,98,0,32,0,98,0,101,0,97,0,114,0,105,0,110,0,103,0,95,0,49,0,46,0,53,0,48,0,32,0,98,0,111,0,114,0,101,0,46,0,8&quot;<br>
+&nbsp;&nbsp;&nbsp; str3 = str3 &amp; 
+&quot;3,0,76,0,68,0,80,0,82,0,84,0,9,128,255,254,255,20,112,0,98,0,32,0,98,0,101,0,97,0,114,0,105,0,110,0,103,0,95,0,49,0,46,0,53,0,48,0,32,0,98,0,111,0,114,0,101,0,2,0,0,130,66,58,52,255,254,255,0,0,144,22,28,65,1,0,0,0,0,0,0,0,34,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,52,0,0,0,0,0,0,0,144,22,28,65,15,0,0,0,58,68,58,52,1,0,0,0,255,255,255,255,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,15,0,0,0,58,68,58,52,1,0,0,0,0,0,12,128,0,0,5,128,8,0,19,0,0,0,141,68,58,52,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; str3 = str3 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray str3, var10<br>
+&nbsp;&nbsp;&nbsp; Set pDisp3 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var10), 
+longstatus)<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Create arrays<br>
+&nbsp;&nbsp;&nbsp; varArray3 = Array(pDisp1)<br>
+&nbsp;&nbsp;&nbsp; varArray4 = Array(pDisp2)<br>
+&nbsp;&nbsp;&nbsp; varArray5 = Array(pDisp3)<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Add bonded contact sets<br>
+&nbsp;&nbsp;&nbsp; Set ContactMgr = Study.<b>ContactManager</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No ContactManager 
+object&quot;<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWContactSet = ContactMgr.<b>CreateContactSet2</b>(swsContactTypeBonded, 
+0, (varArray3), (varArray4), errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No CWContactSet object&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWContactSet = ContactMgr.<b>CreateContactSet2</b>(swsContactTypeBonded, 
+0, (varArray3), (varArray5), errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No CWContactSet object&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Simultaneously edit both contact sets<br>
+&nbsp;&nbsp;&nbsp; Dim multCSEM As CWMultipleContactSetsEditManager<br>
+&nbsp;&nbsp;&nbsp; Set multCSEM = Study.<b>MultipleContactSetsEditManager</b><br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = multCSEM.<b>AddContactSet</b>(&quot;Contact 
+Set-1&quot;)<br>
+&nbsp;&nbsp;&nbsp; errCode = multCSEM.<b>AddContactSet</b>(&quot;Contact Set-2&quot;)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Number of contact sets added: &quot; &amp; multCSEM.<b>GetContactSetCount</b><br>
+&nbsp;&nbsp;&nbsp; multCSEM.<b>MultipleContactSetsBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; errCode = multCSEM.<b>SetAsDefaultContactSet</b>(&quot;Contact 
+Set-1&quot;)<br>
+&nbsp;&nbsp;&nbsp; errCode = multCSEM.<b>SetContactType</b>(swsContactTypeFreeOrInsulated)<br>
+&nbsp;&nbsp;&nbsp; multCSEM.<b>MultipleContactSetsEndEdit</b><br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Mesh<br>
+&nbsp;&nbsp;&nbsp; Set CWMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CWMesh Is Nothing Then ErrorMsg SwApp, &quot;No mesh object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CWMesh.<b>Quality</b> = 1<br>
+&nbsp;&nbsp;&nbsp; Call CWMesh.<b>GetDefaultElementSizeAndTolerance</b>(swsLinearUnitMillimeters, 
+el, tl)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(swsLinearUnitMillimeters, 
+el, tl)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Mesh failed&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed with 
+error code as defined in swsRunAnalysisError_e: &quot; &amp; errCode<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get results<br>
+&nbsp;&nbsp;&nbsp; Set CWResult = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWResult Is Nothing Then ErrorMsg SwApp, &quot;No result 
+object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Freq = CWResult.<b>GetResonantFrequencies</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No frequency result&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Resonant frequencies:&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; For i = 0 To UBound(Freq)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print Freq(i)<br>
+&nbsp;&nbsp;&nbsp; Next i</p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)</p>
+<p class="APICODE">&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;</p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Function StringtoArray(inputSTR As String, varEntity As 
+Variant)</p>
+<p class="APICODE">&nbsp;&nbsp; Dim PID() As Byte<br>
+&nbsp;&nbsp; Dim i As Integer</p>
+<p class="APICODE">&nbsp;&nbsp; varEntity = Split(inputSTR, &quot;,&quot;)<br>
+&nbsp;&nbsp; ReDim PID(UBound(varEntity))</p>
+<p class="APICODE">&nbsp;&nbsp; For i = 0 To (UBound(varEntity) - 1)<br>
+&nbsp;&nbsp;&nbsp; PID(i) = varEntity(i)<br>
+&nbsp;&nbsp; Next i</p>
+<p class="APICODE">&nbsp;&nbsp; varEntity = PID</p>
+<p class="APICODE">End Function</p>
+
+</body>
+
+</html>

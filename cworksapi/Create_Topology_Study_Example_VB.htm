@@ -1,0 +1,1686 @@
+<html>
+
+<head>
+<title>Create Topology Study Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,topology study">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Create Topology Study Example (VBA)</h1>
+<p>This example shows how to create a topology study, constraints, and 
+manufacturing controls.</p>
+
+<p class=APICODE>'---------------------------------------------------------------------------- 
+<br>
+' Preconditions: <br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Open <i>public_documents</i><b>\samples\Simulation Examples\tutor1.sldprt.</b>&nbsp; <br>
+' <br>
+' Postconditions:&nbsp;<br>
+' 1. Creates <b>Coordinate System1</b>.<br>
+' 2. Creates <b>Topology Study 1</b>.<br>
+' 3. Applies Plain Carbon Steel to the solid body.<br>
+' 4. Creates <b>Fixed-1</b> fixture.<br>
+' 5. Creates <b>Pressure-1</b> load.<br>
+' 6. Creates a <b>Minimize Maximum Displacement</b> goal.<br>
+' 7. Creates constraints:<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Mass Constraint1<br>
+</b>'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>DisplacementConstraint1<br>
+</b>'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Stress Constraint1</b>(replaced by<b> Factor of Safety Constraint1</b>)<b><br>
+</b>'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Frequency Constraint1</b>(renamed 
+to<b> New Frequency Constraint</b>)<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Displacement Constraint2</b><br>
+' 8. Creates manufacturing controls:<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Preserved Region1<br>
+</b>'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Thickness control1<br>
+</b>'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>De-mold control1</b> <br>
+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Symmetry control1</b><br>
+' 9. If an error occurs at any point, a dialog box appears.<br>
+'&nbsp;&nbsp;&nbsp; Close the dialog box. The macro ends.<br>
+'<br>
+' NOTE: Because 
+ the model is used elsewhere, do not save changes. <br>
+' 
+---------------------------------------------------------------------------</p>
+
+<p>&nbsp;</p>
+
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>Dim 
+swApp As SldWorks.SldWorks<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim Part As SldWorks.ModelDoc2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim COSMOSWORKS As CosmosWorksLib.COSMOSWORKS<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWTopoMinimizeMaximiumDisplacementGoalObj As 
+CosmosWorksLib.CWTopologyMinimizeMaximumDisplacementGoal<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim ActiveDocObj As ICWModelDoc<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim StudyManagerObj As ICWStudyManager<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim LoadsAndRestraintsManagerObj As ICWLoadsAndRestraintsManager<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim ErrorCodeObj As Long<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim motionStudyMgr As Object<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim NewStudyName As String<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWNewStudy As ICWStudy<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim StudyObj As ICWStudy<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWTopologyStudyManagerObj As CosmosWorksLib.CWTopologyStudyManager<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWTopologyStudyOptionsObj As CosmosWorksLib.CWTopologyStudyOptions<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWTopoMassConstraintObj As CosmosWorksLib.CWTopologyMassConstraint<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWTopoDisplacementConstraintObj As 
+CosmosWorksLib.CWTopologyDisplacementConstraint<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWTopoStressConstraintObj As CosmosWorksLib.CWTopologyStressConstraint<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWTopoFOSConstraintObj As CosmosWorksLib.CWTopologyFactorOfSafetyConstraint<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWTopoFreqConstraintObj As CosmosWorksLib.CWTopologyFrequencyConstraint<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim SolidManagerObj As CosmosWorksLib.CWSolidManager<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim DispArray As Variant<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWRestraintObj As CosmosWorksLib.CWRestraint<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim ReferenceGeometryDispatchObj As Object<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWPressure As CosmosWorksLib.CWPressure<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim NPropVal As Integer<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim sObjName As String<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim NPropDblVal As Double<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim DispArrayForPreservedRegion As Variant<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim sDispObjPlane As Object<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim sDispObjEdge As Object<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim sDispObjPlane1, sDispObjPlane2, sDispObjPlane3 As Object<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim boolstatus As Boolean<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim DispatchObj1, DispatchObj2 As Object<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim DispObj As Object<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim DispatchObjSelVertexForConstraint_Displacement_constraint_1 As Object<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim DispatchObjSelCoordSysForConstraint_Displacement_constraint_1 As Object<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim DispatchObjSelVertexForConstraint_Displacement_constraint_2 As Object<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim DispatchObjSelCoordSysForConstraint_Displacement_constraint_2 As Object<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim sMassConstraintName, sFreqConstraintName, sFreqConstraintNameForVerif As 
+String<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim sDisplacementConstraintName, sFOSConstraintName, sStressConstraintName As 
+String<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim sManufacControlName As String<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>Dim 
+varModeShapes, varComparators, varFrequencyValues As Variant<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim varModeShapesForVerif, varComparatorsForVerif, varFrequencyValuesForVerif As 
+Variant<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim DispatchObjSelCoordSysForGoal_Minimize_Maximum_Displacement As Object<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim DispArrayForGoal_Minimize_Maximum_Displacement As Variant<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWTopoPreservedRegionObj As CosmosWorksLib.CWTopologyPreservedRegion<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWTopoThicknessControlObj As CosmosWorksLib.CWTopologyThicknessControl<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWTopoDemoldControlObj As CosmosWorksLib.CWTopologyDemoldControl<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Dim CWTopoSymmetryControlObj As CosmosWorksLib.CWTopologySymmetryControl<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span><o:p></o:p>
+</p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Option Explicit<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span><o:p></o:p>
+</p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+Sub Main()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span><o:p></o:p>
+</p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set swApp = Application.SldWorks<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If swApp Is Nothing Then Exit Sub<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set Part = swApp.<strong>ActiveDoc</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Create Coordinate System1<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0, 0, -0.025, 0, 0, -1, 
+9.1414694894147E-04, 3, False, 1, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(3.38772104607721E-02, 
+-6.72166874221669E-04, 0, 0, 0, -1, 9.1414694894147E-04, 1, True, 2, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(-5.3773349937733E-04, 
+3.8985678704855E-03, -2.49999999999773E-02, 0, 0, -1, 9.1414694894147E-04, 1, 
+True, 4, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.<strong>InsertCoordinateSystem</strong>(False, False, False)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sMassConstraintName = &quot;Mass Constraint 1&quot;<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sDisplacementConstraintName = &quot;Displacement Constraint 1&quot;<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sFOSConstraintName = &quot;Factor of Safety Constraint 1&quot;<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sStressConstraintName = &quot;Stress Constraint 1&quot;<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sFreqConstraintName = &quot;Frequency Constraint 1&quot;<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sFreqConstraintNameForVerif = &quot;New Frequency Constraint&quot;<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWAddinCallBack = swApp.<strong>GetAddInObject</strong>(&quot;CosmosWorks.CosmosWorks&quot;)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If CWAddinCallBack Is Nothing Then ErrorMsg swApp, &quot;CWAddinCallBack 
+object not found&quot;<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set COSMOSWORKS = CWAddinCallBack.<strong>COSMOSWORKS</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If COSMOSWORKS Is Nothing Then ErrorMsg swApp, &quot;COSMOSWORKS object not 
+found&quot;<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span><o:p></o:p>
+</p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set ActiveDocObj = COSMOSWORKS.<strong>ActiveDoc</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set StudyManagerObj = ActiveDocObj.<strong>StudyManager</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>StudyManagerObj.<strong>ActiveStudy</strong> = 0<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set motionStudyMgr = Part.Extension.GetMotionStudyManager()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>StudyManagerObj.<strong>ActiveStudy</strong> = 1<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Create Topology Study 1<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>NewStudyName = &quot;Topology Study 1&quot;<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>StudyManagerObj.<strong>DeleteStudy</strong> NewStudyName<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWNewStudy = StudyManagerObj.<strong>CreateNewStudy3</strong>(NewStudyName, 13, 0, 
+ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByID2(&quot;Split Line2&quot;, &quot;SOLIDBODY&quot;, 0, 0, 
+0, True, 0, Nothing, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set StudyObj = StudyManagerObj.<strong>GetStudy</strong>(1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set SolidManagerObj = StudyObj.<strong>SolidManager</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+SolidManagerObj.<strong>SetFavLibraryMaterialToSelectedEntities</strong>(&quot;solidworks materials&quot;, 
+&quot;Plain Carbon Steel&quot;)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(3.05868083703444E-02, 
+5.02190380473166E-03, -4.57115266419237E-02, -0.499999999999997, 
+-0.707106781186554, -0.499999999999995, 1.30969659309385E-03, 2, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(9.60370122901963E-02, 
+5.75743614780322E-03, -4.61775206132984E-02, -0.499999999999997, 
+-0.707106781186554, -0.499999999999995, 1.30969659309385E-03, 2, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;</span>Set DispatchObj1 = Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObj2 = Part.SelectionManager.GetSelectedObject6(2, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>DispArray = Array(DispatchObj1, DispatchObj2)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set LoadsAndRestraintsManagerObj = StudyObj.<strong>LoadsAndRestraintsManager</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWRestraintObj = LoadsAndRestraintsManagerObj.<strong>AddRestraint</strong>(0, 
+(DispArray), Nothing, ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.14771358462832, 
+0.100969471635494, -3.10000000001196E-02, -0.499999999999997, 
+-0.707106781186554, -0.499999999999995, 1.30969659309385E-03, 2, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObj1 = Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>DispArray = Array(DispatchObj1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWPressure = LoadsAndRestraintsManagerObj.<strong>AddPressure</strong>(0, (DispArray), 
+ReferenceGeometryDispatchObj, ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWPressure.<strong>PressureBeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWPressure.<strong>DirectionType</strong> = 0<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;</span>CWPressure.<strong>PressureType</strong> = 0<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWPressure.<strong>Value</strong> = 1000<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWPressure.<strong>Unit</strong> = 1<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWPressure.<strong>ReverseDirection</strong> = False<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWPressure.<strong>PressureEndEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp; </span><o:p></o:p>
+</p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes"><strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</strong>
+</span><strong>Set CWTopologyStudyManagerObj = StudyObj.TopologyStudyManager</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopologyStudyOptionsObj = StudyObj.<strong>TopologyStudyOptions</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyOptionsObj.<strong>SetConvergenceCheck</strong> 1<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Create topology minimize maximum displacement goal<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.025, 0.01, 0, 
+0.389180293740867, -0.51558974627672, -0.763351761966972, 8.35592872061701E-04, 
+3, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.025, 0, 0, 0.389180293740867, 
+-0.51558974627672, -0.763351761966972, 8.35592872061701E-04, 3, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>CreateGoal</strong>(1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to create minimize 
+maximum displacement goal.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoMinimizeMaximiumDisplacementGoalObj = 
+CWTopologyStudyManagerObj.<strong>MinimizeMaximumDisplacementGoal</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObj1 = Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObj2 = Part.SelectionManager.GetSelectedObject6(2, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>SetComponent</strong>(3)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Minimize maximum displacement 
+goal: Failed to set component.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>DispArrayForGoal_Minimize_Maximum_Displacement = Array(DispatchObj1, 
+DispatchObj2)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>SetVertices</strong>((DispArrayForGoal_Minimize_Maximum_Displacement))<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Minimize maximum displacement 
+goal: Failed to set vertices.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Minimize maximum displacement 
+goal: Failed to end edit.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.025, 0.01, 0, 
+0.389180293740867, -0.51558974627672, -0.763351761966972, 8.35592872061701E-04, 
+3, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.025, 0, 0, 0.389180293740867, 
+-0.51558974627672, -0.763351761966972, 8.35592872061701E-04, 3, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Edit minimize maximum displacement goal<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoMinimizeMaximiumDisplacementGoalObj = 
+CWTopologyStudyManagerObj.<strong>MinimizeMaximumDisplacementGoal</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObj1 = Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObj2 = Part.SelectionManager.GetSelectedObject6(2, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>SetComponent</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Minimize maximum displacement 
+goal: Failed to set component.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>DispArrayForGoal_Minimize_Maximum_Displacement = Array(DispatchObj1, 
+DispatchObj2)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>SetVertices</strong>((DispArrayForGoal_Minimize_Maximum_Displacement))<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>If 
+ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Minimize maximum displacement goal: 
+Failed to set vertices.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>SetCoordinateSystemPreference</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Minimize maximum displacement 
+goal: Failed to set coordinate system preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Minimize maximum displacement 
+goal: Failed to end edit.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Edit mass constraint<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.BeginEdit<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoMassConstraintObj = 
+CWTopologyStudyManagerObj.<strong>GetMassConstraint</strong>(&quot;Mass Constraint 1&quot;, ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to get mass 
+constraint.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoMassConstraintObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoMassConstraintObj.<strong>SetMassPreference</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Mass constraint: Failed to set 
+mass preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoMassConstraintObj.<strong>SetValue</strong>(0.2)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Mass constraint: Failed to set 
+value.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoMassConstraintObj.<strong>SetUnit</strong>(2)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Mass constraint: Failed to set 
+unit.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoMassConstraintObj.<strong>EndEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Mass constraint: Failed to end 
+edit.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Create topology displacement constraint<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoDisplacementConstraintObj = 
+CWTopologyStudyManagerObj.<strong>CreateDisplacementConstraint</strong>(ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to create displacement 
+constraint.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sDisplacementConstraintName = CWTopoDisplacementConstraintObj.<strong>GetName</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoDisplacementConstraintObj = 
+CWTopologyStudyManagerObj.<strong>GetDisplacementConstraint</strong>(sDisplacementConstraintName, 
+ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to get displacement 
+constraint.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDisplacementConstraintObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoDisplacementConstraintObj.<strong>SetName</strong>(sDisplacementConstraintName)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetComponent</strong>(3)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set component.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetComparator</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set comparator.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetValuationPreference</strong>(1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set valuation preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetValue</strong>(1.2)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set value.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetLocationPreference</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set location preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to end edit.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Set coordinate system and vertexes for minimize maximum displacement 
+goal<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.025, 0.01, 0, 
+0.389180293740867, -0.51558974627672, -0.763351761966972, 8.35592872061701E-04, 
+3, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.025, 0, 0, 0.389180293740867, 
+-0.51558974627672, -0.763351761966972, 8.35592872061701E-04, 3, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByID2(&quot;Coordinate System1&quot;, &quot;COORDSYS&quot;, 
+0, 0, 0, True, 0, Nothing, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.156, 0.054, -0.031, 
+0.389180293740867, -0.51558974627672, -0.763351761966972, 8.35592872061701E-04, 
+3, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;</span>Set 
+CWTopoMinimizeMaximiumDisplacementGoalObj = 
+CWTopologyStudyManagerObj.<strong>MinimizeMaximumDisplacementGoal</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObj1 = Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObj2 = Part.SelectionManager.GetSelectedObject6(2, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObjSelCoordSysForGoal_Minimize_Maximum_Displacement = 
+Part.SelectionManager.GetSelectedObject6(3, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>SetComponent</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Minimize maximum displacement 
+goal: Failed to set component.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>DispArrayForGoal_Minimize_Maximum_Displacement = Array(DispatchObj1, 
+DispatchObj2)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>SetVertices</strong>((DispArrayForGoal_Minimize_Maximum_Displacement))<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Minimize maximum displacement 
+goal: Failed to set vertices.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>RemoveAllVertices</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>SetVertices</strong>((DispArrayForGoal_Minimize_Maximum_Displacement))<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Minimize maximum displacement 
+goal: Failed to set vertices.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>SetCoordinateSystemPreference</strong>(1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Minimize maximum displacement 
+goal: Failed to set coordinate system preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>SetCoordinateSystem</strong>(DispatchObjSelCoordSysForGoal_Minimize_Maximum_Displacement)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Minimize maximum displacement 
+goal: Failed to set coordinate system.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>RemoveCoordinateSys</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>SetCoordinateSystem</strong>(DispatchObjSelCoordSysForGoal_Minimize_Maximum_Displacement)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Minimize maximum displacement 
+goal: Failed to set coordinate system.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoMinimizeMaximiumDisplacementGoalObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Minimize maximum displacement 
+goal: Failed to end edit.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Edit mass constraint<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoMassConstraintObj = 
+CWTopologyStudyManagerObj.<strong>GetMassConstraint</strong>(sMassConstraintName, ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to get mass 
+constraint.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoMassConstraintObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoMassConstraintObj.<strong>SetMassPreference</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Mass constraint: Failed to set 
+mass preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoMassConstraintObj.<strong>SetValue</strong>(200)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Mass constraint: Failed to set 
+value.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoMassConstraintObj.<strong>SetUnit</strong>(1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Mass constraint: Failed to set 
+unit.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sObjName = CWTopoMassConstraintObj.<strong>GetName</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoMassConstraintObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Mass constraint: Failed to end 
+edit.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span><o:p></o:p>
+</p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Edit displacement constraint<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.BeginEdit<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoDisplacementConstraintObj = 
+CWTopologyStudyManagerObj.<strong>GetDisplacementConstraint</strong>(sDisplacementConstraintName, 
+ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to get displacement 
+constraint.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDisplacementConstraintObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObjSelVertexForConstraint_Displacement_constraint_1 = 
+Part.SelectionManager.GetSelectedObject6(4, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>DispArray = 
+Array(DispatchObjSelVertexForConstraint_Displacement_constraint_1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetComponent</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set component.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetComparator</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set comparator.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetValuationPreference</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set valuation preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetValue</strong>(5)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set value.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetUnit</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set unit.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetLocationPreference</strong>(1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set location preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetVertices</strong>((DispArray))<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set vertex.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoDisplacementConstraintObj.<strong>SetCoordinateSystemPreference</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set coordinate system preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to end edit.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.025, 0.01, 0, 
+-0.499999999999997, -0.707106781186554, -0.499999999999995, 
+1.24206498779656E-03, 3, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.025, 0, 0, -0.499999999999997, 
+-0.707106781186554, -0.499999999999995, 1.24206498779656E-03, 3, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByID2(&quot;Coordinate System1&quot;, &quot;COORDSYS&quot;, 
+0, 0, 0, True, 0, Nothing, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.156, 0.054, -0.031, 
+-0.499999999999997, -0.707106781186554, -0.499999999999995, 
+1.24206498779656E-03, 3, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Edit displacement constraint<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoDisplacementConstraintObj = 
+CWTopologyStudyManagerObj.<strong>GetDisplacementConstraint</strong>(sDisplacementConstraintName, 
+ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to get displacement 
+constraint.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDisplacementConstraintObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObjSelVertexForConstraint_Displacement_constraint_1 = 
+Part.SelectionManager.GetSelectedObject6(2, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>DispArray = 
+Array(DispatchObjSelVertexForConstraint_Displacement_constraint_1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;</span>Set DispatchObjSelCoordSysForConstraint_Displacement_constraint_1 = 
+Part.SelectionManager.GetSelectedObject6(3, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetComponent</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set component.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetComparator</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set comparator.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetValuationPreference</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set valuation preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetValue</strong>(0.005)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set value.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetUnit</strong>(2)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set unit.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetLocationPreference</strong>(1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set location preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetVertices</strong>((DispArray))<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set vertex.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE" style="height: 16px"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoDisplacementConstraintObj.<strong>SetCoordinateSystemPreference</strong>(1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set coordinate system preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoDisplacementConstraintObj.<strong>SetCoordinateSystem</strong>(DispatchObjSelCoordSysForConstraint_Displacement_constraint_1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set coordinate system.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDisplacementConstraintObj.<strong>RemoveCoordinateSys</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoDisplacementConstraintObj.<strong>SetCoordinateSystem</strong>(DispatchObjSelCoordSysForConstraint_Displacement_constraint_1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to set coordinate system.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sObjName = CWTopoDisplacementConstraintObj.<strong>GetName</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Displacement constraint: 
+Failed to end edit.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Create topology stress constraint<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoStressConstraintObj = 
+CWTopologyStudyManagerObj.<strong>CreateStressConstraint</strong>(ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;</span>If 
+ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to create stress constraint.&quot;: 
+GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sStressConstraintName = CWTopoStressConstraintObj.<strong>GetName</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoStressConstraintObj = 
+CWTopologyStudyManagerObj.<strong>GetStressConstraint</strong>(sStressConstraintName, 
+ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoStressConstraintObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoStressConstraintObj.<strong>SetName</strong>(sStressConstraintName)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoStressConstraintObj.<strong>SetComponent</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoStressConstraintObj.<strong>SetComparator</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoStressConstraintObj.<strong>SetValuationPreference</strong>(1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoStressConstraintObj.<strong>SetValue</strong>(20)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoStressConstraintObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sObjName = CWTopoStressConstraintObj.<strong>GetName</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If sObjName &lt;&gt; sStressConstraintName Then ErrorMsg swApp, &quot;Stress 
+constraint: Failed to get name.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Edit stress constraint<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoStressConstraintObj = 
+CWTopologyStudyManagerObj.<strong>GetStressConstraint</strong>(sStressConstraintName, 
+ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoStressConstraintObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoStressConstraintObj.<strong>SetComponent</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoStressConstraintObj.<strong>SetComparator</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoStressConstraintObj.<strong>SetValuationPreference</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoStressConstraintObj.<strong>SetValue</strong>(6200)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoStressConstraintObj.<strong>SetUnit</strong>(1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sObjName = CWTopoStressConstraintObj.<strong>GetName</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If sObjName &lt;&gt; sStressConstraintName Then ErrorMsg swApp, &quot;Stress 
+constraint: Failed to get name.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;</span>ErrorCodeObj 
+= CWTopoStressConstraintObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span><o:p></o:p>
+</p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Check whether Factor Of Safety constraint exists<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.BeginEdit<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoFOSConstraintObj = 
+CWTopologyStudyManagerObj.<strong>GetFactorOfSafetyConstraint</strong>(sFOSConstraintName, 
+ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 9 Then ErrorMsg swApp, &quot;Failed: Factor Of Safety 
+constraint exists.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Replace topology stress constraint with Factor Of Safety constraint<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.BeginEdit<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>RemoveConstraint</strong>(&quot;Stress 
+Constraint 1&quot;)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoFOSConstraintObj = 
+CWTopologyStudyManagerObj.<strong>CreateFactorOfSafetyConstraint</strong>(ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to create Factor Of 
+Safety constraint.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sFOSConstraintName = CWTopoFOSConstraintObj.<strong>GetName</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoFOSConstraintObj = 
+CWTopologyStudyManagerObj.<strong>GetFactorOfSafetyConstraint</strong>(sFOSConstraintName, 
+ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoFOSConstraintObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoFOSConstraintObj.<strong>SetName</strong>(sFOSConstraintName)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoFOSConstraintObj.<strong>SetComponent</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoFOSConstraintObj.<strong>SetComparator</strong>(1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoFOSConstraintObj.<strong>SetValue</strong>(4)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sObjName = CWTopoFOSConstraintObj.<strong>GetName</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If sObjName &lt;&gt; sFOSConstraintName Then ErrorMsg swApp, &quot;Factor of Safety 
+constraint: Failed to get name.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoFOSConstraintObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Check whether stress constraint still exists<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.BeginEdit<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoStressConstraintObj = 
+CWTopologyStudyManagerObj.<strong>GetStressConstraint</strong>(sStressConstraintName, 
+ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 9 Then ErrorMsg swApp, &quot;Failed: Stress constraint was 
+not replaced with Factor Of Safety constraint.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Create topology frequency constraint<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>varModeShapes = Array(2, 4, 5)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>varComparators = Array(1, 1, 2)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>varFrequencyValues = Array(&quot;100&quot;, &quot;200&quot;, &quot;201 - 205&quot;)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoFreqConstraintObj = 
+CWTopologyStudyManagerObj.<strong>CreateFrequencyConstraint</strong>(ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to create frequency 
+constraint.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sFreqConstraintName = CWTopoFreqConstraintObj.<strong>GetName</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoFreqConstraintObj = 
+CWTopologyStudyManagerObj.<strong>GetFrequencyConstraint</strong>(sFreqConstraintName, 
+ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoFreqConstraintObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoFreqConstraintObj.<strong>SetName</strong>(sFreqConstraintName)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoFreqConstraintObj.<strong>SetModeTrackingFlag</strong> 0<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoFreqConstraintObj.<strong>SetFrequencyData</strong>((varModeShapes), 
+(varComparators), (varFrequencyValues))<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoFreqConstraintObj.<strong>ClearFrequencyData</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoFreqConstraintObj.<strong>SetFrequencyData</strong>((varModeShapes), 
+(varComparators), (varFrequencyValues))<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoFreqConstraintObj.<strong>SetName</strong> sFreqConstraintNameForVerif<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sObjName = CWTopoFreqConstraintObj.<strong>GetName</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If sObjName &lt;&gt; sFreqConstraintNameForVerif Then ErrorMsg swApp, 
+&quot;Frequency constraint: Failed to get name.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoFreqConstraintObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.135, 0.01, 0, 
+-0.499999999999997, -0.707106781186554, -0.499999999999995, 
+1.19476403492439E-03, 3, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByID2(&quot;Coordinate System1&quot;, &quot;COORDSYS&quot;, 
+0, 0, 0, True, 0, Nothing, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObjSelVertexForConstraint_Displacement_constraint_2 = 
+Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>DispArray = 
+Array(DispatchObjSelVertexForConstraint_Displacement_constraint_2)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObjSelCoordSysForConstraint_Displacement_constraint_2 = 
+Part.SelectionManager.GetSelectedObject6(2, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Create second topology displacement constraint<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.BeginEdit<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoDisplacementConstraintObj = 
+CWTopologyStudyManagerObj.<strong>CreateDisplacementConstraint</strong>(ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to create displacement 
+constraint.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sDisplacementConstraintName = CWTopoDisplacementConstraintObj.<strong>GetName</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoDisplacementConstraintObj = 
+CWTopologyStudyManagerObj.<strong>GetDisplacementConstraint</strong>(sDisplacementConstraintName, 
+ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to get displacement 
+constraint.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDisplacementConstraintObj.BeginEdit<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetComponent</strong>(5)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to set component.&quot;: 
+GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetComparator</strong>(0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to set comparator.&quot;: 
+GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetValuationPreference</strong>(1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to set valuation 
+preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetValue</strong>(1.2)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to set value.&quot;: GoTo 
+LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+&nbsp;&nbsp;</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetLocationPreference</strong>(1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to set location 
+preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>SetVertices</strong>((DispArray))<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to set vertex.&quot;: GoTo 
+LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoDisplacementConstraintObj.<strong>SetCoordinateSystemPreference</strong>(1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to set coordinate 
+system preference.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoDisplacementConstraintObj.<strong>SetCoordinateSystem</strong>(DispatchObjSelCoordSysForConstraint_Displacement_constraint_2)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to set coordinate 
+system.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDisplacementConstraintObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to end edit.&quot;: GoTo 
+LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Create topology preserved region<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.152000000000072, 
+2.36311904768058E-02, -4.88232552103796E-02, 0.389180293740867, 
+-0.51558974627672, -0.763351761966972, 8.18084299275831E-04, 2, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.155833684385215, 
+2.27465262312307E-02, -3.90000000001578E-02, 0.389180293740867, 
+-0.51558974627672, -0.763351761966972, 8.18084299275831E-04, 2, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.BeginEdit<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoPreservedRegionObj = 
+CWTopologyStudyManagerObj.<strong>CreatePreservedRegionControl</strong>(ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to create preserved 
+region control.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoPreservedRegionObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObj1 = Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObj2 = Part.SelectionManager.GetSelectedObject6(2, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>DispArrayForPreservedRegion = Array(DispatchObj1, DispatchObj2)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoPreservedRegionObj.<strong>SelectFaces</strong>((DispArrayForPreservedRegion))<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed: 
+CWTopoPreservedRegionObj faces could not be selected&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoPreservedRegionObj.<strong>SetIncludeRegionDepth</strong> True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoPreservedRegionObj.<strong>SetAreaDepth</strong> 1<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoPreservedRegionObj.<strong>SetAreaDepthUnit</strong> 0<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoPreservedRegionObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sManufacControlName = CWTopoPreservedRegionObj.<strong>GetName</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Edit preserved region control area depth and units<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.152000000000072, 
+2.36311904768058E-02, -4.88232552103796E-02, 0.389180293740867, 
+-0.51558974627672, -0.763351761966972, 8.18084299275831E-04, 2, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.155833684385215, 
+2.27465262312307E-02, -3.90000000001578E-02, 0.389180293740867, 
+-0.51558974627672, -0.763351761966972, 8.18084299275831E-04, 2, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.BeginEdit<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoPreservedRegionObj = 
+CWTopologyStudyManagerObj.<strong>GetPreservedRegionControl</strong>(sManufacControlName, 
+ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoPreservedRegionObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObj1 = Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set DispatchObj2 = Part.SelectionManager.GetSelectedObject6(2, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>DispArrayForPreservedRegion = Array(DispatchObj1, DispatchObj2)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = 
+CWTopoPreservedRegionObj.<strong>SelectFaces</strong>((DispArrayForPreservedRegion))<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed: 
+CWTopoPreservedRegionObj faces could not be selected&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoPreservedRegionObj.<strong>SetName</strong> (sManufacControlName)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoPreservedRegionObj.<strong>SetIncludeRegionDepth</strong> True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;</span>CWTopoPreservedRegionObj.<strong>SetAreaDepth</strong> 
+0.002<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoPreservedRegionObj.<strong>SetAreaDepthUnit</strong> 2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoPreservedRegionObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Create topology thickness control<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoThicknessControlObj = 
+CWTopologyStudyManagerObj.<strong>CreateThicknessControl</strong>(ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>If 
+ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to create thickness control.&quot;: 
+GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoThicknessControlObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoThicknessControlObj.<strong>SetIncludeMinMemberThickness</strong> True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoThicknessControlObj.<strong>SetMinimumMemberThickness</strong> 5.99766617291857<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoThicknessControlObj.<strong>SetMinimumMemberThicknessUnit</strong> 0<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoThicknessControlObj.<strong>SetIncludeMaxMemberThickness</strong> True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoThicknessControlObj.<strong>SetMaxMemberThickness</strong> 10.710118165926<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoThicknessControlObj.<strong>SetMaxMemberThicknessUnit</strong> 0<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoThicknessControlObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sManufacControlName = CWTopoThicknessControlObj.<strong>GetName</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Edit thickness control to include maximum member thickness<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoThicknessControlObj = 
+CWTopologyStudyManagerObj.<strong>GetThicknessControl</strong>(sManufacControlName, ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoThicknessControlObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoThicknessControlObj.<strong>SetName</strong> sManufacControlName<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoThicknessControlObj.<strong>SetIncludeMinMemberThickness</strong> False<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoThicknessControlObj.<strong>SetIncludeMaxMemberThickness</strong> True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoThicknessControlObj.<strong>SetMaxMemberThickness</strong> 1.5<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoThicknessControlObj.<strong>SetMaxMemberThicknessUnit</strong> 1<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoThicknessControlObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Create topology de-mold control with a mid-plane direction<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByID2(&quot;Plane7&quot;, &quot;PLANE&quot;, 0, 0, 0, True, 
+0, Nothing, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoDemoldControlObj = 
+CWTopologyStudyManagerObj.<strong>CreateDemoldControl</strong>(ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+&nbsp;</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to create De-mold 
+control.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set sDispObjPlane = Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>SelectDemoldDirection</strong> 0<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>SetAutoDetermineCentralMidPlane</strong> False<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>SelectPlaneForDirection</strong> sDispObjPlane<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDemoldControlObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sManufacControlName = CWTopoDemoldControlObj.<strong>GetName</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Edit de-mold control to automatically determine central mid plane 
+direction<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByID2(&quot;Plane7&quot;, &quot;PLANE&quot;, 0, 0, 0, True, 
+0, Nothing, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.DeSelectByID(&quot;Plane7&quot;, &quot;PLANE&quot;, 0, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.155546878794837, 
+9.87797571485771E-03, -3.89175812866256E-02, 0.389180293740867, 
+-0.51558974627672, -0.763351761966972, 8.18084299275831E-04, 1, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoDemoldControlObj = 
+CWTopologyStudyManagerObj.<strong>GetDemoldControl</strong>(sManufacControlName, ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set sDispObjEdge = Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>SetName</strong> sManufacControlName<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>SelectDemoldDirection</strong> 0<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>SetAutoDetermineCentralMidPlane</strong> True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>SelectEdgeForPullDirection</strong> sDispObjEdge<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDemoldControlObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Edit de-mold control to be pulling<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.155546878794837, 
+9.87797571485771E-03, -3.89175812866256E-02, 0.389180293740867, 
+-0.51558974627672, -0.763351761966972, 8.18084299275831E-04, 1, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.BeginEdit<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoDemoldControlObj = 
+CWTopologyStudyManagerObj.<strong>GetDemoldControl</strong>(sManufacControlName, ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set sDispObjEdge = Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>SelectDemoldDirection</strong> 1<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>SelectEdgeForPullDirection</strong> sDispObjEdge<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>SetReverseDirection</strong> False<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDemoldControlObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Edit de-mold control to be stamping<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByRay(0.155546878794837, 
+9.87797571485771E-03, -3.89175812866256E-02, 0.389180293740867, 
+-0.51558974627672, -0.763351761966972, 8.18084299275831E-04, 1, True, 0, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoDemoldControlObj = 
+CWTopologyStudyManagerObj.<strong>GetDemoldControl</strong>(sManufacControlName, ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set sDispObjEdge = Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>SelectDemoldDirection</strong> 2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>SelectEdgeForPullDirection</strong> sDispObjEdge<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoDemoldControlObj.<strong>SetReverseDirection</strong> True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoDemoldControlObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Define topology one-half symmetry control<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByID2(&quot;Plane7&quot;, &quot;PLANE&quot;, 0, 0, 0, True, 
+0, Nothing, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoSymmetryControlObj = 
+CWTopologyStudyManagerObj.<strong>CreateSymmetryControl</strong>(ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>If ErrorCodeObj &lt;&gt; 0 Then ErrorMsg swApp, &quot;Failed to create symmetry 
+control.&quot;: GoTo LastLine<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoSymmetryControlObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set sDispObjPlane1 = Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoSymmetryControlObj.<strong>SelectSymmetryType</strong> 0<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoSymmetryControlObj.<strong>SelectFirstSymmetryPlane</strong> sDispObjPlane1<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoSymmetryControlObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>sManufacControlName = CWTopoSymmetryControlObj.<strong>GetName</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Define topology one-quarter symmetry control<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByID2(&quot;Plane7&quot;, &quot;PLANE&quot;, 0, 0, 0, True, 
+0, Nothing, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByID2(&quot;Plane5&quot;, &quot;PLANE&quot;, 0, 0, 0, True, 
+0, Nothing, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoSymmetryControlObj = 
+CWTopologyStudyManagerObj.<strong>GetSymmetryControl</strong>(&quot;Symmetry control 1&quot;, ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoSymmetryControlObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set sDispObjPlane1 = Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set sDispObjPlane2 = Part.SelectionManager.GetSelectedObject6(2, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoSymmetryControlObj.<strong>SelectSymmetryType</strong> 1<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoSymmetryControlObj.<strong>SelectFirstSymmetryPlane</strong> sDispObjPlane1<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoSymmetryControlObj.<strong>SelectSecondSymmetryPlane</strong> sDispObjPlane2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoSymmetryControlObj.<strong>SetName</strong> sManufacControlName<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoSymmetryControlObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>' Define topology one-eighth symmetry control<o:p></o:p></p>
+<p class="APICODE"><o:p>&nbsp;</o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByID2(&quot;Plane7&quot;, &quot;PLANE&quot;, 0, 0, 0, True, 
+0, Nothing, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByID2(&quot;Plane5&quot;, &quot;PLANE&quot;, 0, 0, 0, True, 
+0, Nothing, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>boolstatus = Part.Extension.SelectByID2(&quot;Plane4&quot;, &quot;PLANE&quot;, 0, 0, 0, True, 
+0, Nothing, 0)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopologyStudyManagerObj.BeginEdit<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set CWTopoSymmetryControlObj = 
+CWTopologyStudyManagerObj.<strong>GetSymmetryControl</strong>(sManufacControlName, ErrorCodeObj)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoSymmetryControlObj.<strong>BeginEdit</strong><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set sDispObjPlane1 = Part.SelectionManager.GetSelectedObject6(1, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set sDispObjPlane2 = Part.SelectionManager.GetSelectedObject6(2, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Set sDispObjPlane3 = Part.SelectionManager.GetSelectedObject6(3, -1)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoSymmetryControlObj.<strong>SelectSymmetryType</strong> 2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoSymmetryControlObj.<strong>SelectFirstSymmetryPlane</strong> sDispObjPlane1<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoSymmetryControlObj.<strong>SelectSecondSymmetryPlane</strong> sDispObjPlane2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CWTopoSymmetryControlObj.<strong>SelectThirdSymmetryPlane</strong> sDispObjPlane3<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopoSymmetryControlObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>ErrorCodeObj = CWTopologyStudyManagerObj.<strong>EndEdit</strong>()<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.ClearSelection2 True<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Part.GraphicsRedraw2<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><o:p></o:p></p>
+<p class="APICODE">LastLine:<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+End Sub<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span><o:p></o:p>
+</p>
+<p class="APICODE">Sub ErrorMsg(swApp As SldWorks.SldWorks, Message As String)<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+swApp.SendMsgToUser2 Message, 0, 0<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+swApp.RecordLine &quot;'*** WARNING - General&quot;<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+swApp.RecordLine &quot;'*** &quot; &amp; Message<o:p></o:p></p>
+<p class="APICODE"><span style="mso-spacerun:yes">&nbsp;&nbsp;&nbsp; </span>
+swApp.RecordLine &quot;&quot;<o:p></o:p></p>
+<p class="APICODE">End Sub<o:p></o:p></p>
+
+</body>
+
+</html>

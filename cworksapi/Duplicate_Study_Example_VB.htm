@@ -1,0 +1,112 @@
+<html>
+
+<head>
+<title>Duplicate Study Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,duplicate study">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Duplicate Study Example (VBA)</h1>
+<p>This example shows how to duplicate a simulation study.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions: <br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Open <span style="background-position: 0 0"><i>pubic_documents</i></span><b>\Simulation 
+Examples\tutor1.sldprt</b>.<br>
+'<br>
+' Postconditions:<br>
+' 1. Duplicates the <b>Ready</b> study to create the <b>DuplicateReady</b> study.<br>
+' 2. Meshes and analyzes <b>DuplicateReady</b>.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+' ---------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS As 
+CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim CWMesh As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; Dim CWResult As CosmosWorksLib.CWResults<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim errCode As Long<br>
+&nbsp;&nbsp;&nbsp; Dim el As Double, tl As Double<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Set SwApp = 
+Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = 
+SwApp.<b>GetAddInObject</b>(&quot;CosmosWorks.CosmosWorks&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, &quot;No CWAddinCallBack 
+object&quot;, True<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;No 
+Cosmosworks 
+object&quot;, True<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get active document<br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;, True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get Ready study<br>
+&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;No study 
+manager object&quot;, True<br>
+&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 0<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(0)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;No study 
+object&quot;, 
+True<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Duplicate study<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>DuplicateStudy</b>(&quot;Ready&quot;, &quot;DuplicateReady&quot;, 
+&quot;Default&quot;, 1, errCode)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;Study not 
+duplicated&quot;, True<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Mesh the duplicate study<br>
+&nbsp;&nbsp;&nbsp; Set CWMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CWMesh Is Nothing Then ErrorMsg SwApp, &quot;No mesh object&quot;, 
+False<br>
+&nbsp;&nbsp;&nbsp; CWMesh.<b>Quality</b> = 0<br>
+&nbsp;&nbsp;&nbsp; Call CWMesh.<b>GetDefaultElementSizeAndTolerance</b>(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Mesh failed&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Run analysis on the duplicate study<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed&quot;, True<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWResult = Study.<b>results</b><br>
+&nbsp;&nbsp;&nbsp; If CWResult Is Nothing Then ErrorMsg SwApp, &quot;No result 
+object&quot;, False<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">End Sub<br>
+&nbsp;</p>
+<pre>Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String, EndTest As Boolean)
+    SwApp.<b>SendMsgToUser2</b> Message, 0, 0
+    SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;
+    SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message
+    SwApp.<b>RecordLine</b> &quot;&quot;
+End Sub</pre>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

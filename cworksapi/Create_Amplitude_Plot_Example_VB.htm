@@ -1,0 +1,149 @@
+<html>
+
+<head>
+<title>Create Amplitude Plot and Set Mode Shape Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,result plots">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Create Amplitude Plot and Set Mode Shape Example (VBA)</h1>
+<p>This example shows how to create an amplitude plot and set its mode shape 
+number.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions: <br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Open <i>public_documents</i><b>\samples\Simulation Examples\tutor1.sldprt</b>.<br>
+' 4. Create a frequency study and apply material to the model.<br>
+'<br>
+' Postconditions:<br>
+' 1. Activates the <b>Frequency1</b> study.<br>
+' 2. Meshes and analyzes the study.<br>
+' 3. Creates one or more default resultant amplitude plots, depending on your<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Simulation &gt; Options &gt; Default Options &gt; 
+Frequency/Buckling Study<br>
+'&nbsp;&nbsp;&nbsp; Results</b> settings.<br>
+' 4. Creates another resultant amplitude plot and sets its mode shape number<br>
+'&nbsp;&nbsp;&nbsp; to 4.<br>
+' 5. Gets the minimum and maximum resultant amplitudes for the last plot.<br>
+' 6. Click <b>OK</b> to close any error dialog boxes.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+' ---------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit<br>
+</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS As 
+CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim CWMesh As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; Dim CWResult As CosmosWorksLib.CWResults<br>
+&nbsp;&nbsp;&nbsp; Dim CWCFf As CosmosWorksLib.CWPlot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim errCode As Long<br>
+&nbsp;&nbsp;&nbsp; Dim el As Double, tl As Double<br>
+&nbsp;&nbsp;&nbsp; Dim Disp&nbsp; As Variant<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Const DispMax&nbsp; As Double = 1.424<br>
+&nbsp;&nbsp;&nbsp; Const DispMin&nbsp; As Double = 0.1<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Set SwApp = 
+Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = SwApp.<b>GetAddInObject</b>(&quot;CosmosWorks.CosmosWorks&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWAddinCallBack object&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;No 
+CosmosWorks object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get active document<br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get Frequency1 study<br>
+&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWStudyManager object&quot;<br>
+&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 1<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(1)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;No CWStudy object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Mesh<br>
+&nbsp;&nbsp;&nbsp; Set CWMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CWMesh Is Nothing Then ErrorMsg SwApp, &quot;No CWMesh object&quot;<br>
+&nbsp;&nbsp;&nbsp; CWMesh.Quality = 0<br>
+&nbsp;&nbsp;&nbsp; Call CWMesh.<b>GetDefaultElementSizeAndTolerance</b>(0, el, 
+tl)<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Mesh failed&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed 
+with error code as defined in swsRunAnalysisError_e: &quot; &amp; errCode<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get results<br>
+&nbsp;&nbsp;&nbsp; Set CWResult = Study.<b>results</b><br>
+&nbsp;&nbsp;&nbsp; If CWResult Is Nothing Then ErrorMsg SwApp, &quot;No CWResults 
+object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create resultant amplitude plot<br>
+&nbsp;&nbsp;&nbsp; Set CWCFf = CWResult.<b>CreatePlot</b>(swsResultDisplacementOrAmplitude, swsFrequencyBucklingDisplacement_URES, swsUnitSI, False, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failure to create 
+plot&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Set mode shape number of plot to 4<br>
+&nbsp;&nbsp;&nbsp;&nbsp; errCode = CWCFf.<b>SetModeShape</b>(4)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Plot is not set 
+for specified mode shape&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = CWCFf.<b>ActivatePlot</b>()<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Plot is not 
+activated&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get min/max resultant amplitudes from 
+plot<br>
+&nbsp;&nbsp;&nbsp; Disp = CWCFf.<b>GetMinMaxResultValues</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No amplitude 
+values&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If (Disp(1) &lt; 0.95 * DispMin) Or (Disp(1) 
+&gt; 1.05 * DispMin) Then<br>
+&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot; Minimum amplitude % error = &quot; &amp; (((Disp(1) 
+- DispMin) / DispMin) * 100)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If (Disp(3) &lt; 0.95 * DispMax) Or (Disp(3) 
+&gt; 1.05 * DispMax) Then<br>
+&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;Maximum amplitude % error = &quot; &amp; (((Disp(3) - 
+DispMax) / DispMax) * 100)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Sub<br>
+&nbsp;</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

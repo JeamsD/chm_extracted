@@ -1,0 +1,109 @@
+<html>
+
+<head>
+<title>Get Linearized Stress Results Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,linearized stress">
+<meta name=MS-HKWD content="VBA examples,pressure vessel study">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Get Linearized Stress Results Example (VBA)</h1>
+<p>This example shows how to get the stress results that are linearized along 
+Stress Classification Lines for a pressure 
+vessel study.</p>
+
+<p class=APICODE>'---------------------------------------------------------------------------- 
+<br>
+' Preconditions: <br>
+'&nbsp; 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>&nbsp;Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+'&nbsp; 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+'&nbsp; 3. Open <span style="background-position: 0 0"><i>pubic_documents</i></span><b>\Simulation 
+Examples\pressurevessel.sldprt</b>.<br>
+'&nbsp; 4. Open the Immediate window.<br>
+'&nbsp; 5. Mesh <b>Ready-Solids</b> using a curvature-based mesh with a maximum 
+of 10 elements.<br>
+'&nbsp; 6. Analyze <b>Ready-Solids</b>.<br>
+'&nbsp; 7. Create <b>Pressure Vessel Design 1</b> study, using a linear combination of<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; <b>Ready-Solids</b> with 
+Factor = 1.<br>
+'&nbsp; 8. Analyze <b>Pressure Vessel Design 1</b>.<br>
+'&nbsp; 9. Create a default von Mises stress plot of the results.<br>
+'<br>
+' Postconditions:<br>
+'&nbsp; 1. Gets the following stress values linearized along Stress 
+Classification Lines<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; for the specified points on the planar section created 
+by the <strong>Top</strong> plane:<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * Membrane stress<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * Bending (Point 1) stress<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * Membrane stress + bending (Point 1) stress<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * Bending (Point 2) stress<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * Membrane stress + Bending (Point 2) stress<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * Peak (Point 1)<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * Peak (Point 2)<br>
+'&nbsp; 2. Inspect the Immediate window.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save any changes.<br>
+' ---------------------------------------------------------------------------<br>
+</p>
+<pre>Dim SwApp As SldWorks.SldWorks
+Dim Part As SldWorks.ModelDoc2
+Dim COSMOSWORKS As Object
+Dim CWObject As CosmosWorksLib.CwAddincallback
+Dim ActDoc As CosmosWorksLib.CWModelDoc
+Dim StudyMngr As CosmosWorksLib.CWStudyManager
+Dim Study As CosmosWorksLib.CWStudy
+Dim CWResult As CosmosWorksLib.CWResults
+Dim CWPlot As CosmosWorksLib.CWPlot
+Dim errCode As Long
+Dim boolCode As Boolean
+
+Sub main()
+
+    Set SwApp = Application.SldWorks
+    Set Part = SwApp.ActiveDoc
+    Set CWObject = SwApp.GetAddInObject(&quot;CosmosWorks.CosmosWorks&quot;)
+    Set COSMOSWORKS = CWObject.COSMOSWORKS
+    Set ActDoc = COSMOSWORKS.ActiveDoc()
+    Set StudyMngr = ActDoc.StudyManager()
+    Set Study = StudyMngr.GetStudy(4)
+    StudyMngr.ActiveStudy = 4
+
+    Set CWResult = Study.Results
+    Dim plotNames As Variant
+    plotNames = CWResult.GetPlotNames
+    boolCode = CWResult.ActivatePlot(&quot;Stress1&quot;)
+    
+    Set CWPlot = CWResult.GetPlot(&quot;Stress1&quot;, errCode)
+    
+    boolCode = Part.Extension.SelectByID2(&quot;Top&quot;, &quot;PLANE&quot;, 0, 0, 0, True, 0, Nothing, 0)
+    Dim ReferenceGeometryDispatchObj2 As SldWorks.Feature
+    Set ReferenceGeometryDispatchObj2 = Part.SelectionManager.GetSelectedObject6(1, -1)
+
+    Dim values As Variant
+    values = CWPlot.<strong>GetLinearizedStressValuesAlongSCL</strong>(5, 0.29224, -1.08E-19, -0.00034826, 0.30464, -2.17E-19, -0.00054522, ReferenceGeometryDispatchObj2, errCode)
+
+    Debug.Print &quot;Linearized normal stresses in the X-direction:&quot;
+    Debug.Print &quot;  Membrane:                     &quot; &amp; values(0)
+    Debug.Print &quot;  Bending (Point 1):            &quot; &amp; values(1)
+    Debug.Print &quot;  Membrane + Bending (Point 1): &quot; &amp; values(2)
+    Debug.Print &quot;  Bending (Point 2):            &quot; &amp; values(3)
+    Debug.Print &quot;  Membrane + Bending (Point 2): &quot; &amp; values(4)
+    Debug.Print &quot;  Peak (Point 1):               &quot; &amp; values(5)
+    Debug.Print &quot;  Peak (Point 2):               &quot; &amp; values(6)
+
+End Sub</pre>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

@@ -1,0 +1,300 @@
+<html>
+
+<head>
+<title>Add Prescribed Displacement Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,prescribed displacements">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Add Prescribed Displacement Example (VBA)</h1>
+<p>This example shows how to add a prescribed displacement to a study to create a fixture.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Ensure that the specified model exists.<br>
+' 4. Ensure that the specified material library exists.<br>
+'<br>
+' Postconditions:<br>
+' 1. Opens the model document.<br>
+' 2. Creates a static study.<br>
+' 3. Adds materials.<br>
+' 4. Adds a prescribed displacement using reference geometry.<br>
+' 5. Creates <b>Reference Geometry-1</b> in the Simulation study tree.<br>
+' 6. Meshes the model.<br>
+' 7. Analyzes the study.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+' ---------------------------------------------------------------------------<br>
+Option Explicit</p>
+<p class="APICODE">Dim SwApp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.SldWorks<br>
+Dim Part&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+SldWorks.ModelDoc2<br>
+Dim COSMOSWORKS&nbsp;&nbsp;&nbsp;&nbsp; As CosmosWorksLib.COSMOSWORKS<br>
+Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+Dim ActDoc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWModelDoc<br>
+Dim StudyMngr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWStudyManager<br>
+Dim Study&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWStudy<br>
+Dim SolidMgr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWSolidManager<br>
+Dim SolidComp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWSolidComponent<br>
+Dim SolidBody&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As CosmosWorksLib.CWSolidBody<br>
+Dim LBCMgr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWLoadsAndRestraintsManager<br>
+Dim CWFeatObj&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As CosmosWorksLib.CWRestraint<br>
+Dim strMaterialLib&nbsp; As String<br>
+Dim errCode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Long<br>
+Dim boolstatus&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Boolean<br>
+Dim longstatus&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Long, longwarnings As Long<br>
+Dim StaticOptions&nbsp;&nbsp; As CosmosWorksLib.CWStaticStudyOptions<br>
+Dim DispArray1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Variant, DispArray2 As Variant<br>
+Const MeshEleSize&nbsp;&nbsp; As Double = 4.48279654351123<br>
+Const MeshTol&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Double = 0.224139827175561<br>
+Const Tol1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Double = 
+0.05</p>
+<p class="APICODE">Sub main()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim PIDCollection As New Collection<br>
+&nbsp;&nbsp;&nbsp; Set PIDCollection = PIDInitializer()<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Exit Sub<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>OpenDoc6</b>(&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 
+2019\samples\Simulation Examples\Thermal\computer_chip.sldasm&quot;, 
+swDocASSEMBLY, 2, &quot;&quot;, longstatus, longwarnings)<br>
+&nbsp;&nbsp;&nbsp; If Part Is Nothing Then ErrorMsg SwApp, &quot;Failed to open 
+computer_chip.sldasm&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; strMaterialLib = SwApp.<b>GetExecutablePath</b> 
+&amp; &quot;\lang\english\sldmaterials\solidworks materials.sldmat&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = SwApp.<b>GetAddInObject</b>(&quot;CosmosWorks.CosmosWorks&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+get Simulation add-in&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+COSMOSWORKS&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+active document&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+study manager&quot;<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>CreateNewStudy3</b>(&quot;Static_solid_new&quot;, 
+swsAnalysisStudyTypeStatic, 0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;Failed to create 
+study&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Add materials<br>
+&nbsp;&nbsp;&nbsp; Set SolidMgr = Study.<b>SolidManager</b><br>
+&nbsp;&nbsp;&nbsp; If SolidMgr Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+solid manager&quot;<br>
+&nbsp;&nbsp;&nbsp; Set SolidComp = SolidMgr.<b>GetComponentAt</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get 
+component&quot;<br>
+&nbsp;&nbsp;&nbsp; Set SolidBody = SolidComp.<b>GetSolidBodyAt</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get solid 
+body&quot;<br>
+&nbsp;&nbsp;&nbsp; boolstatus = SolidBody.<b>SetLibraryMaterial</b>(strMaterialLib, 
+&quot;AISI 1020&quot;)<br>
+&nbsp;&nbsp;&nbsp; If boolstatus = False Then ErrorMsg SwApp, &quot;Failed to apply 
+material&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidComp = SolidMgr.<b>GetComponentAt</b>(1, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get 
+component&quot;<br>
+&nbsp;&nbsp;&nbsp; Set SolidBody = SolidComp.<b>GetSolidBodyAt</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get solid 
+body&quot;<br>
+&nbsp;&nbsp;&nbsp; boolstatus = SolidBody.<b>SetLibraryMaterial</b>(strMaterialLib, 
+&quot;AISI 1020&quot;)<br>
+&nbsp;&nbsp;&nbsp; If boolstatus = False Then ErrorMsg SwApp, &quot;Failed to apply 
+material&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidComp = SolidMgr.<b>GetComponentAt</b>(2, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get 
+component&quot;<br>
+&nbsp;&nbsp;&nbsp; Set SolidBody = SolidComp.<b>GetSolidBodyAt</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get solid 
+body&quot;<br>
+&nbsp;&nbsp;&nbsp; boolstatus = SolidBody.<b>SetLibraryMaterial</b>(strMaterialLib, 
+&quot;AISI 1020&quot;)<br>
+&nbsp;&nbsp;&nbsp; If boolstatus = False Then ErrorMsg SwApp, &quot;Failed to apply 
+material&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidComp = SolidMgr.<b>GetComponentAt</b>(3, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get 
+component&quot;<br>
+&nbsp;&nbsp;&nbsp; Set SolidBody = SolidComp.<b>GetSolidBodyAt</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get solid 
+body&quot;<br>
+&nbsp;&nbsp;&nbsp; boolstatus = SolidBody.<b>SetLibraryMaterial</b>(strMaterialLib, 
+&quot;AISI 1020&quot;)<br>
+&nbsp;&nbsp;&nbsp; If boolstatus = False Then ErrorMsg SwApp, &quot;Failed to apply 
+material&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidComp = SolidMgr.<b>GetComponentAt</b>(4, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get 
+component&quot;<br>
+&nbsp;&nbsp;&nbsp; Set SolidBody = SolidComp.<b>GetSolidBodyAt</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get solid 
+body&quot;<br>
+&nbsp;&nbsp;&nbsp; boolstatus = SolidBody.<b>SetLibraryMaterial</b>(strMaterialLib, 
+&quot;AISI 1020&quot;)<br>
+&nbsp;&nbsp;&nbsp; If boolstatus = False Then ErrorMsg SwApp, &quot;Failed to apply 
+material&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set LBCMgr = Study.<b>LoadsAndRestraintsManager</b><br>
+&nbsp;&nbsp;&nbsp; If LBCMgr Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+loads and restraints manager&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Add prescribed displacement<br>
+&nbsp;&nbsp;&nbsp; DispArray1 = Array(SelectByPID(Part, &quot;selection1&quot;, 
+PIDCollection))<br>
+&nbsp;&nbsp;&nbsp; DispArray2 = Array(0#, 0.01, 0#, 0, 1, 0)<br>
+&nbsp;&nbsp;&nbsp; Set CWFeatObj = LBCMgr.<b>AddPrescribedDisplacement</b>((DispArray2), 
+0, (DispArray1), SelectByPID(Part, &quot;selection7&quot;, PIDCollection), errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to create 
+prescribed displacement&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create mesh<br>
+&nbsp;&nbsp;&nbsp; Dim CWMeshObj As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; Set CWMeshObj = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CWMeshObj Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+create mesh object&quot;<br>
+&nbsp;&nbsp;&nbsp; CWMeshObj.<b>MesherType</b> = 0<br>
+&nbsp;&nbsp;&nbsp; CWMeshObj.<b>Quality</b> = 0<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, MeshEleSize, MeshTol)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to create mesh&quot;<br>
+&nbsp;&nbsp;&nbsp; Set CWMeshObj = Nothing</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Set static study options<br>
+&nbsp;&nbsp;&nbsp; Set StaticOptions = Study.<b>StaticStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; If StaticOptions Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+get static study options&quot;<br>
+&nbsp;&nbsp;&nbsp; StaticOptions.<b>SolverType</b> = 1<br>
+&nbsp;&nbsp;&nbsp; StaticOptions.<b>UseSoftSpring</b> = 1<br>
+&nbsp;&nbsp;&nbsp; StaticOptions.<b>LargeDisplacement</b> = 0</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed with 
+error as defined in swsRunAnalysisError_e: &quot; &amp; errCode<br>
+&nbsp; </p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+<p class="APICODE">Function SelectByPID(Part As SldWorks.ModelDoc2, PIDName As 
+String, PIDCollection As Collection) As Object</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim PID()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Byte<br>
+&nbsp;&nbsp;&nbsp; Dim PIDVariant&nbsp; As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim PIDString&nbsp;&nbsp; As String<br>
+&nbsp;&nbsp;&nbsp; Dim i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Integer<br>
+&nbsp;&nbsp;&nbsp; Dim SelObj&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Object<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; PIDString = &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDString = PIDCollection.Item(PIDName)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; PIDVariant = Split(PIDString, &quot;,&quot;)<br>
+&nbsp;&nbsp;&nbsp; ReDim PID(UBound(PIDVariant))<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; For i = 0 To (UBound(PIDVariant) - 1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PID(i) = PIDVariant(i)<br>
+&nbsp;&nbsp;&nbsp; Next i<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SelObj = Part.<b>Extension</b>.<b>GetObjectByPersistReference</b>((PID))<br>
+&nbsp;&nbsp;&nbsp; Set SelectByPID = SelObj<br>
+&nbsp;&nbsp;&nbsp; Set SelObj = Nothing<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Function</p>
+<p class="APICODE">Function PIDInitializer() As Collection</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim PIDCollection As New Collection<br>
+&nbsp;&nbsp;&nbsp; Dim selection1 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection2 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection3 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection4 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection5 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection6 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection7 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection8 As String</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection1 = 
+&quot;35,29,213,113,218,129,72,162,168,88,152,178,27,137,239,153,46,2,0,0,75,1,0,0,120,1,109,81,193,74,195,64,20,156,90,173,150,170,88,168,136,226,213,163,130,87,177,160,164,21,11,74,37,233,177,16,210,77,162,213,38,45,233,6,122,17,250,9,30,60,244,39,60,232,47,248,7,234,247,52,206,107,26,80,235,194,190,221,157,55,239,61,102,246,105,15,200,3,72,166,201,174,133,24,29,12,161,17,193,97,244,112,136,99,156,65,161,143,0,3,102,5,139,96,19,185,67,151,200,50,43,183,184,115,243,93,146,78,73,14,37,4,253,11,71,121,166,231,219,74,146,178,10,18,100,22,215,227,251,243,193,75,227,173,149,157,105,217,142,148,69,253,192,122,208,245,80,91,113,228,55,92,211,27,216,42,77,23,36,109,218,74,38,108,240,94,31,233,102,231,222,83,58,133,202,132,12,75,71,221,240,246,210,9,221,158,71,120,154,156,26,56,65,27,6,154,176,112,61,139,53,234,81,212,217,70,29,35,42,21,109,61,42,27,82,153,207,92,68,118,60,243,65,116,139,98,225,182,168,89,238,1,43,122,124,47,186,117,68,236,10,53,220,192,36,187,56,230,244,226,34,107,9,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; 
+&quot;120,253,156,84,241,177,185,127,158,89,51,255,129,213,26,39,248,236,31,115,130,78,157,98,20,102,133,231,246,215,164,202,234,153,195,21,209,31,186,98,242,47,159,86,198,107,200,184,89,131,252,24,248,137,203,212,245,127,48,225,255,229,206,255,75,82,92,223,103,242,125,74,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection2 = 
+&quot;35,29,213,113,218,129,72,162,168,88,152,178,27,137,239,153,12,2,0,0,64,1,0,0,120,1,93,81,205,74,195,64,24,156,106,173,138,255,16,16,164,87,143,122,18,4,65,80,146,136,5,165,146,244,40,132,184,73,180,154,164,37,221,64,47,133,60,130,7,15,190,132,23,95,193,71,240,125,26,231,75,12,104,23,118,55,59,223,55,179,153,217,215,3,96,25,64,57,47,13,19,79,24,98,140,35,156,224,2,10,35,36,60,229,208,8,145,193,35,82,215,219,236,223,229,108,253,206,29,225,151,45,108,32,25,93,249,42,116,194,200,83,82,148,209,145,69,110,224,152,125,189,29,126,244,62,7,205,94,211,12,210,236,52,16,166,155,103,81,47,112,194,177,167,234,90,71,36,29,79,137,252,150,244,77,117,255,225,57,84,186,134,246,8,153,174,206,134,233,227,181,159,6,113,72,120,94,158,154,56,195,61,76,244,225,226,182,90,45,154,81,152,16,181,49,133,95,25,139,105,107,66,91,17,107,25,187,115,158,116,101,90,236,74,239,128,134,229,59,33,35,174,20,235,0,142,169,123,3,11,119,112,216,179,94,240,206,118,19,222,18,208,253,126,63,135,189,221,189,108,50,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection2 = selection2 &amp; 
+&quot;32,38,1,175,90,84,139,168,149,83,77,87,137,200,34,157,6,247,130,180,134,33,126,247,197,123,54,74,220,23,109,167,250,95,52,43,197,26,26,138,188,198,102,1,252,197,36,239,69,76,126,98,17,107,174,99,137,227,7,37,71,119,15,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection2 = selection2 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection3 = 
+&quot;35,29,213,113,218,129,72,162,168,88,152,178,27,137,239,153,12,2,0,0,64,1,0,0,120,1,93,81,205,74,195,64,24,156,106,173,138,85,20,2,130,244,234,81,193,147,32,8,74,26,177,160,84,146,30,133,16,55,137,86,243,83,210,13,244,82,200,35,120,240,224,75,120,241,21,124,4,223,167,113,190,196,128,118,97,119,179,243,125,51,155,153,125,61,0,86,1,148,139,210,48,241,132,49,38,56,194,9,46,160,144,34,230,41,135,70,128,12,46,145,186,222,102,255,46,103,235,119,118,133,95,182,176,133,56,189,242,84,96,7,161,171,164,40,163,35,139,220,192,49,255,122,59,252,24,124,142,154,189,166,25,164,89,137,47,76,39,207,194,129,111,7,19,87,213,181,142,72,218,174,18,249,109,233,155,233,225,195,115,160,116,13,237,17,50,29,157,141,147,199,107,47,241,163,128,240,162,60,53,113,134,123,152,24,194,193,109,181,246,105,70,97,74,212,194,12,94,101,44,162,173,41,109,133,172,101,236,206,121,210,149,105,177,43,189,35,26,150,239,152,140,168,82,172,3,56,166,238,13,250,184,131,205,158,205,130,119,182,155,240,86,128,222,247,251&quot;<br>
+&nbsp;&nbsp;&nbsp; selection3 = selection3 &amp; 
+&quot;,57,172,157,222,101,147,1,49,9,120,189,79,181,144,90,57,213,116,149,136,44,210,105,112,47,72,107,24,226,119,95,188,103,105,236,188,104,43,209,255,162,89,43,54,208,80,228,53,186,5,240,23,147,188,151,49,249,137,101,172,185,142,37,142,31,26,13,119,9,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection3 = selection3 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection4 = 
+&quot;35,29,213,113,218,129,72,162,168,88,152,178,27,137,239,153,12,2,0,0,65,1,0,0,120,1,93,81,205,74,195,64,24,156,106,173,138,90,20,2,130,244,234,81,47,30,4,65,80,210,136,5,165,146,244,40,132,184,73,180,154,159,146,110,160,151,66,30,193,131,7,95,194,139,175,224,35,248,62,141,243,37,6,180,11,187,155,157,239,155,217,204,236,235,1,176,10,160,92,148,134,137,39,140,49,193,17,78,112,1,133,20,49,79,57,52,2,100,112,137,212,245,54,251,119,57,91,191,179,43,252,178,133,45,196,233,149,167,2,59,8,93,37,69,25,29,89,228,6,142,249,215,219,225,199,224,115,212,236,53,205,32,205,74,124,97,58,121,22,14,124,59,152,184,170,174,117,68,210,118,149,200,239,72,223,76,15,31,158,3,165,107,104,143,144,233,232,108,156,60,94,123,137,31,5,132,23,229,169,137,51,220,195,196,16,14,110,171,181,79,51,10,83,162,22,102,240,42,99,17,109,77,105,43,100,45,99,119,206,147,174,76,139,93,233,29,209,176,124,199,100,68,149,98,29,192,49,117,111,208,199,29,108,246,108,22,188,179,221,132,183,2,244,190,223,207,97,117,123,15&quot;<br>
+&nbsp;&nbsp;&nbsp; selection4 = selection4 &amp; 
+&quot;1,77,6,196,36,224,245,62,213,66,106,229,84,211,85,34,178,72,167,193,189,32,173,97,136,223,125,241,158,165,177,243,162,173,68,255,139,102,173,216,64,67,145,215,216,46,128,191,152,228,189,140,201,79,44,99,205,117,44,113,252,0,33,137,119,13,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection4 = selection4 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection5 = 
+&quot;35,29,213,113,218,129,72,162,168,88,152,178,27,137,239,153,12,2,0,0,65,1,0,0,120,1,93,81,205,74,195,64,24,156,106,173,138,86,20,2,130,244,234,81,15,94,4,65,80,210,136,5,165,146,244,40,132,184,73,180,154,159,146,110,160,151,66,30,193,131,7,95,194,139,175,224,35,248,62,141,243,37,6,180,11,187,155,157,239,155,217,204,236,235,1,176,10,160,92,148,134,137,39,140,49,193,17,78,112,1,133,20,49,79,57,52,2,100,112,137,212,245,54,251,119,57,91,191,179,43,252,178,133,45,196,233,149,167,2,59,8,93,37,69,25,29,89,228,6,142,249,215,219,225,199,224,115,212,236,53,205,32,205,74,124,97,58,121,22,14,124,59,152,184,170,174,117,68,210,118,149,200,119,165,111,166,135,15,207,129,210,53,180,71,200,116,116,54,78,30,175,189,196,143,2,194,139,242,212,196,25,238,97,98,8,7,183,213,218,167,25,133,41,81,11,51,120,149,177,136,182,166,180,21,178,150,177,59,231,73,87,166,197,174,244,142,104,88,190,99,50,162,74,177,14,224,152,186,55,232,227,14,54,123,54,11,222,217,110,194,91,1,122,223,239,231,176,118,122,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection5 = selection5 &amp; 
+&quot;151,77,6,196,36,224,245,62,213,66,106,229,84,211,85,34,178,72,167,193,189,32,173,97,136,223,125,241,158,165,177,243,162,173,68,255,139,102,173,216,64,67,145,215,216,46,128,191,152,228,189,140,201,79,44,99,205,117,44,113,252,0,29,203,119,11,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection5 = selection5 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection6 = 
+&quot;35,29,213,113,218,129,72,162,168,88,152,178,27,137,239,153,42,2,0,0,73,1,0,0,120,1,101,81,205,74,195,96,16,156,250,83,45,85,177,80,17,197,171,71,5,175,162,160,36,21,11,74,37,233,177,16,218,175,137,86,155,164,164,95,160,23,33,143,224,193,131,47,225,65,95,193,55,80,159,167,113,182,73,65,205,66,246,75,102,119,118,51,243,61,237,2,139,0,210,105,186,99,35,70,15,99,104,68,232,50,187,56,192,17,206,160,16,194,199,136,85,193,34,56,68,238,48,32,178,68,230,38,159,82,254,84,101,82,90,66,21,126,120,209,85,174,229,122,142,146,162,68,89,146,236,98,60,126,60,239,191,54,223,219,243,51,163,213,73,107,4,125,97,218,113,228,53,251,150,59,114,84,86,43,203,72,203,81,50,126,93,250,38,186,213,187,119,149,206,160,26,33,195,214,209,32,184,189,236,6,253,161,75,120,154,158,24,56,70,7,6,90,176,113,61,203,38,197,40,138,236,160,129,9,101,138,176,33,101,141,41,203,99,45,98,119,60,51,65,68,139,92,233,109,83,176,188,251,100,12,249,93,180,234,144,216,21,76,220,192,98,119,37,225,246,74,177,107,1,120,251,12&quot;<br>
+&nbsp;&nbsp;&nbsp; selection6 = selection6 &amp; 
+&quot;2,57,197,231,198,222,249,220,151,220,254,21,147,27,60,206,143,185,65,103,54,49,75,103,157,231,214,55,105,121,136,7,219,226,71,20,250,246,131,110,4,250,143,93,203,201,42,230,20,185,161,181,4,248,141,201,226,255,24,127,172,128,229,119,197,138,196,15,139,128,125,95,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection6 = selection6 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection7 = 
+&quot;35,29,213,113,218,129,72,162,168,88,152,178,27,137,239,153,12,2,0,0,65,1,0,0,120,1,93,81,203,74,195,64,20,61,213,90,21,223,80,16,164,91,151,186,18,4,65,80,146,136,5,165,146,116,41,132,58,157,104,53,143,146,78,160,27,33,159,224,194,133,63,225,198,95,240,19,252,159,198,115,147,6,180,23,102,38,115,238,61,231,230,220,121,59,0,150,1,20,179,162,109,225,9,35,140,113,132,19,92,64,33,65,196,91,6,3,141,20,62,145,42,223,100,253,46,87,99,190,118,132,95,52,176,129,40,185,26,40,237,234,192,87,146,148,104,201,38,29,24,175,223,239,135,159,221,175,126,125,86,180,54,105,78,60,20,166,151,165,65,119,232,234,177,175,170,92,75,36,93,95,137,252,150,212,77,77,239,225,89,43,83,65,123,132,44,207,164,163,248,241,122,16,15,67,77,120,86,156,90,56,195,61,44,244,224,225,182,220,109,154,81,152,16,117,48,197,160,52,22,210,214,132,182,2,230,82,86,103,188,153,210,180,216,149,218,62,13,203,119,68,70,88,42,86,3,56,166,238,13,108,220,193,101,205,122,206,158,205,122,120,75,64,231,231,227,28,206,118,231,178,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection7 = selection7 &amp; 
+&quot;158,1,49,25,240,170,77,181,128,90,25,213,76,57,17,217,164,178,205,51,23,218,60,196,239,190,120,79,147,200,123,49,78,108,254,141,102,37,95,67,77,145,215,216,204,129,191,152,52,94,196,228,39,22,177,249,187,48,35,241,11,36,122,119,14,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection7 = selection7 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection8 = 
+&quot;35,29,213,113,218,129,72,162,168,88,152,178,27,137,239,153,12,2,0,0,65,1,0,0,120,1,93,81,193,74,195,64,20,156,106,173,138,85,20,2,130,244,234,81,193,147,32,8,74,18,177,160,84,146,30,133,80,183,27,173,54,73,73,55,208,139,144,79,240,224,193,159,240,226,47,248,9,254,79,227,188,164,1,237,131,221,205,206,123,51,47,243,246,237,0,88,5,80,204,11,203,198,19,70,152,224,8,39,184,128,66,130,136,183,12,6,26,41,2,34,85,190,201,250,93,174,198,98,181,133,95,52,176,133,40,185,26,40,237,233,48,80,146,148,104,201,38,29,24,175,223,239,135,159,221,175,126,125,86,52,139,52,55,30,10,211,207,210,176,59,244,244,36,80,85,174,37,146,94,160,68,126,91,234,102,166,247,240,172,149,169,160,61,66,182,111,210,81,252,120,61,136,135,99,77,120,94,156,218,56,195,61,108,244,224,227,182,220,29,154,81,152,18,117,49,195,160,52,54,166,173,41,109,133,204,165,172,206,120,51,165,105,177,43,181,125,26,150,239,136,140,113,169,88,13,224,152,186,55,112,112,7,143,53,155,57,123,54,235,225,173,0,157,159,143,115,184,59,15&quot;<br>
+&nbsp;&nbsp;&nbsp; selection8 = selection8 &amp; 
+&quot;7,203,122,6,196,100,192,235,14,213,66,106,101,84,51,229,68,100,147,74,139,103,46,180,69,136,223,125,241,158,38,145,255,98,220,216,252,27,205,90,190,129,154,34,175,209,206,129,191,152,52,94,198,228,39,150,177,197,187,48,35,241,11,25,64,119,8,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection8 = selection8 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; PIDCollection.Add selection1, &quot;selection1&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection2, &quot;selection2&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection3, &quot;selection3&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection4, &quot;selection4&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection5, &quot;selection5&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection6, &quot;selection6&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection7, &quot;selection7&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection8, &quot;selection8&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set PIDInitializer = PIDCollection<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Function</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

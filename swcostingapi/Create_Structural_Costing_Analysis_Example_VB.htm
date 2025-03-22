@@ -1,0 +1,200 @@
+<html>
+
+<head>
+<title>Create Structural Costing Analysis Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,">
+<meta name=MS-HKWD content="VBA examples,structural Costing analysis">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Costing API 
+ Help</span></h1>
+<h1>Create Structural Costing Analysis Example (VBA)</h1>
+<p>This example shows how to create a structural Costing analysis of a weldment part.</p>
+<pre>'------------------------------------------------
+' Preconditions:
+' 1. Specified part template exists.
+' 2. Add a reference to <b>SldCostingAPI</b> <i>nnnn</i> <b>Type Library</b>.
+' 3. Open the Immediate window.
+' 4. Run the macro.
+'
+' Postconditions:
+' 1. Creates a weldment part.
+' 2. Gets the CostingManager.
+' 3. Gets the Costing part.
+' 4. Sets the Costing manufacturing method
+'    to structural and gets the Costing body.
+' 5. Gets the common Costing analysis and the
+'    structural Costing analysis.
+' 6. Gets the material classes from the Costing template
+'    and sets the material class.
+' 7. Gets the material names from the Costing template
+'    and sets the material for the material class.
+' 8. Sets and gets structural Costing analysis
+'    parameters.
+' 9. Gets the total manufacturing cost.
+'10. Examine the Immediate window to see the
+'    results of steps 6 through 9.
+'-------------------------------------------------</pre>
+<pre>Option Explicit</pre>
+<pre>Dim swApp As SldWorks.SldWorks
+Dim swModel As SldWorks.ModelDoc2
+Dim swModelDocExt As SldWorks.ModelDocExtension
+Dim swSketchMgr As SldWorks.SketchManager
+Dim swFeatMgr As SldWorks.FeatureManager
+Dim swSelMgr As SldWorks.SelectionMgr
+Dim swcCostMgr As SldCostingAPI.CostManager
+Dim swcCostPart As SldCostingAPI.CostPart
+Dim swcCostBody As SldCostingAPI.CostBody
+Dim swcCostAnalysis As SldCostingAPI.CostAnalysis
+Dim swcStructuralAnalysis As SldCostingAPI.CostAnalysisStructural
+Dim swFeat As Object
+Dim sketchLines As Variant
+Dim groups As Variant
+Dim groupArray() As Object
+Dim group1 As Object
+Dim segment1 As Variant
+Dim segmentArray1() As Object
+Dim segment As SldWorks.SketchLine
+Dim status As Boolean
+Dim totalCost As Double
+Dim templateName As String
+Dim materialClassCount As Long
+Dim materialClasses As Variant
+Dim materialCount As Long
+Dim materials As Variant
+Dim i As Long
+Dim costMethod As Long</pre>
+<pre>Sub main()</pre>
+<pre>    Set swApp = Application.SldWorks    </pre>
+<pre>    'Open new part
+    Set swModel = swApp.<b>NewDocument</b>(&quot;C:\ProgramData\SolidWorks\SolidWorks 2015\templates\Part.prtdot&quot;, 0, 0, 0)
+
+    'Sketch a rectangle
+    Set swModelDocExt = swModel.<b>Extension</b>
+    status = swModelDocExt.<b>SetUserPreferenceToggle</b>(swUserPreferenceToggle_e.swSketchAddConstToRectEntity, swUserPreferenceOption_e.swDetailingNoOptionSpecified, False)
+    status = swModelDocExt.<b>SetUserPreferenceToggle</b>(swUserPreferenceToggle_e.swSketchAddConstLineDiagonalType, swUserPreferenceOption_e.swDetailingNoOptionSpecified, False)
+    Set swSketchMgr = swModel.<b>SketchManager</b>
+    sketchLines = swSketchMgr.<b>CreateCornerRectangle</b>(0, 0, 0, 7.12674458144988E-02, -4.41036883594848E-02, 0)
+    swModel.<b>ClearSelection2</b> True
+    swSketchMgr.<b>InsertSketch</b> True    </pre>
+<pre>    'Create a weldment feature
+    Set swFeatMgr = swModel.<b>FeatureManager</b>
+    Set swFeat = swFeatMgr.<b>InsertWeldmentFeature</b>()    </pre>
+<pre>    'Create a structural member
+    status = swModelDocExt.<b>SelectByID2</b>(&quot;Line2@Sketch1&quot;, &quot;EXTSKETCHSEGMENT&quot;, 0, -8.30721773633059E-03, 0, True, 0, Nothing, 0)
+    ReDim groupArray(0 To 0) As Object
+    Set group1 = swFeatMgr.<b>CreateStructuralMemberGroup</b>()
+    ReDim segmentArray1(0 To 0) As Object
+    swModel.<b>ClearSelection2</b> True
+    status = swModelDocExt.<b>SelectByID2</b>(&quot;Line2@Sketch1&quot;, &quot;EXTSKETCHSEGMENT&quot;, 0, 0.334864850338306, 0.393154025912395, True, 0, Nothing, 0)
+    Set swSelMgr = swModel.<b>SelectionManager</b>
+    Set segment = swSelMgr.<b>GetSelectedObject6</b>(1, 0)
+    Set segmentArray1(0) = segment
+    segment1 = segmentArray1
+    group1.<b>Segments</b> = (segment1)
+    group1.<b>ApplyCornerTreatment</b> = True
+    group1.<b>CornerTreatmentType</b> = 1
+    group1.<b>GapWithinGroup</b> = 0
+    group1.<b>GapForOtherGroups</b> = 0
+    group1.<b>Angle</b> = 0
+    Set groupArray(0) = group1
+    groups = groupArray
+    Set swFeat = swFeatMgr.<b>InsertStructuralWeldment4</b>(&quot;c:\program files\solidworks corp\solidworks\lang\english\weldment profiles\ansi inch\rectangular tube\3 x 2 x 0.25.sldlfp&quot;, 1, True, (groups))
+    swModel.<b>ClearSelection2</b> True    </pre>
+<pre>    'Get CostingManager
+    Set swcCostMgr = swModelDocExt.<b>GetCostingManager</b>
+    If swcCostMgr Is Nothing Then
+        Debug.Print &quot;CostingManager is nothing.&quot;
+        Exit Sub
+    End If    </pre>
+<pre>    'Get Costing part
+    Set swcCostPart = swcCostMgr.<b>CostingModel</b>
+    If swcCostPart Is Nothing Then
+        Debug.Print &quot;Costing part is nothing.&quot;
+        Exit Sub
+    End If    </pre>
+<pre>    'Set the Costing manufacturing method
+    'to structural and get the Costing body
+    Set swcCostBody = swcCostPart.<b>SetCostingMethod</b>(&quot;&quot;, swcMethodType_e.swcMethodType_Structural)
+    If swcCostBody Is Nothing Then
+        Debug.Print &quot;Costing body is nothing.&quot;
+        Exit Sub
+    End If    </pre>
+<pre>    'Get the common Costing analysis
+    Set swcCostAnalysis = swcCostBody.<b>GetCostAnalysis</b>
+    If swcCostAnalysis Is Nothing Then
+        Debug.Print &quot;Failed to activate Costing analysis.&quot;
+        Exit Sub
+    End If    </pre>
+<pre>    'Get the structural Costing analysis
+    Set swcStructuralAnalysis = swcCostAnalysis.<b>GetSpecificAnalysis</b>
+    If swcStructuralAnalysis Is Nothing Then
+        Debug.Print &quot;Structural Costing analysis is nothing.&quot;
+        Exit Sub
+    End If    </pre>
+<pre>    'Get the material classes from the Costing template
+    materialClassCount = swcStructuralAnalysis.<b>GetMaterialClassesCount</b>
+    If materialClassCount = 0 Then
+        Debug.Print (&quot;No material classes for this structural Costing analysis.&quot;)
+        Exit Sub
+    End If    </pre>
+<pre>    Debug.Print &quot;Structural Costing Analysis&quot;    </pre>
+<pre>    materialClasses = swcStructuralAnalysis.<b>GetMaterialClasses</b>
+    Debug.Print (&quot;  Valid material classes for this structural Costing Analysis: &quot;)
+    For i = 0 To materialClassCount - 1
+        Debug.Print (&quot;    &quot; &amp; materialClasses(i))
+    Next i    </pre>
+<pre>    'Set the material class
+    swcStructuralAnalysis.<b>CurrentMaterialClass</b> = materialClasses(0)
+    Debug.Print (&quot;  Name of the material class for this structural Costing analysis: &quot; &amp; materialClasses(0))</pre>
+<pre>    'Get the material names from the Costing template
+    templateName = swcCostAnalysis.<b>CostingTemplateName</b>
+    Debug.Print (&quot;  Costing template path and file name: &quot; &amp; templateName)
+    materialCount = swcStructuralAnalysis.<b>GetMaterialCount</b>(materialClasses(0))
+    If materialCount = 0 Then
+        Debug.Print &quot;No materials for this structural Costing Analysis.&quot;
+        Exit Sub
+    End If
+    Debug.Print &quot;  Number of materials: &quot; &amp; materialCount
+    materials = swcStructuralAnalysis.<b>GetMaterials</b>(materialClasses(0))
+    Debug.Print (&quot;  Valid materials for this structural Costing Analysis: &quot;)
+    For i = 0 To materialCount - 1
+        Debug.Print (&quot;    &quot; &amp; materials(i))
+    Next i    </pre>
+<pre>    swcStructuralAnalysis.<b>CurrentMaterial</b> = materials(0)
+    Debug.Print (&quot;  Name of material for &quot; &amp; materialClasses(0) &amp; &quot; for this structural Costing analysis: &quot; &amp; materials(0))</pre>
+<pre>    'Set and get structural Costing analysis parameters
+    'Get current profile
+    Debug.Print &quot;  Current profile:&quot;
+    Debug.Print &quot;    Standard: &quot; &amp; swcStructuralAnalysis.<b>CurrentProfileStandard</b>
+    Debug.Print &quot;    Type:     &quot; &amp; swcStructuralAnalysis.<b>CurrentProfileType</b>
+    Debug.Print &quot;    Size:     &quot; &amp; swcStructuralAnalysis.<b>CurrentProfileSize</b>    </pre>
+<pre>    'Get current cost method
+    costMethod = swcStructuralAnalysis.<b>CurrentCostMethodType</b>
+    Select Case costMethod
+        Case 0
+            Debug.Print &quot;  Current cost method: Unknown&quot;
+            Debug.Print &quot;  Exiting. Check the template.&quot;
+            Exit Sub
+        Case 1
+            Debug.Print &quot;  Current cost method: Per length&quot;
+        Case 2
+            Debug.Print &quot;  Current cost method: Per unit length&quot;
+    End Select</pre>
+<pre>   'Reset the shop rate to the default
+    swcStructuralAnalysis.<b>ShopRateApplied</b> = True
+    swcStructuralAnalysis.<b>shoprate</b> = 27.55
+    Debug.Print (&quot;  Shop rate applied: &quot; &amp; swcStructuralAnalysis.<b>ShopRateApplied</b>)
+    Debug.Print (&quot;  Shop rate: $&quot; &amp; swcStructuralAnalysis.<b>shoprate</b>)
+    
+    totalCost = swcCostAnalysis.<b>GetTotalCostToManufacture</b>
+    Debug.Print (&quot;Total structural cost to manufacture: $&quot; &amp; totalCost)</pre>
+<pre>End Sub</pre>
+
+</body>
+
+</html>

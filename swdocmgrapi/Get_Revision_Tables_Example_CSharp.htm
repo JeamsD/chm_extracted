@@ -1,0 +1,110 @@
+<html>
+
+<head>
+<title>Get Revision Tables Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,revision tables">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS API 
+ Help</span></h1>
+<h1>Get Revision Tables Example (C#)</h1>
+<p>This example shows how to get a revision table in a drawing document, add a 
+revision row, get revision row information, and update the revision row and 
+column data. </p>
+
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+	<span style="color: #008000">//</span><span style="color:green;">---------------------------------------------------------------------------</span><br>
+	<span style="color: #008000">//</span><span style="color:green;">&nbsp;Preconditions:&nbsp;&nbsp;</span><br>
+	<span style="color:Green">
+	// 1. Read the SOLIDWORKS Document Manager API <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;<b>Getting Started</b> topic and ensure that <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;the required DLLs have been registered. <br>
+	// 2. Copy and paste this module into a C# <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;console application in Microsoft Visual Studio.&nbsp; <br>
+	// 3. Add the <b>SolidWorks.Interop.swdocumentmgr.dll</b> <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;reference to the project.<br>
+	// 4. Substitute <i>your_license_code</i> with your SOLIDWORKS <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;Document Manager license key.<br>
+	// 5. Ensure the specified document exists. <br>
+	// 6. Compile and run this program in Debug mode.</span><br>
+	<span style="color: #008000">//</span><br>
+	<span style="color: #008000">//</span><span style="color:green;">&nbsp;Postconditions:&nbsp;<br>
+	// 1. Prints&nbsp;to&nbsp;the&nbsp;Immediate&nbsp;window:<br>
+	//&nbsp;&nbsp;&nbsp; * Path and&nbsp;filename</span><br>
+	<span style="color:green;">//&nbsp;&nbsp;&nbsp; *&nbsp;Last&nbsp;saved date</span><br>
+	<span style="color:green;">//&nbsp;&nbsp;&nbsp; *&nbsp;For&nbsp;each&nbsp;revision&nbsp;table:</span><br>
+	<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *&nbsp;Name</span><br>
+	<span style="color: #008000">//</span><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *&nbsp;Sheet 
+	name</span><br>
+	<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *&nbsp;Latest revision<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * Revision information<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * Revision table style<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * Whether a placeholder row exists<br>
+	// 2. In the revision table of sheet 1:<br>
+	//&nbsp;&nbsp;&nbsp; a. Adds a revision row.<br>
+	//&nbsp;&nbsp;&nbsp; b. Updates the revision column data.<br>
+	//&nbsp;&nbsp;&nbsp; c. Updates the revision row data.<br>
+	//<br>
+	// NOTE: Do not save changes to the document, as it is used elsewhere.</span><br>
+	<span style="color: #008000">//</span><span style="color:green;">---------------------------------------------------------------------------</span><br>
+&nbsp;<br>
+	<span style="color:blue;">using</span>&nbsp;SolidWorks.Interop.swdocumentmgr;<br>
+	<span style="color:blue;">using</span>&nbsp;System;<br>
+	<span style="color:blue;">using</span>&nbsp;System.Diagnostics;<br>
+&nbsp;<br>
+	<span style="color:blue;">namespace</span>&nbsp;ConsoleApplication2<br>
+	{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Module1</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;Main()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">SwDMClassFactory</span>&nbsp;dmClassFact&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">SwDMClassFactory</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">SwDMApplication3</span>&nbsp;dmDocMgr&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">SwDMApplication3</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">ISwDMDocument15</span>&nbsp;dmDoc&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">ISwDMDocument15</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">ISwDMTable6</span>&nbsp;dmTable&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">ISwDMTable6</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">ISwDMSheet4</span>&nbsp;dmSheet&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">ISwDMSheet4</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">SwDmDocumentOpenError</span>&nbsp;dmError&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">SwDmDocumentOpenError</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;nameDrawing&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span>;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmClassFact&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">SwDMClassFactory</span>();<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDocMgr&nbsp;=&nbsp;(<span style="color:#2b91af;">SwDMApplication3</span>)dmClassFact.<b>GetApplication</b>(<span style="color:#a31515;">&quot;<i>your_license_key</i>&quot;</span>);
+	<span style="color:green;">//Do&nbsp;not&nbsp;distribute&nbsp;</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nameDrawing&nbsp;=&nbsp;<span style="color:#a31515;">&quot;</span><span style="COLOR: #a31515">C:\\Users\\Public\\Documents\\SOLIDWORKS\\SOLIDWORKS 2018\\advdrawings\\foodprocessor.slddrw</span><span style="color:#a31515;">&quot;</span>;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Get&nbsp;the&nbsp;SOLIDWORKS&nbsp;drawing&nbsp;document</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDoc&nbsp;=&nbsp;(<span style="color:#2b91af;">ISwDMDocument15</span>)dmDocMgr.<b>GetDocument</b>(nameDrawing,&nbsp;<span style="color:#2b91af;">SwDmDocumentType</span>.swDmDocumentDrawing,&nbsp;<span style="color:blue;">false</span>,&nbsp;<span style="color:blue;">out</span>&nbsp;dmError);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Document's&nbsp;full&nbsp;name:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>FullName</b>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Date&nbsp;document&nbsp;last&nbsp;saved:&nbsp;&quot;</span>&nbsp;+&nbsp;dmDoc.<b>LastSavedDate</b>);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Get&nbsp;the&nbsp;names&nbsp;of&nbsp;the&nbsp;revision&nbsp;tables&nbsp;in&nbsp;the document</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>[]&nbsp;tableNames&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tableNames&nbsp;=&nbsp;(<span style="color:blue;">string</span>[])dmDoc.<b>GetTableNames</b>(<span style="color:#2b91af;">SwDmTableType</span>.swDmTableTypeRevision);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;i&nbsp;=&nbsp;0;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;((tableNames&nbsp;!=&nbsp;<span style="color:blue;">null</span>))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">for</span>&nbsp;(i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;=&nbsp;tableNames.Length&nbsp;-&nbsp;1;&nbsp;i++)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmTable&nbsp;=&nbsp;(<span style="color:#2b91af;">SwDMTable6</span>)dmDoc.<b>GetTable</b>(tableNames[i]);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;Revision&nbsp;table&nbsp;name:&nbsp;&quot;</span>&nbsp;+&nbsp;dmTable.<b>Name</b>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmSheet&nbsp;=&nbsp;(<span style="color:#2b91af;">SwDMSheet4</span>)dmTable.<b>Sheet</b>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(dmSheet&nbsp;!=&nbsp;<span style="color:blue;">null</span>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;On&nbsp;sheet:&nbsp;&quot;</span>&nbsp;+&nbsp;dmSheet.<b>Name</b>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	}</p>
+	<p class="APICODE">&nbsp;</div>
+
+</body>
+
+</html>

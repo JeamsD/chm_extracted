@@ -1,0 +1,255 @@
+<html>
+
+<head>
+<title>Send Message to Users Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,categories">
+<meta name=MS-HKWD content="C# examples,notifications">
+<meta name=MS-HKWD content="C# examples,users">
+<meta name=MS-HKWD content="C# examples,messages">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Send Message to Users Example (C#)</h1>
+<p><a name="TOP"></a>This example shows how to send a message, also called a notification, to logged-in users who have 
+permission to modify Categories.</p>
+<p><b>NOTE</b>: If using the primary interop assembly 
+provided with SOLIDWORKS PDM Professional, see
+<a href="Using_NET_Framework_in_Applications.htm">Using .NET Framework 4.0 in 
+Stand-alone Applications</a>.</p>
+
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><img border="0" src="SendMessage.gif" width="268" height="206">
+ 
+<span style="color: green">//----------------------------------------------------------------------------</span>
+<span style="color: green">//&nbsp;Preconditions:</span>
+<span style="color: green">//&nbsp;&nbsp;1.&nbsp;Start&nbsp;Microsoft&nbsp;Visual&nbsp;Studio&nbsp;2010.</span>
+<span style="color: green">//&nbsp;&nbsp;2.&nbsp;Click&nbsp;<b>File&nbsp;&gt;&nbsp;New&nbsp;&gt;&nbsp;Project&nbsp;&gt;&nbsp;C#&nbsp;&gt;&nbsp;Windows&nbsp;Forms&nbsp;Application</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;3.&nbsp;Type&nbsp;<b>SendMessageCSharp</b>&nbsp;in&nbsp;Name.</span>
+<span style="color: green">//&nbsp;&nbsp;4.&nbsp;Click&nbsp;the&nbsp;<b>Browse</b>&nbsp;button&nbsp;and&nbsp;browse&nbsp;to&nbsp;the&nbsp;folder&nbsp;where&nbsp;to&nbsp;create&nbsp;the&nbsp;project.</span>
+<span style="color: green">//&nbsp;&nbsp;5.&nbsp;Click&nbsp;<b>OK</b>.&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;6.&nbsp;Create&nbsp;a&nbsp;form&nbsp;similar&nbsp;to&nbsp;the&nbsp;form&nbsp;shown&nbsp;above&nbsp;and&nbsp;change:&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Label&nbsp;to&nbsp;<b>VaultsLabel</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Combo&nbsp;box&nbsp;to&nbsp;<b>VaultsComboBox</b>.&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Button&nbsp;to&nbsp;<b>TraverseUsersButton</b>.&nbsp;&nbsp;&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;7.&nbsp;Replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>Form1.cs</b>&nbsp;with&nbsp;<a href="#Form1">this&nbsp;code</a>.</span>
+<span style="color: green">//&nbsp;&nbsp;8.&nbsp;Replace&nbsp;the&nbsp;code&nbsp;in&nbsp;Form1.Designer.cs&nbsp;with&nbsp;<a href="#Form1.Designer">this&nbsp;code</a>.</span>
+<span style="color: green">//&nbsp; 9.&nbsp;Add&nbsp;<b>EPDM.Interop.epdm.dll&nbsp;</b>as&nbsp;a&nbsp;reference&nbsp;(right-click&nbsp;the&nbsp;project</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer,&nbsp;click&nbsp;<b>Add&nbsp;Reference</b>,&nbsp;click&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Framework</b>&nbsp;in&nbsp;the&nbsp;left-side&nbsp;panel,&nbsp;browse&nbsp;to&nbsp;the&nbsp;top&nbsp;folder&nbsp;of&nbsp;your&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;installation,&nbsp;locate&nbsp;and&nbsp;click&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>EPDM.Interop.epdm.dll</b>,&nbsp;click&nbsp;<b>Open</b>,&nbsp;click&nbsp;<b>Add</b>,&nbsp;and&nbsp;click&nbsp;<b>Close</b>).</span>
+<span style="color: green">//&nbsp;10.&nbsp;Right-click&nbsp;<b>EPDM.Interop.epdm</b>&nbsp;in&nbsp;References,&nbsp;click&nbsp;<b>Properties</b>,&nbsp;and&nbsp;set&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Embed&nbsp;Interop&nbsp;Types</b>&nbsp;to&nbsp;<b>False</b>&nbsp;to&nbsp;handle&nbsp;methods&nbsp;that&nbsp;pass&nbsp;arrays&nbsp;of&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;structures.</span>
+<span style="color: green">//&nbsp;11.&nbsp;Switch&nbsp;back&nbsp;to&nbsp;the&nbsp;<b>Form1.cs</b>&nbsp;code&nbsp;window.</span>
+<span style="color: green">//&nbsp;12.&nbsp;Click&nbsp;<b>Debug&nbsp;&gt;&nbsp;Start&nbsp;Debugging</b>&nbsp;or&nbsp;press&nbsp;F5.</span>
+<span style="color: green">//</span>
+<span style="color: green">//&nbsp;Postconditions:&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;1.&nbsp;Displays&nbsp;a&nbsp;dialog.</span>
+<span style="color: green">//&nbsp;&nbsp;2.&nbsp;Select&nbsp;a&nbsp;vault.</span>
+<span style="color: green">//&nbsp;&nbsp;3.&nbsp;Click&nbsp;the&nbsp;<b>Send&nbsp;message&nbsp;to&nbsp;users&nbsp;who&nbsp;can&nbsp;modify&nbsp;Categories</b>&nbsp;button.</span>
+<span style="color: green">//&nbsp;&nbsp;4.&nbsp;After&nbsp;several&nbsp;minutes,&nbsp;a&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;notification&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is displayed only to&nbsp;logged-in users&nbsp;who&nbsp;have&nbsp;
+//     permission to modify&nbsp;Categories.&nbsp;</span>
+<span style="COLOR: green">//  5. To open the the message, click:
+//     * either the notification while it is displayed or</span>
+<span style="COLOR: green">//       the SOLIDWORKS PDM Professional tray icon.
+//       - or - </span>
+<span style="COLOR: green">//     * <b>Tools &gt; Inbox</b> in File Explorer.</span>
+<span style="color: green">//&nbsp;&nbsp;6.&nbsp;Close&nbsp;the&nbsp;dialog.</span>
+<span style="color: green">//----------------------------------------------------------------------------&nbsp;
+
+<a name="Form1"></a>//Form1.cs</span>
+<span style="color: blue">using</span>&nbsp;System;
+<span style="color: blue">using</span>&nbsp;System.Windows.Forms;
+<span style="color: blue">using</span>&nbsp;System.Diagnostics;
+<span style="color: blue">using</span>&nbsp;System.Runtime.InteropServices;
+<span style="color: blue">using</span>&nbsp;EPDM.Interop.epdm; 
+ 
+<span style="color: blue">namespace</span>&nbsp;SendMessageCSharp
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;<span style="color: blue">partial</span>&nbsp;<span style="color: blue">class</span>&nbsp;<span style="color: #2b91af">Form1</span>&nbsp;:&nbsp;<span style="color: #2b91af">Form</span>
+&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;Form1()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InitializeComponent();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">void</span>&nbsp;SendMessageCSharp_Load(System.<span style="color: #2b91af">Object</span>&nbsp;sender,&nbsp;System.<span style="color: #2b91af">EventArgs</span>&nbsp;e)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Declare&nbsp;and&nbsp;create&nbsp;an&nbsp;instance&nbsp;of&nbsp;IEdmVault5</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">IEdmVault5</span>&nbsp;vault1&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;<span style="color: #2b91af">EdmVault5</span>();
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Cast&nbsp;IEdmVault5&nbsp;to&nbsp;IEdmVault8</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">IEdmVault8</span>&nbsp;vault&nbsp;=&nbsp;(<span style="color: #2b91af">IEdmVault8</span>)vault1;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">EdmViewInfo</span>[]&nbsp;Views&nbsp;=&nbsp;<span style="color: blue">null</span>;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault.<b>GetVaultViews</b>(<span style="color: blue">out</span>&nbsp;Views,&nbsp;<span style="color: blue">false</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Items.Clear();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">foreach</span>&nbsp;(<span style="color: #2b91af">EdmViewInfo</span>&nbsp;View&nbsp;<span style="color: blue">in</span>&nbsp;Views)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Items.Add(View.<b>mbsVaultName</b>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">if</span>&nbsp;(VaultsComboBox.Items.Count&nbsp;&gt;&nbsp;0)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Text&nbsp;=&nbsp;(<span style="color: blue">string</span>)VaultsComboBox.Items[0];
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color: #2b91af">COMException</span>&nbsp;ex)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(<span style="color: #a31515">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color: #a31515">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">catch</span>&nbsp;(<span style="color: #2b91af">Exception</span>&nbsp;ex)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(ex.Message);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;<span style="color: blue">void</span>&nbsp;TraverseUsersButton_Click(System.<span style="color: #2b91af">Object</span>&nbsp;sender,&nbsp;System.<span style="color: #2b91af">EventArgs</span>&nbsp;e)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Declare&nbsp;and&nbsp;create&nbsp;an&nbsp;instance&nbsp;of&nbsp;IEdmVault5&nbsp;object</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">IEdmVault5</span>&nbsp;vault&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;<span style="color: #2b91af">EdmVault5</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color: blue">this</span>.Handle.ToInt32());
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Declare&nbsp;an&nbsp;IEdmUserMgr5&nbsp;object</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">IEdmUserMgr5</span>&nbsp;UserMgr&nbsp;=&nbsp;<span style="color: blue">default</span>(<span style="color: #2b91af">IEdmUserMgr5</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UserMgr&nbsp;=&nbsp;(<span style="color: #2b91af">IEdmUserMgr5</span>)vault;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">IEdmPos5</span>&nbsp;UserPos&nbsp;=&nbsp;<span style="color: blue">default</span>(<span style="color: #2b91af">IEdmPos5</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UserPos&nbsp;=&nbsp;UserMgr.<b>GetFirstUserPosition</b>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">while</span>&nbsp;(!UserPos.<b>IsNull</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmUser5</span>&nbsp;User&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmUser5</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmUser7</span>&nbsp;User1&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmUser7</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;User&nbsp;=&nbsp;UserMgr.<b>GetNextUser</b>(UserPos);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;User1&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUser7</span>)User;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(User.<b>IsLoggedIn</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(User1.<b>HasSysRightEx</b>(<span style="color:#2b91af;">EdmSysPerm</span>.EdmSysPerm_ModifyCategories))
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;User.<b>SendMsg</b>(<span style="color: #a31515">&quot;Category&nbsp;request&quot;</span>,&nbsp;<span style="color: #a31515">&quot;Please&nbsp;stop&nbsp;by&nbsp;my&nbsp;office&nbsp;sometime&nbsp;&quot;</span>&nbsp;+&nbsp;<span style="color: #a31515">&quot;this&nbsp;morning&nbsp;to&nbsp;discuss&nbsp;adding&nbsp;&quot;</span>&nbsp;+&nbsp;<span style="color: #a31515">&quot;a&nbsp;new&nbsp;file&nbsp;type&nbsp;to&nbsp;a&nbsp;Category.&quot;</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color: #2b91af">COMException</span>&nbsp;ex)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(<span style="color: #a31515">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color: #a31515">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">catch</span>&nbsp;(<span style="color: #2b91af">Exception</span>&nbsp;ex)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(ex.Message);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;}
+}</pre>
+<div align="center">
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><a href="#TOP">Back to top</a></pre>
+</div>
+<pre style="font-family: Courier New; font-size: 13; color: #008000; background: white"><a name="Form1.Designer"></a>//Form1.Designer.cs</pre>
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><span style="color: blue">namespace</span>&nbsp;SendMessageCSharp
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">partial</span>&nbsp;<span style="color: blue">class</span>&nbsp;<span style="color: #2b91af">Form1</span>
+&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;</span><span style="color: gray">&lt;summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;Required&nbsp;designer&nbsp;variable.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;</span><span style="color: gray">&lt;/summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;System.ComponentModel.<span style="color: #2b91af">IContainer</span>&nbsp;components&nbsp;=&nbsp;<span style="color: blue">null</span>;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;</span><span style="color: gray">&lt;summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;Clean&nbsp;up&nbsp;any&nbsp;resources&nbsp;being&nbsp;used.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;</span><span style="color: gray">&lt;/summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;</span><span style="color: gray">&lt;param&nbsp;name=&quot;disposing&quot;&gt;</span><span style="color: green">true&nbsp;if&nbsp;managed&nbsp;resources&nbsp;should&nbsp;be&nbsp;disposed;&nbsp;otherwise,&nbsp;false.</span><span style="color: gray">&lt;/param&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">protected</span>&nbsp;<span style="color: blue">override</span>&nbsp;<span style="color: blue">void</span>&nbsp;Dispose(<span style="color: blue">bool</span>&nbsp;disposing)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">if</span>&nbsp;(disposing&nbsp;&amp;&amp;&nbsp;(components&nbsp;!=&nbsp;<span style="color: blue">null</span>))
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;components.Dispose();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">base</span>.Dispose(disposing);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+<span style="color: blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#region</span>&nbsp;Windows&nbsp;Form&nbsp;Designer&nbsp;generated&nbsp;code
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;</span><span style="color: gray">&lt;summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;Required&nbsp;method&nbsp;for&nbsp;Designer&nbsp;support&nbsp;-&nbsp;do&nbsp;not&nbsp;modify</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;the&nbsp;contents&nbsp;of&nbsp;this&nbsp;method&nbsp;with&nbsp;the&nbsp;code&nbsp;editor.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;</span><span style="color: gray">&lt;/summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;<span style="color: blue">void</span>&nbsp;InitializeComponent()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsLabel&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Label</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsComboBox&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">ComboBox</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.TraverseUsersButton&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Button</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.SuspendLayout();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;VaultsLabel</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsLabel.AutoSize&nbsp;=&nbsp;<span style="color: blue">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsLabel.Location&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(80,&nbsp;27);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsLabel.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;VaultsLabel&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsLabel.Size&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(91,&nbsp;13);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsLabel.TabIndex&nbsp;=&nbsp;0;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsLabel.Text&nbsp;=&nbsp;<span style="color: #a31515">&quot;Select&nbsp;vault&nbsp;view:&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;VaultsComboBox</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsComboBox.FormattingEnabled&nbsp;=&nbsp;<span style="color: blue">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsComboBox.Location&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(67,&nbsp;67);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsComboBox.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;VaultsComboBox&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsComboBox.Size&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(121,&nbsp;21);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsComboBox.TabIndex&nbsp;=&nbsp;1;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;TraverseUsersButton</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.TraverseUsersButton.Location&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(67,&nbsp;110);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.TraverseUsersButton.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;TraverseUsersButton&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.TraverseUsersButton.Size&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(121,&nbsp;53);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.TraverseUsersButton.TabIndex&nbsp;=&nbsp;2;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.TraverseUsersButton.Text&nbsp;=&nbsp;<span style="color: #a31515">&quot;Send&nbsp;message&nbsp;to&nbsp;users&nbsp;who&nbsp;can&nbsp;modify&nbsp;Categories&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.TraverseUsersButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color: blue">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.TraverseUsersButton.Click&nbsp;+=&nbsp;<span style="color: blue">new</span>&nbsp;System.<span style="color: #2b91af">EventHandler</span>(<span style="color: blue">this</span>.TraverseUsersButton_Click);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;Form1</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.AutoScaleDimensions&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">SizeF</span>(6F,&nbsp;13F);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.AutoScaleMode&nbsp;=&nbsp;System.Windows.Forms.<span style="color: #2b91af">AutoScaleMode</span>.Font;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.ClientSize&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(268,&nbsp;200);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Controls.Add(<span style="color: blue">this</span>.TraverseUsersButton);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Controls.Add(<span style="color: blue">this</span>.VaultsComboBox);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Controls.Add(<span style="color: blue">this</span>.VaultsLabel);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;Form1&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Text&nbsp;=&nbsp;<span style="color: #a31515">&quot;Send&nbsp;Message&nbsp;to&nbsp;Users&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Load&nbsp;+=&nbsp;<span style="color: blue">new</span>&nbsp;System.<span style="color: #2b91af">EventHandler</span>(<span style="color: blue">this</span>.SendMessageCSharp_Load);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.ResumeLayout(<span style="color: blue">false</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.PerformLayout();
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+<span style="color: blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#endregion</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Label</span>&nbsp;VaultsLabel;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">ComboBox</span>&nbsp;VaultsComboBox;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Button</span>&nbsp;TraverseUsersButton;
+&nbsp;&nbsp;&nbsp;&nbsp;}
+}</pre>
+<div align="center">
+	<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><a href="#TOP">Back to top</a></pre>
+
+</div>
+
+</body>
+
+</html>

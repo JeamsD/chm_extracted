@@ -1,0 +1,227 @@
+<html xmlns:v="urn:schemas-microsoft-com:vml"
+xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+
+<head>
+<title>Stand-alone Applications (C++)</title>
+<meta name=MS-HKWD content="Stand-alone applications">
+<meta name=MS-HKWD content="Stand-alone applications,C++">
+<meta name=MS-HKWD content="C++, stand-alone applications">
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+<style>
+<!--
+ol           { margin-right: 10 }
+div.Section1
+	{page:Section1;}
+-->
+</style>
+</head>
+
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Stand-alone Applications (C++)</h1>
+
+
+<body bgcolor=white lang=SV link=blue vlink=purple style='tab-interval:65.2pt'>
+
+<div class=Section1>
+
+<p>This topic describes how to create a C++ Windows MFC stand-alone application that logs into 
+a SOLIDWORKS PDM Professional file vault and lists the files in the root folder. </p>
+
+<ol style="line-height: 200%; font-family: Verdana; font-size: 8pt; margin-bottom: 10">
+	<li class=kadov-p>Start up Microsoft Visual Studio.</li>
+	<li class=kadov-p>Click <b>File &gt; New &gt; Project &gt; Visual C++ &gt; MFC/ATL &gt; MFC 
+	Application</b>.<ol style="line-height: 200%; margin-bottom: 10">
+		<li>Type the name of your project in <b>Name</b>.</li>
+		<li>Click the <b>Browse</b> button and browse to the folder where to 
+		create your project.</li>
+		<li>Click <b>OK</b>.</li>
+		<li>Click <b>Next</b>.</li>
+		<li>Select application type, <b>Dialog based</b>.</li>
+		<li>Click <b>Next, Next</b>, and <b>Next</b>.</li>
+		<li>Click <b>Finish</b>.</li>
+		<li>Click <b>Build &gt; Build Solution</b>.</li>
+	</ol></li>
+	<li class=kadov-p>Copy <b>Edm.tlb</b> from the API subfolder of the SOLIDWORKS PDM Professional CD 
+	to <i>project_path\project_name\project_name</i>.</li>
+	<li class=kadov-p>Register <b>Edm.tlb</b>. For example, on a computer 
+	running Windows 7 x64:<ol style="line-height: 200%; margin-bottom: 10">
+		<li>Search the disk for <b>
+		regtlibv12.exe</b>.</li>
+		<li>Open a command window and type:<br>
+		<font face="Courier New" size="2">&gt;<b>cd</b> <i>path_to_regtlibv12.exe</i><br>
+		&gt;<b>regtlibv12.exe</b> &quot;<i>project_path\project_name\project_name\</i><b>Edm.tlb&quot;</b></font></li>
+		<li><font face="Verdana">Close the command window.</font></li>
+	</ol></li><span lang=EN-US
+style='font-family:Arial'>
+	<li class=kadov-p>Drag a button from the Toolbox onto the form.</li>
+	<li class=kadov-p>Double-click <b>Button1</b> on the form.</li></span>
+	<span lang=EN-US
+style='font-family:Arial'></span><span lang=EN-US
+style='font-family:Arial'>
+	<li class=kadov-p>Type the following code at the top of the code
+	<font face="Verdana"><span lang=EN-US>after the </span></font>
+	<span lang=EN-US
+style='font-family:Arial'><font face="Courier New" size="2">#include </font>
+	<font face="Verdana">statements</font>:</span><font face="Courier New" size="2"><br>
+	#import &quot;Edm.tlb&quot; no_namespace</font><li class=kadov-p>Find and replace
+	<font color="#008000" face="Courier New" size="2">//TODO: Add your control 
+	notification handler code</font>
+	<font color="#008000" face="Courier New" size="2">here</font>, which appears 
+	in the button's command handler, with the following code. Fix the formatting 
+	of the code if needed.<br>
+	<span style="FONT-FAMILY: 'Courier New'; FONT-SIZE: 10pt" lang="EN-US">
+	<span style="COLOR: green">//Initialize COM (Usually done just once, for 
+	instance in InitInstance.)</span><br>
+	CoInitialize(0);<br>
+	<br>
+	IEdmVault5Ptr poVault;<br>
+	HRESULT hRes = poVault.CreateInstance( __uuidof(EdmVault5), NULL );<br>
+	try<br>
+	{<br>
+	<span style="COLOR: green">//Create a vault interface.</span><br>
+	if( FAILED(hRes) )<br>
+	_com_issue_error(hRes);<br>
+	<br>
+	<span style="COLOR: green">//Log in on the vault.</span><br>
+	poVault-&gt;LoginAuto( &quot;MyVault&quot;, (long)m_hWnd );<br>
+	<br>
+	<span style="COLOR: green">//Get a pointer to the root folder.</span><br>
+	IEdmFolder5Ptr poFolder;<br>
+	poFolder = poVault-&gt;RootFolder;<br>
+	<br>
+	<span style="COLOR: green">//Get position of first file in the folder.</span><br>
+	IEdmPos5Ptr poPos;<br>
+	poPos = poFolder-&gt;GetFirstFilePosition();<br>
+	<br>
+	CString oMessage;<br>
+	if( poPos-&gt;IsNull )<br>
+	oMessage = &quot;The root folder of your vault does not contain any files.&quot;;<br>
+	else<br>
+	oMessage = &quot;The root folder of your vault contains these files:\n&quot;;<br>
+	<br>
+	while( poPos-&gt;IsNull == VARIANT_FALSE )<br>
+	{<br>
+	IEdmFile5Ptr poFile = poFolder-&gt;GetNextFile( poPos );<br>
+	oMessage += (LPCTSTR)poFile-&gt;GetName();<br>
+	oMessage += &quot;\n&quot;;<br>
+	}<br>
+	<br>
+	AfxMessageBox( oMessage );<br>
+	}<br>
+	catch( const _com_error &amp;roError )<br>
+	{<br>
+	<span style="COLOR: green">//We get here if one of the methods above failed.</span><br>
+	if( poVault == NULL )<br>
+	{<br>
+	AfxMessageBox( _T(&quot;Could not create vault interface.&quot; ));<br>
+	}<br>
+	else<br>
+	{<br>
+	BSTR bsName = NULL;<br>
+	BSTR bsDesc = NULL;<br>
+	poVault-&gt;GetErrorString( (long)roError.Error(), &amp;bsName, &amp;bsDesc );<br>
+	bstr_t oName( bsName, false );<br>
+	bstr_t oDesc( bsDesc, false );<br>
+	<br>
+	bstr_t oMsg = &quot;Something went wrong.\n&quot;;<br>
+	oMsg += oName;<br>
+	oMsg += &quot;\n&quot;;<br>
+	oMsg += oDesc;<br>
+	AfxMessageBox( oMsg );<br>
+	}<br>
+	}<br>
+	<br>
+	<span style="COLOR: green">//Deinitialize COM.</span><br>
+	CoUninitialize();</span></li>
+</ol>
+<ol style="font-family: Verdana; font-size: 8pt" start="9">
+	<li>
+	<pre style="color: black; background: white"><font face="Verdana">Replace </font><span style="font-family: Courier New; font-size: 10pt" lang="EN-US">MyVault</span><font face="Verdana"><span lang="EN-US"> in the code </span></font><span style="font-family: Verdana">with the name of a SOLIDWORKS PDM Professional vault on your computer</span><span lang="EN-US" style="font-family: Verdana">.</span></pre>
+	</li>
+	<li>
+	<pre style="color: black; background: white"><span lang=EN-US
+style='font-family:Arial'><span style="font-size: 8pt; font-family: Verdana">If creating this project on a <span lang="sv">64-bit</span> computer, change the platform to x64:</span></pre>
+	<ol style="font-family: Verdana; font-size: 8pt; line-height: 150%">
+		<li>
+		<pre style="color: black; background: white"><span style="font-family: Verdana">Right-click the name of your project in the Solution Explorer and click <b>Properties</b>.</span></pre>
+		</li>
+		<li>
+		<pre style="color: black; background: white"><span style="font-family: Verdana">Click the <b>Configuration Manager </b>button.</span></pre>
+		</li>
+		<li>
+		<pre style="color: black; background: white"><span style="font-family: Verdana">Click the down-arrow button in the <b>Platform</b> column and select <b>New</b>. </span></pre>
+		</li>
+		<li>
+		<pre style="color: black; background: white"><span style="font-family: Verdana">Select <b>x64</b> in <b>New platform</b> and click <b>OK</b>.  </span></pre>
+		</li>
+		<li>
+		<pre style="color: black; background: white"><span style="font-family: Verdana">Click <b>Close</b>. If <b>Active(x64)</b> is not shown in <b>Platform</b>, then repeat Steps 2 - 5 until it is. </span></pre>
+		</li>
+		<li>
+		<pre style="color: black; background: white"><span style="font-family: Verdana">Click <b>OK</b>.</span></pre>
+		</li>
+	</ol>
+	</li>
+	</span>
+	<li>
+	<pre style="color: black; background: white"><font face="Verdana">Specify the project configuration properties:</font></pre>
+<ol style="font-family: Verdana; font-size: 8pt" start="1">
+	<li>
+	<pre style="color: black; background: white"><font face="Verdana">Right-click the name of your project in the Solution Explorer and click <b>Properties</b>.</font></pre>
+	</li>
+	<li>
+	<pre style="color: black; background: white"><font face="Verdana">Click <b>Configuration Properties &gt; General</b>.</font></pre>
+	</li>
+	<li>
+	<pre style="color: black; background: white"><font face="Verdana">Set <b>Use of MFC</b> to <b>Use MFC in a Shared DLL</b>.</font></pre>
+	</li>
+	<li>
+	<pre style="color: black; background: white"><font face="Verdana">Set <b>Character Set</b> to <b>Use Unicode Character Set</b>.</font></pre>
+	</li>
+</ol>
+	</li>
+	<li>
+	<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><font face="Verdana" style="font-size: 8pt">Click <b>Build &gt; Clean Solution</b>.</font></pre>
+	</li>
+	<li>
+	<pre style="color: black; background: white"><font face="Verdana">Click <b>Build &gt; Rebuild Solution</b>.</font></pre>
+	</li>
+	<li>
+	<pre style="color: black; background: white"><font face="Verdana">Click <b>Debug &gt; Start Debugging</b> or press <b>F5</b>.</font></pre>
+	<ol style="font-family: Verdana; font-size: 8pt">
+		<li>
+		<pre style="color: black; background: white"><font face="Verdana">Click <b>Button1</b>.
+
+A message box is displayed that either contains the names of the files in the root folder of the specified vault or informs you that the root folder of the specified vault does not contain any files.</font></pre>
+		</li>
+		<li>
+		<pre style="color: black; background: white"><font face="Verdana">Close the form.</font></pre>
+		</li>
+	</ol>
+	</li>
+	<li>
+	<pre style="color: black; background: white"><font face="Verdana">Click <b>File &gt; Save All</b>.</font></pre>
+	</li>
+</ol>
+<h2 style='background:white'>
+<span lang=EN-GB style='font-family:Verdana;mso-ansi-language:EN-GB'><o:p>&nbsp;See 
+Also</o:p></span></h2>
+<p style='background:white'><a href="StandAloneApp.htm">Stand-alone Applications (VB.NET)</a></p>
+<p style='background:white'>
+<a href="Destroy_Deleted_Files_in_Vault_Example_CSharp.htm">Destroy Deleted 
+Files in Vault Example (C++)</a></p>
+<p style='background:white'>
+<a href="Destroy_Deleted_Files_in_Vault_Example_VBNET.htm">Destroy Deleted Files 
+in Vault Example (VB.NET)</a></p>
+
+</div>
+
+</span>
+
+</body>
+
+</html>

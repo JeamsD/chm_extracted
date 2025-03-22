@@ -1,0 +1,217 @@
+<html>
+
+<head>
+<title>Calculate Environmental Impact of an Assembly Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples">
+<meta name=MS-HKWD content="VBA examples,Sustainability analysis">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Sustainability API 
+ Help</span></h1>
+<h1>Calculate Environmental Impact of an Assembly Example (VBA)</h1>
+<p>This example shows how to calculate the environmental impact of an assembly.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Select <b>Tools &gt; References &gt; sustainability 20<i>xx</i> Type Library</b> 
+or <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; Browse...</b> and select <i>
+install_dir</i><b>\sustainability.tlb</b>.<br>
+' 2. Open an assembly.<br>
+' 3. Open an Immediate window.<br>
+' 4. Run to the breakpoint and wait for the environmental impact results to<br>
+'&nbsp;&nbsp;&nbsp; finish updating in the Sustainability Task Pane.<br>
+' 5. Press F5 to finish.<br>
+'<br>
+' Postconditions: <br>
+' 1. Inspect the Immediate window.<br>
+' 2. <b>C:\EnvImpactReport.docx</b> is created and opened.<br>
+' ---------------------------------------------------------------------------</p>
+<p class="APICODE">Dim swApp As SldWorks.SldWorks<br>
+Dim asmDoc As SldWorks.ModelDoc2<br>
+Dim sustain As sustainabilityLib.sustainabilityApp<br>
+Dim materialInfo As sustainabilityLib.SustainabilityMaterial<br>
+Dim assemblyProcess As sustainabilityLib.SustainabilityAssemblyProcess<br>
+Dim assemblyUse As sustainabilityLib.SustainabilityAssemblyUse<br>
+Dim transInfo As sustainabilityLib.SustainabilityTransportation<br>
+Dim eolInfo As sustainabilityLib.SustainabilityEndOfLife<br>
+Dim environmentalImpactInfo As 
+sustainabilityLib.SustainabilityEnvironmentalImpact<br>
+Dim missingComponentList As Variant<br>
+Dim materialclass As String<br>
+Dim materialname As String<br>
+Dim assemblyEnergy As Boolean<br>
+Dim assemblyProcessAmt As Variant<br>
+Dim arrayComponent1(1) As Double<br>
+Dim BuildToLast As Double<br>
+Dim energylifespan As Boolean<br>
+Dim assemblyUseAmt As Variant<br>
+Dim arrayComponent2(5) As Double<br>
+Dim CarbonValues As Variant<br>
+Dim WaterValues As Variant<br>
+Dim AirValues As Variant<br>
+Dim EnergyValues As Variant<br>
+&nbsp;</p>
+<p class="APICODE">Option Explicit<br>
+Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set swApp = Application.<b>SldWorks</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set asmDoc = swApp.<b>ActiveDoc</b><br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set sustain = asmDoc.<b>Extension</b>.<b>GetSustainability</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Assign material to assembly components<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Assign material to assembly components:&quot;<br>
+&nbsp;&nbsp;&nbsp; Set materialInfo = sustain.<b>GetSustainabilityMaterial</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of components 
+missing materials: &quot; &amp; materialInfo.<b>GetMissingMaterialComponentCount</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; missingComponentList = materialInfo.<b>GetMissingMaterialComponentList</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; materialInfo.<b>SetPropertiesForComponent</b> 
+(missingComponentList)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; materialclass = &quot;Steel&quot;<br>
+&nbsp;&nbsp;&nbsp; materialInfo.<b>materialclass</b> = materialclass<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Material class: &quot; &amp; materialclass<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; materialname = &quot;AISI 1020&quot;<br>
+&nbsp;&nbsp;&nbsp; materialInfo.<b>materialname</b> = materialname<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Material name: &quot; &amp; materialname<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; materialInfo.<b>ViewResults</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Assembly Process<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Assembly Process:&quot;<br>
+&nbsp;&nbsp;&nbsp; Set assemblyProcess = sustain.<b>GetSustainabilityAssemblyProcess</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; assemblyProcess.<b>EnergyForAssemblyProcess</b> 
+= True<br>
+&nbsp;&nbsp;&nbsp; assemblyEnergy = assemblyProcess.<b>EnergyForAssemblyProcess</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; arrayComponent1(0) = 10#<br>
+&nbsp;&nbsp;&nbsp; arrayComponent1(1) = 20#<br>
+&nbsp;&nbsp;&nbsp; assemblyProcessAmt = arrayComponent1<br>
+&nbsp;&nbsp;&nbsp; assemblyProcess.<b>AssemblyProcessAmount</b> = 
+assemblyProcessAmt<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Region of assembly as 
+defined in swSustainabilityRegionName_e: &quot; &amp; assemblyProcess.<b>region</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; BuildToLast = 21#<br>
+&nbsp;&nbsp;&nbsp; assemblyProcess.<b>BuiltToLast</b> = BuildToLast<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Built to last: &quot; &amp; assemblyProcess.<b>BuiltToLast</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Units of time as defined in 
+swSustainabilityDurationType_e: &quot; &amp; assemblyProcess.<b>durationType</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Assembly Use<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Assembly Use:&quot;<br>
+&nbsp;&nbsp;&nbsp; Set assemblyUse = sustain.<b>GetSustainabilityAssemblyUse</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; assemblyUse.<b>energyOverlifeSpan</b> = 
+True<br>
+&nbsp;&nbsp;&nbsp; energylifespan = assemblyUse.<b>energyOverlifeSpan</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; arrayComponent2(0) = 10#<br>
+&nbsp;&nbsp;&nbsp; arrayComponent2(1) = 20#<br>
+&nbsp;&nbsp;&nbsp; arrayComponent2(2) = 30#<br>
+&nbsp;&nbsp;&nbsp; arrayComponent2(3) = 40#<br>
+&nbsp;&nbsp;&nbsp; arrayComponent2(4) = 50#<br>
+&nbsp;&nbsp;&nbsp; arrayComponent2(5) = 60#<br>
+&nbsp;&nbsp;&nbsp; assemblyUseAmt = arrayComponent2<br>
+&nbsp;&nbsp;&nbsp; assemblyUse.<b>AssemblyUseAmount</b> = assemblyUseAmt<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Per units of time as defined in 
+swSustainabilityDurationType_e: &quot; &amp; assemblyUse.<b>durationType</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Assembly use region as defined in 
+swSustainabilityRegionName_e: &quot; &amp; assemblyUse.<b>AssemblyRegion</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Transportation<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Transportation (in km):&quot;<br>
+&nbsp;&nbsp;&nbsp; Set transInfo = sustain.<b>GetSustainabilityTransportation</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; By train: &quot; &amp; 
+transInfo.<b>Train</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; By truck: &quot; &amp; transInfo.<b>Truck</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; By boat: &quot; &amp; transInfo.<b>Boat</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; By plane: &quot; &amp; transInfo.<b>Plane</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' End of Life<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Disposal at end of life:&quot;<br>
+&nbsp;&nbsp;&nbsp; Set eolInfo = sustain.<b>GetSustainabilityEndOfLife</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; % recycled: &quot; &amp; 
+eolInfo.<b>recycled</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; % incinerated: &quot; &amp; eolInfo.<b>incinerated</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; % landfill: &quot; &amp; eolInfo.<b>landfill</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Environmental Impact<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Calculated Environmental Impact:&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set environmentalImpactInfo = sustain.<b>GetSustainabilityEnvironmentalImpact</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot; Time over which to evaluate 
+environmental impact: &quot; &amp; environmentalImpactInfo.<b>durationofuse</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot; Units of time over which to evaluate as defined 
+in swSustainabilityDurationType_e: &quot; &amp; environmentalImpactInfo.<b>durationType</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; environmentalImpactInfo.<b>UpdateResults</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Stop<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CarbonValues = environmentalImpactInfo.<b>GetCurrentCarbonFootPrint2</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot; Carbon footprint&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Material: &quot; &amp; CarbonValues(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Use: &quot; &amp; CarbonValues(1)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Transportation: &quot; &amp; CarbonValues(2)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Manufacturing: &quot; &amp; CarbonValues(3)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; End of Life: &quot; &amp; CarbonValues(4)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; WaterValues = environmentalImpactInfo.<b>GetWaterEutrophication2</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot; Water eutrophication&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Material: &quot; &amp; WaterValues(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Use: &quot; &amp; WaterValues(1)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Transportation: &quot; &amp; WaterValues(2)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Manufacturing: &quot; &amp; WaterValues(3)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; End of Life: &quot; &amp; WaterValues(4)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; AirValues = environmentalImpactInfo.<b>GetAirAcidification2</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot; Air acidification&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Material: &quot; &amp; AirValues(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Use: &quot; &amp; AirValues(1)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Transportation: &quot; &amp; AirValues(2)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Manufacturing: &quot; &amp; AirValues(3)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; End of Life: &quot; &amp; AirValues(4)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; EnergyValues = environmentalImpactInfo.<b>GetEnergyConsumption2</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot; Energy consumption&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Material: &quot; &amp; EnergyValues(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Use: &quot; &amp; EnergyValues(1)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Transportation: &quot; &amp; EnergyValues(2)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Manufacturing: &quot; &amp; EnergyValues(3)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; End of Life: &quot; &amp; EnergyValues(4)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim FileType As Long<br>
+&nbsp;&nbsp;&nbsp; Dim FileName As String<br>
+&nbsp;&nbsp;&nbsp; Dim SaveTo As String<br>
+<br>
+&nbsp;&nbsp;&nbsp; FileType = 
+swSustainabilitySaveAsFileType_e.swSustainabilityDocxReport<br>
+&nbsp;&nbsp;&nbsp; FileName = &quot;EnvImpactReport&quot;<br>
+&nbsp;&nbsp;&nbsp; SaveTo = &quot;C:\&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; environmentalImpactInfo.<b>SaveAsReport</b> 
+FileType, FileName, SaveTo</p>
+<p class="APICODE">&nbsp;</p>
+<p class="APICODE">End Sub</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

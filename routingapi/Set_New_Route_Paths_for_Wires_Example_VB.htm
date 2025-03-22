@@ -1,0 +1,124 @@
+<html>
+
+<head>
+<title>Set New Route Paths for Wires Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,wires">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Routing API 
+ Help</span></h1>
+<h1>Set New Route Paths for Wires Example (VBA)</h1>
+<p>This example shows how to <font face="Verdana">set</font><font face="Verdana" style="font-size: 8pt"> 
+new route paths for wires.</font></p>
+<pre>'----------------------------------------------------------------------------
+' Preconditions:
+' 1. Add SOLIDWORKS Routing as an add-in
+'   (in SOLIDWORKS select <b>Tools &gt; Add-Ins &gt; SOLIDWORKS Routing</b>).
+' 2. Add the <b>SOLIDWORKS</b> &lt;<i>version</i>&gt; <b>Routing Type Library </b>as a reference
+'   (in the IDE select <b>Tools &gt; References</b>).
+' 3. Open <i>public_documents</i><b>\samples\tutorial\api\RoutingAssem1.sldasm</b>.
+' 4. Open the Immediate window.
+' 5. Run the macro.
+'
+' Postconditions: Examine the Immediate window.
+'
+' <b>NOTE</b>: Because the assembly document is used elsewhere, do not save
+' any changes when saving it.
+'---------------------------------------------------------------------------
+
+Option Explicit</pre>
+<pre>Sub main()</pre>
+<pre>    Dim swApp As SldWorks.SldWorks
+    Dim swModel As SldWorks.ModelDoc2
+    Dim swModelDoc As SldWorks.ModelDocExtension
+    Dim swTopLevelAssembly As SldWorks.AssemblyDoc
+    Dim rtRouteManager As SWRoutingLib.RouteManager
+    Dim rtElectricalRoute As SWRoutingLib.electricalRoute
+    Dim rtWire As SWRoutingLib.Wire
+    Dim status As Boolean
+    Dim count As Long
+    Dim wires As Variant
+    Dim cableName As String
+    Dim cuttingLength As Double
+    Dim routePathStatus As Long
+    Dim routeSegmentIDs As Variant
+    Dim routeSegmentIDsCount As Long
+    Dim i As Long
+    Dim j As Long
+    Dim k As Long</pre>
+<pre>    ' Connect to SOLIDWORKS
+    Set swApp = Application.SldWorks</pre>
+<pre>    ' Get the active document
+    Set swModel = swApp.<b>ActiveDoc</b>
+    Set swModelDoc = swModel.<b>Extension</b>        </pre>
+<pre>    ' Downcast from model document to assembly document
+    Set swTopLevelAssembly = swModel</pre>
+<pre>    ' Get the RouteManager from the top-level assembly
+    Set rtRouteManager = swTopLevelAssembly.<b>GetRouteManager</b></pre>
+<pre>    If rtRouteManager Is Nothing Then
+        Debug.Print &quot;No RouteManager found in top-level document&quot;
+        Exit Sub
+    End If
+</pre>
+<pre>    ' Select and edit a route
+    status = swModelDoc.<b>SelectByID2</b>(&quot;Route1@Harness1^RoutingAssem1-1@RoutingAssem1&quot;, &quot;ROUTEFABRICATED&quot;, 0, 0, 0, False, 0, Nothing, 0)
+    swModel.<b>EditRoute</b>    </pre>
+<pre>    ' Get electrical route
+    Set rtElectricalRoute = rtRouteManager.<b>GetElectricalRoute</b>
+    If rtElectricalRoute Is Nothing Then
+        Debug.Print &quot;Electrical route not found&quot;
+        Exit Sub
+    End If
+    Debug.Print &quot;Electrical route found&quot;    </pre>
+<pre>    ' Get the number of wires and get the wires
+    count = rtElectricalRoute.<b>GetWiresCount</b>
+    Debug.Print &quot;Number of wires: &quot; &amp; count
+    wires = rtElectricalRoute.<b>GetWires</b>    </pre>
+<pre>    ' For each wire...
+    For i = 0 To count - 1    </pre>
+<pre>        ' Get wire
+        Set rtWire = wires(i)
+         If rtWire Is Nothing Then
+            Exit Sub
+        End If</pre>
+<pre>        Debug.Print &quot;&quot;
+        ' Get wire's cutting length and name of the cable
+        cuttingLength = rtWire.<b>GetCuttingLength</b>
+        Debug.Print &quot;  Cutting length: &quot; &amp; cuttingLength
+        cableName = rtWire.<b>UserName</b>
+        Debug.Print &quot;  Cable name: &quot; &amp; cableName        </pre>
+<pre>        ' Get and set wire's route segments and their IDs
+        routeSegmentIDs = rtWire.<b>GetRouteSegmentIDs</b>
+        routeSegmentIDsCount = rtWire.<b>GetRouteSegmentIDsCount</b>
+        For j = 0 To routeSegmentIDsCount - 1
+            Debug.Print &quot;    Original route segment ID: &quot; &amp; routeSegmentIDs(j)
+            routeSegmentIDs(j) = routeSegmentIDs(j) - 1
+        Next j         
+    
+        ' Set new IDs for the route segments in the wire, clear
+        ' the previous selected route path, and create a new
+        ' route path for the route segments in the wire
+        routePathStatus = rtWire.<b>SetRoutePathForWire</b>(routeSegmentIDs)
+        Debug.Print &quot;    Status of creating new route path (0 = success): &quot; &amp; routePathStatus</pre>
+<pre>        ' Get the wire's route segments and their IDs
+        routeSegmentIDs = rtWire.<b>GetRouteSegmentIDs</b>
+        routeSegmentIDsCount = rtWire.<b>GetRouteSegmentIDsCount</b>
+        For k = 0 To routeSegmentIDsCount - 1
+            Debug.Print &quot;    New route segment ID: &quot; &amp; routeSegmentIDs(k)
+        Next k       
+
+    Next i        </pre>
+<pre>    ' Clear selection
+    swModel.<b>ClearSelection2</b> True    </pre>
+<pre>    ' Exit edit mode
+    swTopLevelAssembly.<b>EditAssembly</b></pre>
+<pre>End Sub
+</pre>
+
+</body>
+
+</html>

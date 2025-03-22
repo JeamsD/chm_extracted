@@ -1,0 +1,152 @@
+<html>
+
+<head>
+<title>Get XML Stream Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,XML stream">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Document 
+ Manager API Help</span></h1>
+<h1>Get XML Stream Example (C#)</h1>
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p>This example shows how to 
+	get an embedded XML stream in a SOLIDWORKS document using the SOLIDWORKS Document Manager API.<br>
+	<span style="color:Green">
+	<br>
+	</span><span style="color:Green"><font face="Courier New" size="2">//</font></span><span style="color:Green"><font face="Courier New" size="2">---------------------------------------------------------------------------
+	<br>
+	// Preconditions: <br>
+	// 1. Read the SOLIDWORKS Document Manager API <br>
+	//&nbsp;&nbsp;&nbsp; <b>Getting Started </b>topic and ensure that the required 
+	<br>
+	//&nbsp;&nbsp;&nbsp; DLLs have been registered. <br>
+	// 2. Copy and paste this module into a C# console <br>
+	//&nbsp;&nbsp;&nbsp; application in Microsoft 
+	Visual Studio. <br>
+	// 3. Ensure that the specified document exists <br>
+	//&nbsp;&nbsp;&nbsp; (or point to another 
+	document). <br>
+	// 4. Add the <b>SolidWorks.Interop.swdocumentmgr.dll</b> <br>
+	//&nbsp;&nbsp;&nbsp; reference to the 
+	project: <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;a. Right-click the solution in Solution Explorer. <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;b. Click <b>Add Reference</b>. <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;c. Click <b>Browse</b>. <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;d. Click:<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <i><b>&nbsp;</b>install_dir</i><b>\api\redist\SolidWorks.Interop.swdocumentmgr.dll</b>.
+	<br>
+	// 5. Substitute <i>your_license_code</i> with your <br>
+	//&nbsp;&nbsp;&nbsp; SOLIDWORKS 
+	Document Manager license key. <br>
+	// <br>
+	// Postconditions: Locate the XML stream in the current directory. <br>
+	</font>
+	</span><span style="color:Green"><font face="Courier New" size="2">//</font></span><span style="color:Green"><font face="Courier New" size="2">-------------------------------------------------------------------------- <br>
+	<br>
+	</font>
+	</span><font size="2" face="Courier New"><span style="color:Blue">using</span><span style="color:Black"> 
+	System;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	System.Diagnostics;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	System.Collections.Generic;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	System.Text;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	SolidWorks.Interop.swdocumentmgr; <br>
+	</span><span style="color:Blue">class</span><span style="color:Black">
+	</span><span style="color:#2b91af">Program</span><span style="color:Black">
+	<br>
+	{ <br>
+	&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color:Blue">static</span><span style="color:Black">
+	</span><span style="color:Blue">void</span><span style="color:Black"> Main(</span><span style="color:Blue">string</span><span style="color:Black">[] 
+	args)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;{ <br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">const</span><span style="color:Black">
+	</span><span style="color:Blue">string</span><span style="color:Black"> 
+	sLicenseKey = </span><span style="color:#a31515">&quot;</span><span style="color: Green"><i>your_license_code</i></span><span style="color:#a31515">&quot;</span><span style="color:Black">;
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//Specify your license key <br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">const</span><span style="color:Black">
+	</span><span style="color:Blue">string</span><span style="color:Black"> 
+	sDocFileName = </span><span style="color:#a31515">&quot;C:\\Users\\Public\\Documents\\SOLIDWORKS\\SOLIDWORKS 2018\\samples\\tutorial\\EDraw\\claw\\claw-mechanism.sldasm&quot;</span><span style="color:Black">;
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">SwDMClassFactory</span><span style="color:Black"> 
+	swClassFact = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">SwDMClassFactory</span><span style="color:Black">);
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">SwDMApplication</span><span style="color:Black"> 
+	swDocMgr = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">SwDMApplication</span><span style="color:Black">);
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">SwDMDocument</span><span style="color:Black"> 
+	swDoc = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">SwDMDocument</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">SwDmDocumentType</span><span style="color:Black"> 
+	nDocType = 0; <br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> 
+	sPathName = </span><span style="color:Blue">null</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">SwDmDocumentOpenError</span><span style="color:Black"> 
+	nRetVal = 0;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">SwDmXmlDataError</span><span style="color:Black"> 
+	nRetVal2 = 0;<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// Determine type of SOLIDWORKS 
+	file based on file extension <br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> 
+	(sDocFileName.EndsWith(</span><span style="color:#a31515">&quot;sldprt&quot;</span><span style="color:Black">))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType = </span><span style="color:#2b91af">SwDmDocumentType</span><span style="color:Black">.swDmDocumentPart;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">else</span><span style="color:Black">
+	</span><span style="color:Blue">if</span><span style="color:Black"> (sDocFileName.EndsWith(</span><span style="color:#a31515">&quot;sldasm&quot;</span><span style="color:Black">))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType = </span><span style="color:#2b91af">SwDmDocumentType</span><span style="color:Black">.swDmDocumentAssembly;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">else</span><span style="color:Black">
+	</span><span style="color:Blue">if</span><span style="color:Black"> (sDocFileName.EndsWith(</span><span style="color:#a31515">&quot;slddrw&quot;</span><span style="color:Black">))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType = </span><span style="color:#2b91af">SwDmDocumentType</span><span style="color:Black">.swDmDocumentDrawing;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">else<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// Not a SOLIDWORKS file <br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType = </span>
+	<span style="color:#2b91af">SwDmDocumentType</span><span style="color:Black">.swDmDocumentUnknown;<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// So cannot open <br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">return</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} <br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// Strip off SOLIDWORKS file 
+	extension (sldxxx) <br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// 
+	and add XML extension (xml) <br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sPathName = sDocFileName.Substring(0, sDocFileName.Length - 6); <br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sPathName = sPathName + </span><span style="color:#a31515">&quot;xml&quot;</span><span style="color:Black">;
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swClassFact = </span><span style="color:Blue">new</span><span style="color:Black">
+	</span><span style="color:#2b91af">SwDMClassFactory</span><span style="color:Black">();
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDocMgr = (</span><span style="color:#2b91af">SwDMApplication</span><span style="color:Black">)</span></font><font face="Courier New"><font size="2"><span style="color:Black">swClassFact.GetApplication(sLicenseKey); <br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDoc = (</span><span style="color:#2b91af">SwDMDocument</span><span style="color:Black">)swDocMgr.GetDocument(sDocFileName, 
+	nDocType, </span><span style="color:Blue">false</span><span style="color:Black">,
+	</span><span style="color:Blue">out</span><span style="color:Black"> nRetVal);
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDoc.<b>GetXmlStream</b>(sPathName, </span>
+	<span style="color:Blue">ref</span><span style="color:Black"> nRetVal2);&nbsp;&nbsp;
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></font><span style="color:Black"><font size="2"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;} <br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<br>
+	} </font> </span></font></div>
+
+</body>
+
+</html>

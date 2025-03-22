@@ -1,0 +1,284 @@
+<html>
+
+<head>
+<title>Create Plots for a Static Study Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,result plots">
+<meta name=MS-HKWD content="VBA examples,result probes">
+
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Create Plots for a Static Study Example (VBA)</h1>
+<p>This example shows how to create plots of displacement, stress, and strain 
+results in a static study. </p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+'&nbsp; 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+'&nbsp; 2. Add the SOLIDWORKS Simulation type library as a reference (in the 
+IDE,<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS Simulation
+</b><i>version</i><b> type library</b>).<br>
+'&nbsp; 3. Ensure that <b>c:\temp</b> exists.<br>
+'&nbsp; 4. Open <i>public_documents</i><b>\samples\Simulation Examples\tutor1.sldprt</b>.<br>
+'&nbsp; 5. Open the Immediate window.<br>
+'<br>
+' Postconditions:<br>
+'&nbsp; 1. Deletes all default static study plots from the model document.<br>
+'&nbsp; 2. Activates the <b>Ready</b> static study.<br>
+'&nbsp; 3. Meshes and runs the study.<br>
+'&nbsp; 4. Creates <b>Displacement1</b> plot.<br>
+'&nbsp; 5. Changes the units of the displacement plot.<br>
+'&nbsp; 6. Creates and activates<b> Stress2</b> plot.<br>
+'&nbsp; 7. Probes and annotates <b>Stress2</b> and saves the 
+probed result plot to <b><br>
+</b>'<b>&nbsp;&nbsp;&nbsp;&nbsp; c:\temp\tutor1-Ready-Image-1.png</b>.<br>
+'&nbsp; 8. Creates <b>Strain1</b> plot.<br>
+'&nbsp; 9. Applies a view orientation to each plot.<br>
+' 10. Gets the minimum and maximum values for the result plots.<br>
+' 11. Click <b>OK</b> to close each message box.<br>
+' 12. Detect stress hot spots and singularities.<br>
+' 13. Creates the <b>Stress Hot Spot1</b> plot and gets hot spot nodes and 
+elements.<br>
+' 14. Inspect <b>c:\temp\tutor1-Ready-Image-1.png</b>.<br>
+' 15. Inspect the Immediate window.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+' ---------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS As 
+CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim CWMesh As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; Dim CWResult As CosmosWorksLib.CWResults<br>
+&nbsp;&nbsp;&nbsp; Dim CWCFf As CosmosWorksLib.CWPlot<br>
+&nbsp;&nbsp;&nbsp; Dim CWProbeResultsManager As 
+CosmosWorksLib.CWResultsProbeManager</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim errCode As Long<br>
+&nbsp;&nbsp;&nbsp; Dim el As Double, tl As Double</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim Disp&nbsp; As Variant, Stress As 
+Variant, Strn As Variant<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SelNodeElemVariant As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim SelNodeElemWarnings As Variant</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Const URESMax As Double = 1004928&nbsp;&nbsp; 
+'nm<br>
+&nbsp;&nbsp;&nbsp; Const URESMin As Double = 0#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'nm<br>
+&nbsp;&nbsp;&nbsp; Const VONMax&nbsp; As Double = 284&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'MPa<br>
+&nbsp;&nbsp;&nbsp; Const VONMin&nbsp; As Double = 0.797&nbsp;&nbsp;&nbsp;&nbsp; 
+'MPa<br>
+&nbsp;&nbsp;&nbsp; Const MaxStrn As Double = 0.00352<br>
+&nbsp;&nbsp;&nbsp; Const MinStrn As Double = 0.00000294<br>
+&nbsp;&nbsp; <br>
+</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Set SwApp = 
+Application.SldWorks</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = SwApp.<b>GetAddInObject</b>(&quot;CosmosWorks.CosmosWorks&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWAddinCallBack object&quot;, True<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;No 
+CosmosWorks object&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get active document<br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Delete all default static study plots 
+from this model<br>
+&nbsp;&nbsp;&nbsp; ActDoc.<b>DeleteAllDefaultStaticStudyPlots</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get Ready study<br>
+&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;No study 
+manager object&quot;, True<br>
+&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 0<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(0)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;No study object&quot;, 
+True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Set static study options<br>
+&nbsp;&nbsp;&nbsp; Dim StudyOptions As CosmosWorksLib.CWStaticStudyOptions<br>
+&nbsp;&nbsp;&nbsp; Set StudyOptions = Study.<b>StaticStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>AdaptiveMethodType</b> = 2<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>PAdaptiveConvergenceCriteria</b> = 0<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>PAdaptiveErrorLimit</b> = 1#<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>PAdaptiveMaxIterations</b> = 4<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>PAdaptiveMaxPOrder</b> = 5<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>PAdaptiveStartingPOrder</b> = 2<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>PAdaptiveStrainEnergyErrorLimit</b> = 2#<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>IncludeRemarkInReport</b> = 1<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>RemarkComment</b> = &quot;Remark comment&quot;<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>NoPenetration</b> = 1<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>IgnoreClearanceForSurfaceContact</b> = 1<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>IncompatibleBondingOption</b> = 
+swsIncompatibleBondingOption_Automatic<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>IncludeGlobalFriction</b> = 1<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>FrictionCoefficient</b> = 0.5</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Mesh<br>
+&nbsp;&nbsp;&nbsp; Set CWMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CWMesh Is Nothing Then ErrorMsg SwApp, &quot;No mesh object&quot;, 
+False<br>
+&nbsp;&nbsp;&nbsp; CWMesh.<b>Quality</b> = 1<br>
+&nbsp;&nbsp;&nbsp; Call CWMesh.<b>GetDefaultElementSizeAndTolerance</b>(0, el, 
+tl)<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Mesh failed&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get results<br>
+&nbsp;&nbsp;&nbsp; Set CWResult = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWResult Is Nothing Then ErrorMsg SwApp, &quot;No result 
+object&quot;, False<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Time taken in seconds for 
+input phase: &quot; &amp; Study.<b>GetTimeTakenForInputPhase</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Time taken in seconds to solve this study: &quot; &amp; 
+Study.<b>GetTotalSolutionTime<br>
+&nbsp;</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create displacement plot<br>
+&nbsp;&nbsp;&nbsp; Set CWCFf = CWResult.<b>CreatePlot</b>(swsResultDisplacementOrAmplitude, 
+swsDisplacementComponentURES, swsLinearUnitCentimeters, False, errCode)<br>
+&nbsp;&nbsp;&nbsp; If CWCFf Is Nothing Then ErrorMsg SwApp, &quot;Failed to create 
+plot&quot;, False</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Change the units from cm to in<br>
+&nbsp;&nbsp;&nbsp; errCode = CWCFf.<b>SetComponentUnitAndValueByElem</b>(swsDisplacementComponentURES, 
+swsLinearUnitInches, False)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Apply top view orientation<br>
+&nbsp;&nbsp;&nbsp; errCode = CWCFf.<b>ApplyNameViewOrientation2</b>(swsNameViewOrientation_Top)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Activate plot<br>
+&nbsp;&nbsp;&nbsp; errCode = CWCFf.<b>ActivatePlot</b>()<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Plot is not activated&quot;, 
+True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get min/max resultant displacements from 
+plot<br>
+&nbsp;&nbsp;&nbsp; Disp = CWCFf.<b>GetMinMaxResultValues</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No displacement result 
+values&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If (Disp(1) &lt; 0.95 * URESMin) Or (Disp(1) 
+&gt; 1.05 * URESMin) Then<br>
+&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;URES minimum % error = &quot; &amp; (((Disp(1) - 
+URESMin) / URESMin) * 100), False<br>
+&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If (Disp(3) &lt; 0.95 * URESMax) Or (Disp(3) 
+&gt; 1.05 * URESMax) Then<br>
+&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;URES maximum % error = &quot; &amp; (((Disp(3) - 
+URESMax) / URESMax) * 100), False<br>
+&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create stress plot<br>
+&nbsp;&nbsp;&nbsp; Set CWCFf = CWResult.<b>CreatePlot</b>(swsResultStress, 
+swsStaticNodalStress_VON, swsStrengthUnitPascal, False, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to create plot&quot;, 
+True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Apply bottom view orientation<br>
+&nbsp;&nbsp;&nbsp; errCode = CWCFf.<b>ApplyNameViewOrientation2</b>(swsNameViewOrientation_Bottom)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Activate plot<br>
+&nbsp;&nbsp;&nbsp; errCode = CWCFf.<b>ActivatePlot</b>()<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Plot is not activated&quot;, 
+True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get min/max von Mises stresses from plot<br>
+&nbsp;&nbsp;&nbsp; Stress = CWCFf.<b>GetMinMaxResultValues</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No stress results&quot;, 
+True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If (Stress(1) &lt; 0.95 * VONMin) Or 
+(Stress(1) &gt; 1.05 * VONMin) Then<br>
+&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot; Minimum von Mises stress % error = &quot; &amp; 
+(((Stress(1) - VONMin) / VONMin) * 100), False<br>
+&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If (Stress(3) &lt; 0.95 * VONMax) Or 
+(Stress(3) &gt; 1.05 * VONMax) Then<br>
+&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;Maximum von Mises stress % error = &quot; &amp; 
+(((Stress(3) - VONMax) / VONMax) * 100), False<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Probe stress plot at two locations<br>
+&nbsp;&nbsp;&nbsp; Set CWProbeResultsManager = CWCFf.<b>GetResultsProbeManager</b>(errCode)<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = CWProbeResultsManager.<b>BeginProbing</b>()<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CWProbeResultsManager.<b>ClearSelectionAndAnnotations</b><br>
+&nbsp;&nbsp;&nbsp; CWProbeResultsManager.<b>ProbingOption</b> = 
+swsProbePostResultOption_AtNodeElemNumber<br>
+&nbsp;&nbsp;&nbsp; SelNodeElemVariant = Array(1033, 924)<br>
+&nbsp;&nbsp;&nbsp; errCode = CWProbeResultsManager.<b>ShowAnnotationOnSelNodeElems</b>((SelNodeElemVariant), 
+SelNodeElemWarnings)<br>
+&nbsp;&nbsp;&nbsp; If errCode = 14 Then ErrorMsg SwApp, &quot;Not all specified nodes 
+or elements are annotated&quot;, True</p>
+<p class="APICODE"><br>
+&nbsp;&nbsp;&nbsp; errCode = CWProbeResultsManager.<b>CaptureProbedResultPlotAsPNGImage</b>(&quot;c:\temp\&quot;, 
+&quot;tutor1-Ready-Image-1&quot;)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = CWProbeResultsManager.<b>EndProbing</b>()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create strain plot<br>
+&nbsp;&nbsp;&nbsp; Set CWCFf = CWResult.<b>CreatePlot</b>(swsResultStrain, 
+swsStaticElementalStrain_ESTRN, swsStrengthUnitPascal, True, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to create plot&quot;, 
+True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Apply left view orientation<br>
+&nbsp;&nbsp;&nbsp; errCode = CWCFf.<b>ApplyNameViewOrientation2</b>(swsNameViewOrientation_Left)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Activate plot<br>
+&nbsp;&nbsp;&nbsp; errCode = CWCFf.<b>ActivatePlot</b>()<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Plot is not activated&quot;, 
+True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get min/max strains from plot<br>
+&nbsp;&nbsp;&nbsp; Strn = CWCFf.<b>GetMinMaxResultValues</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No strain results&quot;, 
+True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If (Strn(1) &lt; 0.95 * MinStrn) Or (Strn(1) 
+&gt; 1.05 * MinStrn) Then<br>
+&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;Minimum strain % error = &quot; &amp; (((Strn(1) - 
+MinStrn) / MinStrn) * 100), False<br>
+&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If (Strn(3) &lt; 0.95 * MaxStrn) Or (Strn(3) 
+&gt; 1.05 * MaxStrn) Then<br>
+&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;Maximum strain % error = &quot; &amp; (((Strn(3) - 
+MaxStrn) / MaxStrn) * 100), False<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Detect stress hot spots and singularities<br>
+&nbsp;&nbsp;&nbsp; Dim hotSpotsFound As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim singularitiesFound As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim nodeArray As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim elemArray As Variant<br>
+&nbsp;&nbsp;&nbsp; errCode = CWResult.<b>RunStressHotSpotDiagnosticsAndDetectSingularities</b>(25, 
+True, 3, 0.6, 1.5, 0, hotSpotsFound, singularitiesFound)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create stress hot spot plot and get 
+detected hot spots<br>
+&nbsp;&nbsp;&nbsp; If hotSpotsFound = True Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; errCode = CWResult.<b>GetDetectedHotSpotNodes</b>(nodeArray)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; errCode = CWResult.<b>GetDetectedHotSpotElements</b>(elemArray)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set CWCFf = CWResult.<b>CreateStressHotSpotPlot</b>(True, 
+True, errCode)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; <br>
+</p>
+<p class="APICODE">End Sub<br>
+&nbsp;<br>
+</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String, 
+EndTest As Boolean)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

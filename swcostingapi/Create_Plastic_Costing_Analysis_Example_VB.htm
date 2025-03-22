@@ -1,0 +1,166 @@
+<html>
+
+<head>
+<title>Create Plastic Costing Analysis Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,">
+<meta name=MS-HKWD content="VBA examples,plastic Costing analysis">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Costing API 
+ Help</span></h1>
+<h1>Create Plastic Costing Analysis Example (VBA)</h1>
+<p>This example shows how to create a plastic Costing analysis of a part.</p>
+<pre>'------------------------------------------------
+' Preconditions:
+' 1. Specified part to open exists.
+' 2. Add a reference to <b>SldCostingAPI</b> <i>nnnn</i> <b>Type Library</b>.
+' 3. Open the Immediate window.
+' 4. Run the macro.
+'
+' Postconditions:
+' 1. Opens the specified part.
+' 2. Gets the CostingManager.
+' 3. Gets the Costing part.
+' 4. Sets the Costing manufacturing method
+'    to plastic and gets the Costing body.
+' 5. Gets the common Costing analysis and the
+'    plastic Costing analysis.
+' 6. Gets the material classes from the Costing template
+'    and sets the material class.
+' 7. Gets the material names from the Costing template
+'    and sets the material for the material class.
+' 8. Sets and gets plastic Costing analysis
+'    parameters.
+' 9. Gets the total manufacturing cost.
+'10. Examine the Immediate window to see the
+'    results of steps 6 through 9.
+'
+' <b>NOTE</b>: Because the part is used elsewhere, do
+' not save changes when closing it.
+'-------------------------------------------------
+Option Explicit</pre>
+<pre>Dim swApp As SldWorks.SldWorks
+Dim swModel As SldWorks.ModelDoc2
+Dim swModelDocExt As SldWorks.ModelDocExtension
+Dim swcCostMgr As SldCostingAPI.CostManager
+Dim swcCostPart As SldCostingAPI.CostPart
+Dim swcCostBody As SldCostingAPI.CostBody
+Dim swcCostAnalysis As SldCostingAPI.CostAnalysis
+Dim swcPlasticAnalysis As SldCostingAPI.CostAnalysisPlastic
+Dim fileName As String
+Dim errors As Long
+Dim warnings As Long
+Dim totalCost As Double
+Dim templateName As String
+Dim materialClassCount As Long
+Dim materialClasses As Variant
+Dim materialCount As Long
+Dim materials As Variant
+Dim i As Long</pre>
+<pre>Sub main()</pre>
+<pre>    Set swApp = Application.SldWorks
+
+    'Open the specified part
+    fileName = &quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\api\clamp1.sldprt&quot;
+    Set swModel = swApp.<b>OpenDoc6</b>(fileName, swDocumentTypes_e.swDocPART, swOpenDocOptions_e.swOpenDocOptions_Silent, &quot;&quot;, errors, warnings)
+    Set swModelDocExt = swModel.<b>Extension</b>
+    'Get CostingManager
+    Set swcCostMgr = swModelDocExt.<b>GetCostingManager</b>
+    If swcCostMgr Is Nothing Then
+        Debug.Print &quot;CostingManager is nothing.&quot;
+        Exit Sub
+    End If    </pre>
+<pre>    'Get Costing part
+    Set swcCostPart = swcCostMgr.<b>CostingModel</b>
+    If swcCostPart Is Nothing Then
+        Debug.Print &quot;Costing part is nothing.&quot;
+        Exit Sub
+    End If
+
+    'Set the Costing manufacturing method
+    'to plastic and get the Costing body
+    Set swcCostBody = swcCostPart.<b>SetCostingMethod</b>(&quot;&quot;, swcMethodType_e.swcMethodType_Plastic)
+    If swcCostBody Is Nothing Then
+        Debug.Print &quot;Costing body is nothing.&quot;
+        Exit Sub
+    End If
+
+    Debug.Print (&quot;Plastic Costing analysis&quot;)
+    'Get the common Costing analysis
+    Set swcCostAnalysis = swcCostBody.<b>GetCostAnalysis</b>
+    If swcCostAnalysis Is Nothing Then
+        Debug.Print &quot;Failed to activate Costing analysis.&quot;
+        Exit Sub
+    End If
+
+    'Get the Plastic Costing analysis
+    Set swcPlasticAnalysis = swcCostAnalysis.<b>GetSpecificAnalysis</b>
+    If swcPlasticAnalysis Is Nothing Then
+        Debug.Print &quot;Plastic Costing analysis is nothing.&quot;
+        Exit Sub
+    End If
+
+    'Get the material classes from the Costing template
+    materialClassCount = swcPlasticAnalysis.<b>GetMaterialClassesCount</b>
+    If materialClassCount = 0 Then
+        Debug.Print (&quot;No material classes for this plastic Costing analysis.&quot;)
+        Exit Sub
+    End If
+
+    materialClasses = swcPlasticAnalysis.<b>GetMaterialClasses</b>
+    Debug.Print (&quot;  Valid material classes for this plastic Costing Analysis: &quot;)
+    For i = 0 To materialClassCount - 1
+        Debug.Print (&quot;    &quot; &amp; materialClasses(i))
+    Next i
+
+    'Set the material class
+    swcPlasticAnalysis.<b>CurrentMaterialClass</b> = materialClasses(0)
+    Debug.Print (&quot;  Name of the material class for this plastic Costing analysis: &quot; &amp; materialClasses(0))
+
+    'Get the material names from the Costing template
+    templateName = swcCostAnalysis.<b>CostingTemplateName</b>
+    Debug.Print (&quot;  Costing template path and file name: &quot; &amp; templateName)
+    materialCount = swcPlasticAnalysis.<b>GetMaterialCount</b>(materialClasses(0))
+    If materialCount = 0 Then
+        Debug.Print &quot;No materials for this plastic Costing Analysis.&quot;
+        Exit Sub
+    End If
+
+    Debug.Print &quot;  Number of materials: &quot; &amp; materialCount
+    materials = swcPlasticAnalysis.<b>GetMaterials</b>(materialClasses(0))
+    Debug.Print (&quot;  Valid materials for this plastic Costing Analysis: &quot;)
+    For i = 0 To materialCount - 1
+        Debug.Print (&quot;    &quot; &amp; materials(i))
+    Next i
+
+    'Set the material
+    swcPlasticAnalysis.<b>CurrentMaterial</b> = materials(0)
+    Debug.Print (&quot;  Name of material for &quot; &amp; materialClasses(0) &amp; &quot; for this plastic Costing analysis: &quot; &amp; materials(0))
+    'Set and get plastic Costing analysis parameters
+    swcPlasticAnalysis.<b>PercentWasteMaterial</b> = 10
+    swcPlasticAnalysis.<b>MoldCost</b> = swcPlasticAnalysis.<b>MoldCost</b> / 100
+    swcPlasticAnalysis.<b>CalculationMethod</b> = swcMoldCalculationMethod_e.swcMoldCalculationMethod_WallThickness
+    swcPlasticAnalysis.<b>MaxWallThickness</b> = 0.005
+    swcPlasticAnalysis.<b>RunnerSystem</b> = swcRunnerSystem_e.swcRunnerSystem_ColdRunner
+    Debug.Print (&quot;  Plastic Costing analysis parameters:&quot;)
+    Debug.Print (&quot;    Waste percentage: &quot; &amp; swcPlasticAnalysis.<b>PercentWasteMaterial</b> &amp; &quot;%&quot;)
+    Debug.Print (&quot;    Mold cost: $&quot; &amp; swcPlasticAnalysis.<b>MoldCost</b>)
+    Debug.Print (&quot;    Calculation method: &quot; &amp; swcPlasticAnalysis.<b>CalculationMethod</b>)
+    Debug.Print (&quot;    Maximum wall thickness: &quot; &amp; swcPlasticAnalysis.<b>MaxWallThickness</b> &amp; &quot; meters&quot;)
+    'Reset the shop rate to the default
+    swcPlasticAnalysis.<b>ResetShopRate</b>
+    swcPlasticAnalysis.<b>ShopRateApplied</b> = True
+    Debug.Print (&quot;    Default shop rate applied: &quot; &amp; swcPlasticAnalysis.<b>ShopRateApplied</b>)
+    Debug.Print (&quot;    Default shop rate: $&quot; &amp; swcPlasticAnalysis.<b>shoprate</b>)
+    totalCost = swcCostAnalysis.<b>GetTotalCostToManufacture</b>
+    Debug.Print (&quot;Total plastic cost to manufacture: $&quot; &amp; totalCost)</pre>
+<pre>
+End Sub</pre>
+
+</body>
+
+</html>

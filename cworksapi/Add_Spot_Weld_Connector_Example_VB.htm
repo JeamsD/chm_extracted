@@ -1,0 +1,123 @@
+<html>
+
+<head>
+<title>Get Spot Weld Connector Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,spot weld connectors">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Get Spot Weld Connector Example (VBA)</h1>
+<p>This example shows how to get the properties of a spot weld connector.</p>
+
+<p class="APICODE">
+'---------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Ensure the specified part exists.<br>
+' 4. Open the Immediate window.<br>
+'<br>
+' Postconditions:<br>
+' 1. Opens the specified part.<br>
+' 2. Activates the <b>Ready</b> study.<br>
+' 3. Prints properties of <b>Spot Weld Connector-1</b> to the Immediate window.<br>
+' 4. Meshes the model.<br>
+' 5. Analyzes <b>Ready</b>.<br>
+' 6. Inspect the Immediate window, the Simulation study tree, and the<br>
+'&nbsp;&nbsp;&nbsp; graphics area.<br>
+'<br>
+' <b>NOTE:</b> Because the part is used elsewhere, do not save changes.<br>
+'-----------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS As Object<br>
+&nbsp;&nbsp;&nbsp; Dim CWObject As CosmosWorksLib.CwAddincallback<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim CwMesh As CosmosWorksLib.CwMesh<br>
+&nbsp;&nbsp;&nbsp; Dim Part As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Dim LBCMgr As CosmosWorksLib.CWLoadsAndRestraintsManager<br>
+&nbsp;&nbsp;&nbsp; Dim spotWeldConnector As CosmosWorksLib.CWSpotWeldConnector<br>
+&nbsp;&nbsp;&nbsp; Dim longstatus As Long, longwarnings As Long<br>
+&nbsp;&nbsp;&nbsp; Dim errCode As Long<br>
+&nbsp;&nbsp;&nbsp; Dim el As Double, tl As Double</p>
+<p class="APICODE">&nbsp; <br>
+&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>OpenDoc6</b>(&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2019\samples\Simulation Examples\car_model.sldasm&quot;, 2, 0, &quot;&quot;, longstatus, 
+longwarnings)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get SOLIDWORKS Simulation add-in<br>
+&nbsp;&nbsp;&nbsp; Set CWObject = SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWObject Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+the Simulation add-in&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWObject.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+CosmosWorks&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get active document<br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWStudyManager object&quot;<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(0)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;No CWWtudy object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 0</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set LBCMgr = Study.<b>LoadsAndRestraintsManager</b><br>
+&nbsp;&nbsp;&nbsp; If LBCMgr Is Nothing Then ErrorMsg SwApp, &quot;No 
+CWLoadsAndRestraintsManagerobject&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set spotWeldConnector = LBCMgr.<b>GetLoadsAndRestraints</b>(2, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Spot Weld Connector-1&quot;<br>
+&nbsp;&nbsp;&nbsp; spotWeldConnector.<b>SpotWeldConnectorBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Source entity count: &quot; &amp; 
+spotWeldConnector.<b>GetSourceEntityCount</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Target entity count: &quot; &amp; 
+spotWeldConnector.<b>GetTargetEntityCount</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Location count: &quot; &amp; spotWeldConnector.<b>GetSpotWeldLocationCount</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Diameter: &quot; &amp; spotWeldConnector.<b>SpotWeldDiameterValue</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Diameter units as defined in 
+swsLinearUnit_e: &quot; &amp; spotWeldConnector.<b>SpotWeldDiameterUnit</b><br>
+&nbsp;&nbsp;&nbsp; spotWeldConnector.<b>SpotWeldConnectorEndEdit</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Mesh model<br>
+&nbsp;&nbsp;&nbsp; Set CwMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CwMesh Is Nothing Then ErrorMsg SwApp, &quot;No CWMesh object&quot;<br>
+&nbsp;&nbsp;&nbsp; CwMesh.<b>Quality</b> = 1<br>
+&nbsp;&nbsp;&nbsp; Call CwMesh.<b>GetDefaultElementSizeAndTolerance</b>(0, el, 
+tl)<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Mesh failed&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed 
+with error code as defined in swsRunAnalysisError_e: &quot; &amp; errCode</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; <br>
+End Sub</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Sub</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

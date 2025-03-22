@@ -1,0 +1,230 @@
+<html>
+
+<head>
+<title>Create Sheet Metal Costing Analysis Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,sheet metal Costing analysis">
+<meta name=MS-HKWD content="VBA examples">
+<meta name=MS-HKWD content="VBA examples,template overrides">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Costing API 
+ Help</span></h1>
+<h1>Create Sheet Metal Costing Analysis Example (VBA)</h1>
+<p>This example shows how to create a sheet metal Costing analysis.</p>
+
+<pre>'-----------------------------------------------
+' Preconditions:
+' 1. Open:
+'    <b>C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\costing\sheet_metal_part.sldprt</b>
+' 2. Verify that the Costing templates exist by clicking <b>Tools &gt; Options &gt;</b>
+'    <b>System Options &gt; File Locations</b> and selecting <b>Costing templates</b> in
+'    <b>Show folders for</b> in SOLIDWORKS. Click <b>Cancel</b> to close the dialog.
+' 3. Add a reference to <b>sldcostingapi.tlb</b>.
+' 4. Open the Immediate window.
+' 5. Run the macro.
+'
+' Postconditions:
+'&nbsp;1. If prompted to save a temporary template with the costing data,
+'    click <b>Yes</b>, browse to the folder where to save the temporary
+'    template, type the name of the temporary template in <b>File name</b>, 
+'    and click <b>Save</b>.
+' 2. Creates a sheet metal analysis, which can
+'    take one or more minutes to complete.
+' 3. Examine the Immediate window.
+'
+<font size="2">'&nbsp;<b>NOTE</b>:&nbsp;Because&nbsp;the&nbsp;part&nbsp;is&nbsp;used&nbsp;elsewhere,&nbsp;do&nbsp;not<br>'&nbsp;save&nbsp;any&nbsp;changes&nbsp;when&nbsp;closing&nbsp;it.</font>
+'------------------------------------------------
+Option Explicit</pre>
+<pre>Dim swApp As SldWorks.SldWorks
+Dim swModel As SldWorks.ModelDoc2
+Dim swModelDocExt As SldWorks.ModelDocExtension
+Dim swCosting As SldCostingAPI.CostManager
+Dim swCostingPart As SldCostingAPI.CostPart
+Dim swCostingBody As SldCostingAPI.CostBody
+Dim swCostingModel As Object
+Dim swCostingAnalysis As SldCostingAPI.CostAnalysis
+Dim swCostingSheetMetal As SldCostingAPI.CostAnalysisSheetMetal
+Dim sheetmetalCostingTemplatePathName As String
+Dim sheetmetalCostingReportTemplateFolderName As String
+Dim nbrSheetmetalCostingTemplate As Long
+Dim nbrcommonCostingTemplate As Long
+Dim commonCostingTemplates As Variant
+Dim sheetmetalCostingTemplates As Variant
+Dim nbrCostingBodies As Long
+Dim costingBodies As Variant
+Dim costingBodyName As String
+Dim i As Long
+Dim isSheetMetalBody As Boolean
+Dim swCostingFeat As SldCostingAPI.CostFeature
+Dim swCostingNextFeat As SldCostingAPI.CostFeature
+Dim swCostingSubFeat As SldCostingAPI.CostFeature
+Dim swCostingNextSubFeat As SldCostingAPI.CostFeature
+Dim swTemplateOverrides As SldCostingAPI.TemplateOverrides
+Dim costingMethod As Long</pre>
+<pre>Sub main()</pre>
+<blockquote>
+	<pre>Set swApp = Application.SldWorks
+Set swModel = swApp.<b>ActiveDoc</b>
+Set swModelDocExt = swModel.<b>Extension</b></pre>
+	<pre>' Get Costing templates names
+Debug.Print (&quot;Costing template folders:&quot;)
+sheetmetalCostingTemplatePathName = swApp.<b>GetUserPreferenceStringValue</b>(swUserPreferenceStringValue_e.swFileLocationsCostingTemplates)
+Debug.Print &quot;    Name of Costing template folder: &quot; &amp; sheetmetalCostingTemplatePathName
+sheetmetalCostingReportTemplateFolderName = swApp.<b>GetUserPreferenceStringValue</b>(swUserPreferenceStringValue_e.swFileLocationsCostingReportTemplateFolder)
+Debug.Print &quot;    Name of Costing report template folder: &quot; &amp; sheetmetalCostingReportTemplateFolderName
+Debug.Print &quot;&quot;</pre>
+	<pre>' Get CostingManager
+Set swCosting = swModelDocExt.<b>GetCostingManager</b>
+swCosting.<b>WaitForUIUpdate</b>
+</pre>
+	<pre>' Get the number of templates
+nbrSheetmetalCostingTemplate = swCosting.<b>GetTemplateCount</b>(swcCostingType_e.swcCostingType_SheetMetal)
+nbrcommonCostingTemplate = swCosting.<b>GetTemplateCount</b>(swcCostingType_e.swcCostingType_Common)</pre>
+	<pre>' Get names of templates
+sheetmetalCostingTemplates = swCosting.<b>GetTemplatePathnames</b>(swcCostingType_e.swcCostingType_SheetMetal)
+commonCostingTemplates = swCosting.<b>GetTemplatePathnames</b>(swcCostingType_e.swcCostingType_Common)</pre>
+	<pre>ReDim Preserve sheetmetalCostingTemplates(nbrSheetmetalCostingTemplate)
+ReDim Preserve commonCostingTemplates(nbrcommonCostingTemplate)</pre>
+	<pre>Debug.Print (&quot;Costing templates:&quot;)</pre>
+	<pre>' Print names of templates to Immediate window
+For i = 0 To (UBound(sheetmetalCostingTemplates) - 1)
+    Debug.Print &quot;    Name of sheet metal Costing template: &quot; &amp; sheetmetalCostingTemplates(i)
+Next i</pre>
+	<pre>Debug.Print &quot;&quot;</pre>
+	<pre>For i = 0 To (UBound(commonCostingTemplates) - 1)
+    Debug.Print &quot;    Name of common Costing template: &quot; &amp; commonCostingTemplates(i)
+Next i</pre>
+	<pre>Debug.Print &quot;&quot;
+</pre>
+	<pre>' Get Costing part
+Set swCostingModel = swCosting.<b>CostingModel</b>
+Set swCostingPart = swCostingModel</pre>
+	<pre>' Create common Costing analysis
+Set swCostingAnalysis = swCostingPart.<b>CreateCostAnalysis</b>(&quot;c:\program files\solidworks corp\solidworks\lang\english\costing templates\multibodytemplate_default(englishstandard).sldctc&quot;)</pre>
+	<pre>' Get common Costing analysis data
+Debug.Print (&quot;Common Costing analysis data:&quot;)
+Debug.Print (&quot;    Template name:  &quot; &amp; swCostingAnalysis.<b>costingTemplateName</b>)
+Debug.Print (&quot;    Currency code: &quot; &amp; swCostingAnalysis.<b>CurrencyCode</b>)
+Debug.Print (&quot;    Currency name: &quot; &amp; swCostingAnalysis.<b>CurrencyName</b>)
+Debug.Print (&quot;    Currency separator: &quot; &amp; swCostingAnalysis.<b>CurrencySeparator</b>)
+Debug.Print (&quot;    Total manufacturing cost: &quot; &amp; swCostingAnalysis.<b>GetManufacturingCost</b>)
+Debug.Print (&quot;    Material costs: &quot; &amp; swCostingAnalysis.<b>GetMaterialCost</b>)
+Debug.Print (&quot;    Setup cost: &quot; &amp; swCostingAnalysis.<b>GetSetupCost</b>)
+Debug.Print (&quot;    Total cost to charge: &quot; &amp; swCostingAnalysis.<b>GetTotalCostToCharge</b>)
+Debug.Print (&quot;    Total cost to manufacture: &quot; &amp; swCostingAnalysis.<b>GetTotalCostToManufacture</b>)
+Debug.Print (&quot;    Lot size: &quot; &amp; swCostingAnalysis.<b>LotSize</b>)
+Debug.Print (&quot;    Total quantity: &quot; &amp; swCostingAnalysis.<b>TotalQuantity</b>)
+Debug.Print &quot;&quot;</pre>
+	<pre>' Override custom cost per bend and hem cost
+Set swTemplateOverrides = swCostingPart.<b>TemplateOverrides</b>
+' Get Costing method
+costingMethod = swCostingPart.<b>GetCostingMethod</b>(&quot;&quot;)
+If costingMethod = <font SIZE="2">swcMethodType_e.swcMethodType_Sheetmetal</font> Then
+    ' Get and set default and custom cost per bend and hem cost
+    Debug.Print (&quot;Custom cost per bend and hem cost&quot;)
+    Debug.Print (&quot; Default custom cost per bend: $&quot; &amp; swTemplateOverrides.<b>CustomBendCost</b>)
+    Debug.Print (&quot; Default custom hem cost: $&quot; &amp; swTemplateOverrides.<b>CustomHemCost</b>)
+    ' Use custom cost per bend and hem cost
+    swTemplateOverrides.<b>UseCustomBendCost</b> = True
+    swTemplateOverrides.<b>UseCustomHemCost</b> = True
+    Debug.Print (&quot; Use custom cost per bend? &quot; &amp; swTemplateOverrides.<b>UseCustomBendCost</b>)
+    Debug.Print (&quot; Use custom hem cost? &quot; &amp; swTemplateOverrides.<b>UseCustomHemCost</b>)
+    ' Set custom cost per bend and hem cost overrides
+    swTemplateOverrides.<b>CustomBendCost</b> = 4.55
+    swTemplateOverrides.<b>CustomHemCost</b> = 2.17
+    ' Save and use custom cost per bend and hem cost overrides
+    swTemplateOverrides.<b>SaveCostingOverrideSettings</b>
+    swTemplateOverrides.<b>ApplyOverrides</b>
+    Debug.Print (&quot; Custom cost per bend override: $&quot; &amp; swTemplateOverrides.<b>CustomBendCost</b>)
+    Debug.Print (&quot; Custom hem cost override: $&quot; &amp; swTemplateOverrides.<b>CustomHemCost</b>)
+    Debug.Print (&quot;&quot;)</font>
+End If</pre><pre>' Get Costing bodies
+nbrCostingBodies = swCostingPart.<b>GetBodyCount</b>
+If (nbrCostingBodies &gt; 0) Then
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Costing bodies:&quot;
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Number of Costing bodies: &quot; &amp; nbrCostingBodies)
+&nbsp;&nbsp;&nbsp; costingBodies = swCostingPart.<b>GetBodies</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; For i = 0 To (nbrCostingBodies - 1)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set swCostingBody = costingBodies(i)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; costingBodyName = swCostingBody.<b>GetName</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Name of Costing body: &quot; &amp; costingBodyName)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; isSheetMetalBody = False
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' Make sure body is sheet metal
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If (swCostingBody.<b>GetBodyType</b> = swcBodyType_e.swcBodyType_SheetMetal) Then
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; isSheetMetalBody = True
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' Determine analysis status of Costing body
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Select Case swCostingBody.<b>BodyStatus</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case swcBodyStatus_e.swcBodyStatus_NotAnalysed
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' Create Costing analysis
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set swCostingAnalysis = swCostingBody.<b>CreateCostAnalysis</b>(&quot;c:\program files\solidworks corp\solidworks\lang\english\costing templates\sheetmetaltemplate_default(englishstandard).sldcts&quot;)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Creating sheet metal Costing analysis for: &quot; &amp; swCostingBody.<b>GetName</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case swcBodyStatus_e.swcBodyStatus_Analysed
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' Get Costing analysis
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set swCostingAnalysis = swCostingBody.<b>GetCostAnalysis</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Getting sheet metal Costing analysis for: &quot; &amp; swCostingBody.<b>GetName</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case swcBodyStatus_e.swcBodyStatus_Excluded
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' Body excluded from Costing analysis
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Excluded from sheet metal Costing analysis: &quot; &amp; swCostingBody.<b>GetName</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case swcBodyStatus_e.swcBodyStatus_AssignedCustomCost
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' Body has an assigned custom Cost
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Custom cost assigned: &quot; &amp; swCostingBody.<b>GetName</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End Select
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </pre>
+	<pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </pre>
+	<pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Next i</pre><pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If Not isSheetMetalBody Then
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;No sheet metal bodies in part! Exiting macro.&quot;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Exit Sub
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If
+End If</pre><pre>' Get sheet metal Costing Analysis data
+Set swCostingSheetMetal = swCostingAnalysis.<b>GetSpecificAnalysis</b>
+Debug.Print &quot;Sheet metal Costing analysis: &quot;
+Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Current material: &quot; &amp; swCostingSheetMetal.<b>CurrentMaterial</b>)
+Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Current material class: &quot; &amp; swCostingSheetMetal.<b>CurrentMaterialClass</b>)
+Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Current thickness: &quot; &amp; swCostingSheetMetal.<b>CurrentThickness</b>)
+Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Material cost: &quot; &amp; swCostingSheetMetal.<b>MaterialCost</b>)
+Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Material cost from template: &quot; &amp; swCostingSheetMetal.<b>MaterialCostFromTemplate</b>)
+Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Type of blank size: &quot; &amp; swCostingSheetMetal.<b>BlankSizeType</b>)
+Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Blank area from model: &quot; &amp; swCostingSheetMetal.<b>BlankAreaFromModel</b>)
+Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Blank area, include any margins, from model: &quot; &amp; swCostingSheetMetal.<b>FinalAreaFromModel</b>)</pre><pre>Debug.Print (&quot;&quot;)</pre><pre>' Get Costing features
+Debug.Print &quot;Costing features:&quot;
+Set swCostingFeat = swCostingAnalysis.<b>GetFirstCostFeature</b>
+While Not swCostingFeat Is Nothing
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp; Feature: &quot; &amp; swCostingFeat.<b>Name</b>)
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Type: &quot; &amp; swCostingFeat.<b>GetType</b>)
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Setup related: &quot; &amp; swCostingFeat.<b>IsSetup</b>)
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Overridden: &quot; &amp; swCostingFeat.<b>IsOverridden</b>)
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Combined cost: &quot; &amp; swCostingFeat.<b>CombinedCost</b>)
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Combined time: &quot; &amp; swCostingFeat.<b>CombinedTime</b>)
+&nbsp;&nbsp;&nbsp;
+    </pre>
+	<pre>&nbsp;&nbsp;&nbsp; Set swCostingSubFeat = swCostingFeat.<b>GetFirstSubFeature</b>
+&nbsp;&nbsp;&nbsp; While Not swCostingSubFeat Is Nothing
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Subfeature: &quot; &amp; swCostingSubFeat.<b>Name</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Type: &quot; &amp; swCostingSubFeat.<b>GetType</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Setup related: &quot; &amp; swCostingSubFeat.<b>IsSetup</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Overridden: &quot; &amp; swCostingSubFeat.<b>IsOverridden</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Combined cost: &quot; &amp; swCostingSubFeat.<b>CombinedCost</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Combined time: &quot; &amp; swCostingSubFeat.<b>CombinedTime</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set swCostingNextSubFeat = swCostingSubFeat.<b>GetNextFeature</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set swCostingSubFeat = Nothing
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set swCostingSubFeat = swCostingNextSubFeat
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set swCostingNextSubFeat = Nothing
+&nbsp;&nbsp;&nbsp; Wend
+&nbsp;&nbsp;&nbsp; Set swCostingNextFeat = swCostingFeat.<b>GetNextFeature</b>
+&nbsp;&nbsp;&nbsp; Set swCostingFeat = Nothing
+&nbsp;&nbsp;&nbsp; Set swCostingFeat = swCostingNextFeat
+&nbsp;&nbsp;&nbsp; Set swCostingNextFeat = Nothing
+Wend
+&nbsp;&nbsp;&nbsp;
+    </pre>
+</blockquote>
+<pre>End Sub</pre></body></html>

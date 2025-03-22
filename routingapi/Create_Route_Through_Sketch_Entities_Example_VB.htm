@@ -1,0 +1,109 @@
+<html>
+
+<head>
+<title>Create Route Through Sketch Entities Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,sketch entities">
+<meta name=MS-HKWD content="VBA examples,routing">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Routing API 
+ Help</span></h1>
+<h1>Create Route Through Sketch Entities Example (VBA)</h1>
+<p>This example shows how to create a route by specifying sketch entity 
+types and their IDs.</p>
+<pre>'--------------------------------------------
+' Preconditions:
+' 1. Add SOLIDWORKS Routing as an add-in
+'   (in SOLIDWORKS select <b>Tools &gt; Add-Ins &gt; SOLIDWORKS Routing</b>).
+' 2. Add the <b>SOLIDWORKS</b> &lt;<i>version</i>&gt; <b>Routing Type Library</b> as a reference
+'   (in the IDE select <b>Tools &gt; References</b>).
+' 3. Open<b> </b><i>public documents</i><b>\samples\tutorial\api\AutoRouteThroughSketchEntities.sldasm
+</b>' 4. Open the Immediate window.
+' 5. Run the macro.
+'
+' Postconditions:
+' 1. Creates a route using the sketch
+'    points whose entity types and IDs were passed
+'    to IAutoRoute::CreateRouteThroughSketchEntities.
+' 2. Examine the the assembly document to verify.
+' 3. Examine the Immediate window.
+'
+' <b>NOTE</b>: Because the assembly is used elsewhere, 
+' do not save any changes when closing it.
+'-------------------------------------------</pre>
+<pre>Option Explicit</pre>
+<pre>Sub main()</pre>
+<pre>    Dim swApp As SldWorks.SldWorks
+    Dim swModel As SldWorks.ModelDoc2
+    Dim swModelDocExt As SldWorks.ModelDocExtension
+    Dim swTopLevelAssembly As SldWorks.AssemblyDoc
+    Dim rtRouteManager As SWRoutingLib.RouteManager
+    Dim swSelMgr As SldWorks.SelectionMgr
+    Dim swSketchPt1 As SldWorks.SketchPoint
+    Dim swSketchPt2 As SldWorks.SketchPoint
+    Dim status As Boolean
+    Dim routeStatus as Long
+    Dim sketchEntityTypes(1) As Long
+    Dim sketchPt1IDs As Variant
+    Dim sketchPt2IDs As Variant
+    Dim sketchPtIDs(1) As Long</pre>
+<pre>    ' Connect to SOLIDWORKS
+    Set swApp = Application.SldWorks</pre>
+<pre>    ' Get the active document
+    Set swModel = swApp.<b>ActiveDoc</b>
+    Set swModelDocExt = swModel.<b>Extension</b>
+    Set swSelMgr = swModel.<b>SelectionManager</b></pre>
+<pre>    ' Downcast from model document to assembly document
+    Set swTopLevelAssembly = swModel</pre>
+<pre>    ' Get the RouteManager from the top-level assembly
+    Set rtRouteManager = swTopLevelAssembly.<b>GetRouteManager</b></pre>
+<pre>    If rtRouteManager Is Nothing Then
+        Debug.Print &quot;No RouteManager found in top-level document&quot;
+        Exit Sub
+    End If    </pre>
+<pre>    ' Get and edit the route
+    status = swModelDocExt.<b>SelectByID2</b>(&quot;Route1@Harness_1-AutoRouteThroughSketchEntities-1@AutoRouteThroughSketchEntities&quot;, &quot;ROUTEFABRICATED&quot;, 0, 0, 0, False, 0, Nothing, 0)
+    swModel.<b>EditRoute</b>    </pre>
+<pre>    ' Get the AutoRoute
+    Dim rtAutoRoute As AutoRoute
+    Set rtAutoRoute = rtRouteManager.<b>GetAutoRoute</b>    </pre>
+<pre>    If rtAutoRoute Is Nothing Then
+        Debug.Print &quot;No AutoRoute found&quot;
+        Exit Sub
+    End If   </pre>
+<pre>   'Assign the types of sketch entities to be sketch points
+   sketchEntityTypes(0) = 0
+   sketchEntityTypes(1) = 0   </pre>
+<pre>   ' Get the IDs of the sketch points
+   status = swModelDocExt.<b>SelectByID2</b>(&quot;Point3@3DSketch1@Harness_1-AutoRouteThroughSketchEntities-1@AutoRouteThroughSketchEntities&quot;, &quot;EXTSKETCHPOINT&quot;, 4.86125655897816E-02, 2.44300235589649E-02, 1.30597511505374E-02, False, 0, Nothing, 0)
+   Set swSketchPt1 = swSelMgr.<b>GetSelectedObject6</b>(1, -1)
+   sketchPt1IDs = swSketchPt1.<b>GetID
+</b>   Debug.Print &quot;sketchPt1IDs: &quot; &amp; sketchPt1IDs(0); &quot;, &quot; &amp; sketchPt1IDs(1)</pre>
+<pre>   swModel.<b>ClearSelection2</b> True
+
+   status = swModelDocExt.<b>SelectByID2</b>(&quot;Point7@3DSketch1@Harness_1-AutoRouteThroughSketchEntities-1@AutoRouteThroughSketchEntities&quot;, &quot;EXTSKETCHPOINT&quot;, 0.145249999302905, -1.58029634039849E-02, -2.22342355241044E-02, False, 0, Nothing, 0)
+   Set swSketchPt2 = swSelMgr.<b>GetSelectedObject6</b>(1, -1)
+   sketchPt2IDs = swSketchPt2.<b>GetID</b>
+   Debug.Print &quot;sketchPt2IDs: &quot; &amp; sketchPt2IDs(0); &quot;, &quot; &amp; sketchPt2IDs(1)   </pre>
+<pre>   ' Create an array containing the first
+   ' member of each sketch point ID array
+   ' to pass to IAutoRoute::CreateRouteThroughSketchEntities
+   sketchPtIDs(0) = sketchPt1IDs(0)
+   sketchPtIDs(1) = sketchPt2IDs(0)   </pre>
+<pre>   ' Create the route
+   routeStatus = rtAutoRoute.<b>CreateRouteThroughSketchEntities</b>(swAutoRouteConversionMode_e.swOrthogonalAutoRouteMode, swAutoRouteAutoTangencyMode_e.swAutoTangencyMode_ON, sketchEntityTypes, sketchPtIDs)</pre>
+<pre>    ' Clear selection
+    swModel.<b>ClearSelection2</b> True
+    </pre>
+<pre>    ' Return to editing the top-level assembly
+    swTopLevelAssembly.<b>EditAssembly</b></pre>
+<pre>End Sub
+</pre>
+
+</body>
+
+</html>

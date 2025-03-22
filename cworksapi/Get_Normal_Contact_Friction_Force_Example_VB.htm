@@ -1,0 +1,312 @@
+<html>
+
+<head>
+<title>Get Normal Contact/Friction Forces Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,contact forces">
+<meta name=MS-HKWD content="VBA examples,friction forces">
+<meta name=MS-HKWD content="VBA examples,forces">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation 
+ API Help</span></h1>
+<h1>Get Contact or Friction Forces Example (VBA)</h1>
+<p>This example shows how to get the contact or friction forces for selected 
+entities.</p>
+<p><span style="font-weight: bold;">NOTE:</span> To get persistent reference 
+ identifiers (PIDs) for model selections, you can use
+<a href="GettingStarted-swsimulationapi.html">pidcollector.exe</a> 
+ or IModelDocExtension::GetPersistReference3.</p>
+<p class="APICODE">
+'---------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Add the SOLIDWORKS Constant type library as a reference<br>
+'&nbsp;&nbsp;&nbsp; (in the IDE, click <b>Tools &gt; References &gt; <br>
+'&nbsp;&nbsp;&nbsp; SOLIDWORKS version Constant type library</b>).<br>
+' 4. Modify the path to the specified model.<br>
+' 5. Open the Immediate window.<br>
+'<br>
+' Postconditions: Inspect the Immediate window for the x-, y-, z-component <br>
+' and resultant contact forces for the selected entity.<br>
+'<br>
+' NOTE: Because this assembly document is used by<br>
+' SOLIDWORKS Simulation tutorial, do not save any<br>
+' changes when closing the document.<br>
+'-------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Function VerifyLong(SwApp As SldWorks.SldWorks, lExpected As 
+Long, lActual As Long, sMessage As String) As Boolean<br>
+&nbsp;&nbsp;&nbsp; 'This function will compare two long values for equivalence.<br>
+&nbsp;&nbsp;&nbsp; 'If they are different, an error message is reported with {sMessage}<br>
+&nbsp;&nbsp;&nbsp; 'as title, and the function returns false.<br>
+&nbsp;&nbsp;&nbsp; 'If equivalent, the function returns true.<br>
+&nbsp;&nbsp;&nbsp; VerifyLong = True<br>
+&nbsp;&nbsp;&nbsp; If lActual &lt;&gt; lExpected Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, sMessage &amp; &quot;: 
+Expected = &quot; &amp; CStr(lExpected) &amp; &quot; , Actual = &quot; &amp; CStr(lActual)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; VerifyLong = False<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+End Function</p>
+<p class="APICODE">Function SelectByPID(Part As SldWorks.ModelDoc2, PIDName As 
+String, PIDCollection As Collection) As Object<br>
+&nbsp;&nbsp;&nbsp; Dim PID()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Byte<br>
+&nbsp;&nbsp;&nbsp; Dim PIDVariant&nbsp; As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim PIDString&nbsp;&nbsp; As String<br>
+&nbsp;&nbsp;&nbsp; Dim i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Integer<br>
+&nbsp;&nbsp;&nbsp; Dim SelObj&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Object<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get the string from the collection<br>
+&nbsp;&nbsp;&nbsp; PIDString = &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDString = PIDCollection.Item(PIDName)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Parse the string into an array<br>
+&nbsp;&nbsp;&nbsp; PIDVariant = Split(PIDString, &quot;,&quot;)<br>
+&nbsp;&nbsp;&nbsp; ReDim PID(UBound(PIDVariant))<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Change to a byte array<br>
+&nbsp;&nbsp;&nbsp; For i = 0 To (UBound(PIDVariant) - 1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PID(i) = PIDVariant(i)<br>
+&nbsp;&nbsp;&nbsp; Next i<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Select the entity<br>
+&nbsp;&nbsp;&nbsp; Set SelObj = Part.<b>Extension</b>.<b>GetObjectByPersistReference</b>((PID))<br>
+&nbsp;&nbsp;&nbsp; Set SelectByPID = SelObj<br>
+&nbsp;&nbsp;&nbsp; Set SelObj = Nothing<br>
+End Function</p>
+<p class="APICODE">Function PIDInitializer() As Collection<br>
+&nbsp;&nbsp;&nbsp; Dim PIDCollection As New Collection<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Contact plane<br>
+&nbsp;&nbsp;&nbsp; Dim selection1 As String<br>
+&nbsp;&nbsp;&nbsp; 'Constants<br>
+&nbsp;&nbsp;&nbsp; selection1 = 
+&quot;35,29,213,113,218,129,72,162,168,88,152,178,27,137,239,153,84,2,0,0,58,1,0,0,120,1,125,81,193,78,194,64,16,125,168,16,141,26,53,154,112,245,194,17,18,79,38,158,4,132,72,132,104,90,78,132,164,41,237,86,80,218,154,186,68,61,152,244,232,7,248,27,94,252,5,255,139,250,134,210,4,37,233,108,118,103,247,205,190,217,157,55,31,199,192,38,128,100,158,84,26,80,176,225,227,20,47,152,64,99,204,221,24,33,166,196,159,81,197,25,46,49,90,222,177,184,147,136,134,67,31,112,40,238,52,121,114,218,98,198,67,206,194,114,150,229,133,164,128,93,248,97,219,118,148,161,60,203,145,160,88,73,22,249,3,237,253,231,179,242,213,249,238,103,62,165,157,144,214,10,92,97,154,179,200,235,184,134,122,178,156,52,86,146,148,134,229,72,250,125,185,247,170,111,71,15,202,209,41,116,68,168,105,234,104,18,220,95,219,129,59,85,132,231,73,189,137,11,12,209,70,11,117,122,15,209,162,112,41,97,189,152,33,26,57,165,90,44,90,228,209,204,147,47,96,13,38,186,184,194,29,12,244,177,19,243,31,7,249,140,13,224,237,102,208,91,136,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; 
+&quot;156,234,147,174,100,22,171,108,78,58,87,35,53,30,206,187,131,94,166,173,168,82,22,133,162,208,55,31,117,43,208,127,4,44,198,219,200,40,210,179,189,24,88,197,164,43,255,49,126,106,13,203,158,99,136,246,11,23,144,126,96,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; &quot;,Type=1&quot;<br>
+&nbsp;&nbsp;&nbsp; 'Store constants in a collection<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection1, &quot;selection1&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set PIDInitializer = PIDCollection<br>
+End Function</p>
+<p class="APICODE">Function ErrorMsg(SwApp As SldWorks.SldWorks, Message As 
+String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Function</p>
+<p class="APICODE">Sub main()<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim Part As ModelDoc2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS As 
+CosmosWorksLib.COSMOSWORKS, CWAddinCallBack As CosmosWorksLib.CWAddinCallBack, 
+ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager, Study As 
+CosmosWorksLib.CWStudy, CWMesh As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; Dim StudyOptions As Object, CWFeatObj As 
+CosmosWorksLib.CWResults, ActDocExt As SldWorks.ModelDocExtension<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim sModelName As String, sStudyName As 
+String<br>
+&nbsp;&nbsp;&nbsp; Dim sStudyConfig As String<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim&nbsp; longstatus As Long, 
+longwarnings As Long, errCode As Long, lDocType As Long<br>
+&nbsp;&nbsp;&nbsp; Dim i As Long<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim el As Double, el_hold As Double<br>
+&nbsp;&nbsp;&nbsp; Dim tl As Double, tl_hold As Double<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim bStudyFound As 
+Boolean<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim DispArray1 As Variant, Force As Variant<br>
+&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; Dim iMeshUnit As Long, iSolverType As Long, iNumberOfStudies 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim ix As Long, iStudyType As Long<br>
+&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; sModelName = &quot;beam_boltconnection.sldasm&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'Model name<br>
+&nbsp;&nbsp;&nbsp; If InStr(UCase(sModelName), &quot;.SLDASM&quot;) &gt; 0 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lDocType = swDocASSEMBLY<br>
+&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lDocType = swDocPART<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'SOLIDWORKS configuration that study is active under (Blank &quot;&quot; = use default)<br>
+&nbsp;&nbsp;&nbsp; sStudyConfig = &quot;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; sStudyName = &quot;Study 1&quot;&nbsp;&nbsp;'Study name</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim PIDCollection As New Collection<br>
+&nbsp;&nbsp;&nbsp; Set PIDCollection = PIDInitializer()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Exit Sub&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Part = SwApp.OpenDoc6(&quot;<i>public_documents</i><b>\samples\tutorial\api\beam_boltconnection.SLDASM</b>&quot;, 
+lDocType, 1, &quot;&quot;, longstatus, longwarnings)<br>
+&nbsp;&nbsp;&nbsp; If Part Is Nothing Then ErrorMsg SwApp, &quot;Failed to open: &quot; &amp; 
+sModelName: GoTo Lastline</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, &quot;CWAddinCallBack 
+object not found&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;COSMOSWORKS 
+object not found&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get active document<br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b><br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'If needed, rebuild the model<br>
+&nbsp;&nbsp;&nbsp; Set ActDocExt = Part.<b>Extension</b><br>
+&nbsp;&nbsp;&nbsp; If (ActDocExt.<b>NeedsRebuild</b> = True) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Part.<b>ForceRebuild3</b> (False)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'If needed, change the SOLIDWORKS configuration to 
+activate the study<br>
+&nbsp;&nbsp;&nbsp; If sStudyConfig &lt;&gt; &quot;&quot; Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Part.<b>ShowConfiguration2</b> (sStudyConfig)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b><br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;StudyMngr 
+object not there&quot;: GoTo Lastline<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Find the study<br>
+&nbsp;&nbsp;&nbsp; bStudyFound = False<br>
+&nbsp;&nbsp;&nbsp; iNumberOfStudies = StudyMngr.<b>StudyCount</b><br>
+&nbsp;&nbsp;&nbsp; For ix = 0 To iNumberOfStudies<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = ix<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(ix)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg 
+SwApp, &quot;Failed to get study number: &quot; &amp; ix: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If UCase(Study.<b>Name</b>) = 
+UCase(sStudyName) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bStudyFound = 
+True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Exit For<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; Next<br>
+&nbsp;&nbsp;&nbsp; If bStudyFound = False Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;Failed to find study 
+named: &quot; &amp; sStudyName: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CWMesh Is Nothing Then ErrorMsg SwApp, &quot;No mesh object&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Check to use the default 
+element size or tolerance<br>
+&nbsp;&nbsp;&nbsp; If ((el = 0) Or (tl = 0)) Then<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Get the default 
+element size and tolerance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Call CWMesh.<b>GetDefaultElementSizeAndTolerance</b>(iMeshUnit, 
+el_hold, tl_hold)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'If element size was not 
+entered, use the default<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If el = 0 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; el = el_hold<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'If tolerance size 
+was not entered, use the default<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tl = 0.025<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If tl = 0 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tl = tl_hold<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create Mesh<br>
+&nbsp;&nbsp;&nbsp; 'Using the curvature-based mesher?<br>
+&nbsp;&nbsp;&nbsp; If CWMesh.<b>MesherType</b> = swsMesherTypeAlternate Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Yes,&nbsp; set the min element size 
+equal to the max element size<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, 
+el, el)<br>
+&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'No, using the standard mesher<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, 
+el, tl)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;CreateMesh failed: 
+Error code = &quot; &amp; CStr(errCode): GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Check the mesh state<br>
+&nbsp;&nbsp;&nbsp; If VerifyLong(SwApp, swsMeshStateExistsAndCurrent, CWMesh.<b>MeshState</b>, 
+&quot;MeshState indicates that mesh is not current and/or doesn't exist&quot;) = False 
+Then GoTo Lastline</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Check the number of components that 
+failed to mesh<br>
+&nbsp;&nbsp;&nbsp; If VerifyLong(SwApp, 0, CWMesh.<b>GetNoOfFailedComponents</b>, 
+&quot;GetNoOfFailedComponents indicates mesh failure occurred&quot;) = False Then GoTo 
+Lastline</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get analysis type<br>
+&nbsp;&nbsp;&nbsp; iStudyType = Study.<b>AnalysisType</b><br>
+&nbsp;&nbsp;&nbsp; If iStudyType = swsAnalysisStudyTypeStatic Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = Study.<b>StaticStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf iStudyType = swsAnalysisStudyTypeThermal Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = Study.<b>ThermalStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf iStudyType = swsAnalysisStudyTypeFrequency Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = Study.<b>FrequencyStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf iStudyType = swsAnalysisStudyTypeBuckling Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = Study.<b>BucklingStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf iStudyType = swsAnalysisStudyTypeNonlinear Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = Study.<b>NonlinearStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;StudyOptions for 
+this analysis type is not yet supported&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; If StudyOptions Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+get StudyOptions object&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Set solver type<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>SolverType</b> = iSolverType<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Running analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed with 
+error code &quot; &amp; errCode: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Getting results<br>
+&nbsp;&nbsp;&nbsp; Set CWFeatObj = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWFeatObj Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+results object&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; DispArray1 = 
+Array(SelectByPID(Part, &quot;selection1&quot;, PIDCollection))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Force = CWFeatObj.<b>GetContactForcesAndFriction</b>(1, 
+Nothing, (DispArray1), swsNForceType_e.swsNForceTypeNormal, 0, errCode)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, 
+&quot;Failed to get contact force result&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&nbsp; 
+x, y, z, and resultant contact forces:&quot;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; For i = 0 To UBound(Force)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print 
+(&quot;&nbsp;&nbsp;&nbsp; &quot; &amp; Force(i))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Next<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">Lastline:<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Sub</p>
+<p>&nbsp;</p>
+
+</body>
+
+</html>

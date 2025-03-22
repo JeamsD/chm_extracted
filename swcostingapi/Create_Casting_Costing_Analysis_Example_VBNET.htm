@@ -1,0 +1,179 @@
+<html>
+
+<head>
+<title>Create Casting Costing Analysis Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples,">
+<meta name=MS-HKWD content="VB.NET examples,casting Costing analysis">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Costing API 
+ Help</span></h1>
+<h1>Create Casting Costing Analysis Example (VB.NET)</h1>
+<p>This example shows how to create a casting Costing analysis of a part.</p>
+
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><span style="color: green">'-----------------------------------------------</span>
+<span style="color: green">'&nbsp;Preconditions:</span>
+<span style="color: green">'&nbsp;1.&nbsp;Specified&nbsp;part&nbsp;to&nbsp;open&nbsp;exists.</span>
+<span style="color: green">'&nbsp;2.&nbsp;Add&nbsp;a&nbsp;reference&nbsp;to&nbsp;<b>SolidWorks.Interop.sldcostingapi.dll</b>.</span>
+<span style="color: green">'&nbsp;3.&nbsp;Open&nbsp;the&nbsp;Immediate&nbsp;window.</span>
+<span style="color: green">'&nbsp;4.&nbsp;Run&nbsp;the&nbsp;macro.</span>
+<span style="color: green">'</span>
+<span style="color: green">'&nbsp;Postconditions:</span>
+<span style="color: green">'&nbsp;1.&nbsp;Opens&nbsp;the&nbsp;specified&nbsp;part.</span>
+<span style="color: green">'&nbsp;2.&nbsp;Gets&nbsp;the&nbsp;CostingManager.</span>
+<span style="color: green">'&nbsp;3.&nbsp;Gets&nbsp;the&nbsp;Costing&nbsp;part.</span>
+<span style="color: green">'&nbsp;4.&nbsp;Sets&nbsp;the&nbsp;Costing&nbsp;manufacturing&nbsp;method</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;casting&nbsp;and&nbsp;gets&nbsp;the&nbsp;Costing&nbsp;body.</span>
+<span style="color: green">'&nbsp;5.&nbsp;Gets&nbsp;the&nbsp;common&nbsp;Costing&nbsp;analysis&nbsp;and&nbsp;</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;casting&nbsp;Costing&nbsp;analysis.</span>
+<span style="color: green">'&nbsp;6.&nbsp;Gets&nbsp;the&nbsp;material&nbsp;classes&nbsp;from&nbsp;the&nbsp;Costing&nbsp;template</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;sets&nbsp;the&nbsp;material&nbsp;class.</span>
+<span style="color: green">'&nbsp;7.&nbsp;Gets&nbsp;the&nbsp;material&nbsp;names&nbsp;from&nbsp;the&nbsp;Costing&nbsp;template</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;sets&nbsp;the&nbsp;material&nbsp;for&nbsp;the&nbsp;material&nbsp;class.</span>
+<span style="color: green">'&nbsp;8.&nbsp;Sets&nbsp;and&nbsp;gets&nbsp;casting&nbsp;Costing&nbsp;analysis</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;parameters.</span>
+<span style="color: green">'&nbsp;9.&nbsp;Gets&nbsp;the&nbsp;total&nbsp;manufacturing&nbsp;cost.</span>
+<span style="color: green">'10.&nbsp;Examine&nbsp;the&nbsp;Immediate&nbsp;window&nbsp;to&nbsp;see&nbsp;the</span>
+<span style="color: green">'&nbsp;&nbsp;&nbsp;&nbsp;results&nbsp;of&nbsp;steps&nbsp;6&nbsp;through&nbsp;9.</span>
+<span style="color: green">'</span>
+<span style="color: green">'&nbsp;<b>NOTE</b>:&nbsp;Because&nbsp;the&nbsp;part&nbsp;is&nbsp;used&nbsp;elsewhere,&nbsp;do</span>
+<span style="color: green">'&nbsp;not&nbsp;save&nbsp;changes&nbsp;when&nbsp;closing&nbsp;it.</span>
+<span style="color: green">'-------------------------------------------------</span>
+<span style="color: blue">Imports</span>&nbsp;SolidWorks.Interop.sldworks
+<span style="color: blue">Imports</span>&nbsp;SolidWorks.Interop.swconst
+<span style="color: blue">Imports</span>&nbsp;SolidWorks.Interop.sldcostingapi
+<span style="color: blue">Imports</span>&nbsp;System.Runtime.InteropServices
+<span style="color: blue">Imports</span>&nbsp;System.Diagnostics
+<span style="color: blue">Imports</span>&nbsp;System
+ 
+<span style="color: blue">Partial</span>&nbsp;<span style="color: blue">Class</span>&nbsp;<span style="color: #2b91af">SolidWorksMacro</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;swModel&nbsp;<span style="color: blue">As</span>&nbsp;ModelDoc2
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;swModelDocExt&nbsp;<span style="color: blue">As</span>&nbsp;ModelDocExtension
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;swcCostMgr&nbsp;<span style="color: blue">As</span>&nbsp;CostManager
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;swcCostPart&nbsp;<span style="color: blue">As</span>&nbsp;CostPart
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;swcCostBody&nbsp;<span style="color: blue">As</span>&nbsp;CostBody
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;swcCostAnalysis&nbsp;<span style="color: blue">As</span>&nbsp;CostAnalysis
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;swcCastingAnalysis&nbsp;<span style="color: blue">As</span>&nbsp;CostAnalysisCasting
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;fileName&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">String</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;errors&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Integer</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;warnings&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Integer</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;totalCost&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Double</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;templateName&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">String</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;materialClassCount&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Integer</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;materialClasses&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Object</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;materialCount&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Integer</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;materials&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Object</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Dim</span>&nbsp;i&nbsp;<span style="color: blue">As</span>&nbsp;<span style="color: blue">Integer</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Public</span>&nbsp;<span style="color: blue">Sub</span>&nbsp;Main()
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Open&nbsp;the&nbsp;specified&nbsp;part</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fileName&nbsp;=&nbsp;<span style="color: #a31515">&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\api\clamp1.sldprt&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swModel&nbsp;=&nbsp;swApp.<b>OpenDoc6</b>(fileName,&nbsp;swDocumentTypes_e.swDocPART,&nbsp;swOpenDocOptions_e.swOpenDocOptions_Silent,&nbsp;<span style="color: #a31515">&quot;&quot;</span>,&nbsp;errors,&nbsp;warnings)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swModelDocExt&nbsp;=&nbsp;swModel.<b>Extension</b>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Get&nbsp;CostingManager</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swcCostMgr&nbsp;=&nbsp;swModelDocExt.<b>GetCostingManager</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;swcCostMgr&nbsp;<span style="color: blue">Is</span>&nbsp;<span style="color: blue">Nothing</span>&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;CostingManager&nbsp;is&nbsp;nothing.&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Exit Sub</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Get&nbsp;Costing&nbsp;part</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swcCostPart&nbsp;=&nbsp;swcCostMgr.<b>CostingModel</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;swcCostPart&nbsp;<span style="color: blue">Is</span>&nbsp;<span style="color: blue">Nothing</span>&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;Costing&nbsp;part&nbsp;is&nbsp;nothing.&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Exit Sub</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Set&nbsp;the&nbsp;Costing&nbsp;manufacturing&nbsp;method</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'to&nbsp;casting&nbsp;and&nbsp;get&nbsp;the&nbsp;Costing&nbsp;body</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swcCostBody&nbsp;=&nbsp;swcCostPart.<b>SetCostingMethod</b>(<span style="color: #a31515">&quot;&quot;</span>,&nbsp;swcMethodType_e.swcMethodType_Casting)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;swcCostBody&nbsp;<span style="color: blue">Is</span>&nbsp;<span style="color: blue">Nothing</span>&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;Costing&nbsp;body&nbsp;is&nbsp;nothing.&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Exit Sub</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;Casting&nbsp;Costing&nbsp;analysis&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Get&nbsp;the&nbsp;common&nbsp;Costing&nbsp;analysis</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swcCostAnalysis&nbsp;=&nbsp;swcCostBody.<b>GetCostAnalysis</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;swcCostAnalysis&nbsp;<span style="color: blue">Is</span>&nbsp;<span style="color: blue">Nothing</span>&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;Failed&nbsp;to&nbsp;activate&nbsp;Costing&nbsp;analysis.&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Exit Sub</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Get&nbsp;the&nbsp;casting&nbsp;Costing&nbsp;analysis&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swcCastingAnalysis&nbsp;=&nbsp;swcCostAnalysis.<b>GetSpecificAnalysis</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;swcCastingAnalysis&nbsp;<span style="color: blue">Is</span>&nbsp;<span style="color: blue">Nothing</span>&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;Casting&nbsp;Costing&nbsp;analysis&nbsp;is&nbsp;nothing.&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Exit Sub</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Get&nbsp;the&nbsp;material&nbsp;classes&nbsp;from&nbsp;the&nbsp;Costing&nbsp;template</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;materialClassCount&nbsp;=&nbsp;swcCastingAnalysis.<b>GetMaterialClassesCount</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;materialClassCount&nbsp;=&nbsp;0&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;No&nbsp;material&nbsp;classes&nbsp;for&nbsp;this&nbsp;casting&nbsp;Costing&nbsp;analysis.&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Exit Sub</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;materialClasses&nbsp;=&nbsp;swcCastingAnalysis.<b>GetMaterialClasses</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;Valid&nbsp;material&nbsp;classes&nbsp;for&nbsp;this&nbsp;casting&nbsp;Costing&nbsp;Analysis:&nbsp;&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">For</span>&nbsp;i&nbsp;=&nbsp;0&nbsp;<span style="color: blue">To</span>&nbsp;materialClassCount&nbsp;-&nbsp;1
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp;&quot;</span>&nbsp;&amp;&nbsp;materialClasses(i))
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Next</span>&nbsp;i
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Set&nbsp;the&nbsp;material&nbsp;class</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swcCastingAnalysis.<b>CurrentMaterialClass</b>&nbsp;=&nbsp;materialClasses(0)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;Name&nbsp;of&nbsp;the&nbsp;material&nbsp;class&nbsp;for&nbsp;this&nbsp;casting&nbsp;Costing&nbsp;analysis:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;materialClasses(0))
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Get&nbsp;the&nbsp;material&nbsp;names&nbsp;from&nbsp;the&nbsp;Costing&nbsp;template</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;templateName&nbsp;=&nbsp;swcCostAnalysis.<b>CostingTemplateName</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;Costing&nbsp;template&nbsp;path&nbsp;and&nbsp;file&nbsp;name:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;templateName)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;materialCount&nbsp;=&nbsp;swcCastingAnalysis.<b>GetMaterialCount</b>(materialClasses(0))
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">If</span>&nbsp;materialCount&nbsp;=&nbsp;0&nbsp;<span style="color: blue">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;No&nbsp;materials&nbsp;for&nbsp;this&nbsp;casting&nbsp;Costing&nbsp;Analysis.&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Exit Sub</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">If</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;Number&nbsp;of&nbsp;materials:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;materialCount)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;materials&nbsp;=&nbsp;swcCastingAnalysis.<b>GetMaterials</b>(materialClasses(0))
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;Valid&nbsp;materials&nbsp;for&nbsp;this&nbsp;casting&nbsp;Costing&nbsp;Analysis:&nbsp;&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">For</span>&nbsp;i&nbsp;=&nbsp;0&nbsp;<span style="color: blue">To</span>&nbsp;materialCount&nbsp;-&nbsp;1
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp;&quot;</span>&nbsp;&amp;&nbsp;materials(i))
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Next</span>&nbsp;i
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Set&nbsp;the&nbsp;material</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swcCastingAnalysis.<b>CurrentMaterial</b>&nbsp;=&nbsp;materials(0)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;Name&nbsp;of&nbsp;material&nbsp;for&nbsp;&quot;</span>&nbsp;&amp;&nbsp;materialClasses(0)&nbsp;&amp;&nbsp;<span style="color: #a31515">&quot;&nbsp;for&nbsp;this&nbsp;casting&nbsp;Costing&nbsp;analysis:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;materials(0))
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Set&nbsp;and&nbsp;get&nbsp;casting&nbsp;Costing&nbsp;analysis&nbsp;parameters</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swcCastingAnalysis.<b>PercentWasteMaterial</b>&nbsp;=&nbsp;20
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swcCastingAnalysis.<b>MoldCost</b>&nbsp;=&nbsp;swcCastingAnalysis.<b>MoldCost</b>&nbsp;/&nbsp;1500
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;Casting&nbsp;Costing&nbsp;analysis&nbsp;parameters:&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Waste&nbsp;percentage:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;swcCastingAnalysis.<b>PercentWasteMaterial</b>&nbsp;&amp;&nbsp;<span style="color: #a31515">&quot;%&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Mold&nbsp;cost:&nbsp;$&quot;</span>&nbsp;&amp;&nbsp;swcCastingAnalysis.<b>MoldCost</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Casting&nbsp;process&nbsp;cycle&nbsp;time:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;swcCastingAnalysis.<b>Cycletime</b>&nbsp;*&nbsp;3600&nbsp;&amp;&nbsp;<span style="color: #a31515">&quot;&nbsp;in&nbsp;seconds&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'Reset&nbsp;the&nbsp;shop&nbsp;rate&nbsp;to&nbsp;the&nbsp;default</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swcCastingAnalysis.<b>ResetShopRate</b>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swcCastingAnalysis.<b>ShopRateApplied</b>&nbsp;=&nbsp;<span style="color: blue">True</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Default&nbsp;shop&nbsp;rate&nbsp;applied:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;swcCastingAnalysis.<b>ShopRateApplied</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Default&nbsp;shop&nbsp;rate:&nbsp;$&quot;</span>&nbsp;&amp;&nbsp;swcCastingAnalysis.<b>ShopRate</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;totalCost&nbsp;=&nbsp;swcCostAnalysis.<b>GetTotalCostToManufacture</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Debug</span>.Print(<span style="color: #a31515">&quot;Total&nbsp;casting&nbsp;cost&nbsp;to&nbsp;manufacture:&nbsp;$&quot;</span>&nbsp;&amp;&nbsp;<b>totalCost</b>)
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">End</span>&nbsp;<span style="color: blue">Sub</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'''&nbsp;</span><span style="color: gray">&lt;summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'''&nbsp;The&nbsp;SldWorks&nbsp;swApp&nbsp;variable&nbsp;is&nbsp;pre-assigned&nbsp;for&nbsp;you.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">'''&nbsp;</span><span style="color: gray">&lt;/summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">Public</span>&nbsp;swApp&nbsp;<span style="color: blue">As</span>&nbsp;SldWorks
+ 
+ 
+<span style="color: blue">End</span>&nbsp;<span style="color: blue">Class</span></pre>
+
+</body>
+
+</html>

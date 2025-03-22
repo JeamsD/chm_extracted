@@ -1,0 +1,241 @@
+<html>
+
+<head>
+<title>Calling Add-ins (VB.NET)</title>
+<meta name=MS-HKWD content="Add-ins,VB.NET">
+<meta name=MS-HKWD content="VB.NET, add-ins">
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+<style>
+<!--
+div.Section1
+	{page:Section1;}
+-->
+</style>
+</head>
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Calling Add-ins (VB.NET)</h1>
+
+<div class=Section1>
+
+<p class=MsoNormal><span lang=EN-US><font face="Verdana">This
+sample shows how to implement 
+<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmAddIn5~GetAddInInfo.html"> IEdmAddIn5::GetAddInInfo</a> and 
+<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmAddIn5~OnCmd.html"> IEdmAddIn5::OnCmd</a> to create a Visual Basic add-in
+that is called when the user clicks a button in a file data card. The&nbsp;add-in
+opens a dialog box in which the user browses for the file whose data card is 
+displayed. The add-in copies the path of the selected file to a text field in the 
+file's data card.&nbsp;<br>
+<br>
+</font> </span><span lang="en-us"><b><span style="font-family: Verdana">NOTE: </span></b></span>
+	<span lang=EN-US style='font-family:Verdana;
+  mso-ansi-language:EN-US'>Because SOLIDWORKS PDM Professional cannot force a reload of 
+	add-ins if they are written in .NET, all client machines must be restarted to ensure that the latest version of the add-in is used.<o:p></o:p></span><span lang=EN-US><font face="Verdana"> </font> </span></p>
+
+<ol style="font-family: Verdana; font-size: 8pt">
+	<li>
+	<p class=MsoNormal><font face="Verdana">Follow </font><span lang=EN-US><font face="Verdana">
+	<a href="vbmenuitem.htm">Creating Menu Commands (VB.NET)</a> to create a basic add-in.</font></span></p>
+	</li>
+	<li>
+	<p class=MsoNormal><font face="Verdana">R</font><span lang=EN-US><font face="Verdana">egister a hook 
+	to notify your add-in when a user clicks a button in&nbsp;a file data card. 
+	Implement IEdmAddIn5::GetAddInInfo as follows:</font></span></p>
+	</li>
+
+  <blockquote>
+	<p class=APICODE>
+	<span lang=EN-US style='font-size:10.0pt;font-family:"Courier New"'>Public Sub GetAddInInfo(ByRef
+    poInfo As EdmAddInInfo, ByVal poVault As IEdmVault5,
+  ByVal poCmdMgr As IEdmCmdMgr5) Implements IEdmAddIn5.GetAddInInfo<br />
+	<br><span style='color:green'>&nbsp;&nbsp;&nbsp;&nbsp; '</span></span><span style="color: green">Specify 
+	information&nbsp;to display in&nbsp;the&nbsp;add-in's Properties&nbsp;dialog&nbsp;box</span><span lang=EN-US style='font-size:10.0pt;font-family:"Courier New"'><br>&nbsp;&nbsp;&nbsp;&nbsp; poInfo.mbsAddInName = &quot;My serial number generator&quot;<br>&nbsp;&nbsp;&nbsp;&nbsp; poInfo.mbsCompany = &quot;The name of my company&quot;<br>&nbsp;&nbsp;&nbsp;&nbsp; poInfo.mbsDescription = &quot;Implements serial numbers&quot;<br>&nbsp;&nbsp;&nbsp;&nbsp; poInfo.mlAddInVersion = 1<br>&nbsp;&nbsp;&nbsp;&nbsp; poInfo.mlRequiredVersionMajor = 5<br>&nbsp;&nbsp;&nbsp;&nbsp; poInfo.mlRequiredVersionMinor = 2<br>
+	<br><span style='color:green'>&nbsp;&nbsp;&nbsp;&nbsp; 'Notify the add-in when a 
+	file data card 
+	button is clicked<br></span>&nbsp;&nbsp;&nbsp;&nbsp; poCmdMgr.AddHook(EdmCmdType.EdmCmd_CardButton)</span></p>
+	<p class=APICODE>
+	<span lang=EN-US style='font-size:10.0pt;font-family:"Courier New"'>End Sub</span></p>
+</blockquote>
+
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span style="font-family: Verdana">Implement IEdmAddIn5::OnCmd as follows</span><span lang=EN-US style='font-family:Verdana'>:</span></p>
+	</li>
+
+<blockquote>
+	<p style='background:white'>
+	<span lang=EN-US style="font-size:10pt;font-family:Courier New;
+  mso-ansi-language:EN-US">Public Sub OnCmd(ByRef poCmd As EdmCmd, ByRef ppoData
+    As System.Array) Implements IEdmAddIn5.OnCmd <br />&nbsp;
+  On Error GoTo ErrHand <br /><br /><span style="color: #009900">&nbsp;&nbsp;&nbsp; 
+	'Respond only to a specific button command<br />&nbsp;&nbsp;&nbsp; 'The 
+	button command to respond to begins with &quot;MyButton:&quot; and ends with the name
+  of the <br />&nbsp;&nbsp;&nbsp; 'variable to update in the card <br /></span>&nbsp;&nbsp;&nbsp; If Left(poCmd.mbsComment, 9) = &quot;MyButton:&quot; Then
+	<br />&nbsp; &nbsp;&nbsp;&nbsp; 'Get the name of the variable to update.
+	<br />&nbsp; &nbsp;&nbsp;&nbsp; Dim VarName As String <br />&nbsp; &nbsp;&nbsp;&nbsp; VarName = Right(poCmd.mbsComment, Len(poCmd.mbsComment) - 9)
+	<br /><br />&nbsp; &nbsp; <span style="color: #009900">&nbsp; 'Let the user 
+	select the file whose path will be copied to the card variable</span><br />&nbsp; &nbsp;&nbsp;&nbsp; Dim vault As EdmVault5
+	<br />&nbsp; &nbsp;&nbsp;&nbsp; vault = poCmd.mpoVault <br />&nbsp; &nbsp;&nbsp;&nbsp; Dim PathList As IEdmStrLst5
+	<br />&nbsp; &nbsp;&nbsp;&nbsp; PathList = vault.BrowseForFile(poCmd.mlParentWnd, EdmBrowseFlag.EdmBws_ForOpen
+    + EdmBrowseFlag.EdmBws_PermitVaultFiles, 
+  &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;Select File for
+  &quot; + VarName) <br /><span style="color: #009900"><br /></span>&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If Not PathList Is Nothing Then
+	<br />&nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim path As String
+	<br />&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; path = PathList.GetNext(PathList.GetHeadPosition)&nbsp;<br />
+	<br />&nbsp; &nbsp; &nbsp;<span style="color: #009900">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Store the path in the 
+	card variable</span>&nbsp;<br />&nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim vars As IEdmEnumeratorVariable5&nbsp;<br />&nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; vars = poCmd.mpoExtra&nbsp;<br />&nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim VariantPath As Object&nbsp;<br />&nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; VariantPath = path&nbsp;<br />&nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; vars.SetVar(VarName, "", VariantPath)&nbsp;<br />&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If
+	<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If <br /><br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Exit Sub
+	<br /><br /><span style="color: #009900">&nbsp;&nbsp;&nbsp;&nbsp; 'Handle 
+	errors <br /></span>&nbsp;&nbsp;&nbsp;&nbsp; ErrHand:
+    <br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim ErrVault As EdmVault5 <br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrVault = poCmd.mpoVault
+	<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim ErrName As String <br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim ErrDesc As String
+	<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrVault.GetErrorString(Err.Number, ErrName, ErrDesc)
+	<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrVault.MsgBox(poCmd.mlParentWnd, &quot;Error in my card
+  button.&quot; + vbLf + ErrDesc) <br /><br />End Sub<br>
+	<br>
+	</span>
+	<span lang=EN-US style='font-family:Verdana'>The second argument to 
+	OnCmd, ppoData,
+is an array of 
+	<a style="text-decoration: underline" href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmdData.html">EdmCmdData</a> structures. There is one element in the array when 
+it is called from the file data card.
+See EdmCmdData for information about the structure.<o:p></o:p></span></p>
+</blockquote>
+
+
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span lang=EN-US style='mso-ansi-language:EN-US'>Click <b>Build &gt; Build 
+	Solution</b> to build the add-in.</span></p></li>
+	<li><span lang="en-us">I</span><span lang=EN-US style='mso-ansi-language:EN-US'>nstall 
+	the add-in through the SOLIDWORKS PDM Professional 
+	Administration tool: <br>&nbsp;</span></li>
+	
+<ol style="font-family: Verdana; font-size: 8pt">
+	<li><span lang="en-us">Open</span><span lang=EN-US style='mso-ansi-language:EN-US'> the SOLIDWORKS 
+	Professional PDM Administration tool.<br>&nbsp;</span></li>
+	<li><span lang=EN-US style='mso-ansi-language:EN-US'>Expand the vault where 
+	you want to install this add-in and log in as Admin.<br>&nbsp;</span></li>
+	<li><span lang="en-us">Right-click <b>Add-ins</b> and click <b>New 
+	Add-in</b>.<b><br>&nbsp;</b></span></li>
+	<li>B<span lang="en-us">rowse to </span>
+	<span lang=EN-US style='mso-ansi-language:EN-US'>
+	<i style='mso-bidi-font-style:
+normal'>project_path</i><span style='mso-bidi-font-style:
+normal; '><i>\</i></span></span><span style='mso-bidi-font-style:
+normal; mso-ansi-language:EN-US' lang="EN-US"><i>project_name\project_name</i><b>\bin\Debug</b>, 
+		click <i>project_name</i><b>.dll</b> and <b>EPDM.Interop.epdm.dll</b>.<br>&nbsp;</span></li>
+	<li><span lang="en-us">Click <b>Open</b>.<br>&nbsp;</span></li>
+	<li>Click <b>OK</b>.<br>&nbsp;</li>
+	<li>Click <b>OK</b>.</li>
+</ol></li>
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span lang=EN-US style='font-family:Verdana'>Click <b>Cards &gt; File Cards</b>.<o:p></o:p></span></p>
+	</li>
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span style="font-family: Verdana">Double-click <b>Text Card</b></span><span lang=EN-US style='font-family:Verdana'>.</span></p>
+	</li>
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span style="font-family: Verdana">A</span><span lang=EN-US style='font-family:Verdana'>dd 
+	a button to the card. </span></p></li>
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span style="font-family: Verdana">Click the button.</span></p></li>
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span style="font-family: Verdana">In <b>Caption</b>, type <b>Browse...</b>.</span></p>
+	</li>
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span style="font-family: Verdana">In </span>
+	<span lang=EN-US style='font-family:Verdana'><b>Command 
+	type</b>, select <b>Run Add-in</b>.</span></p></li>
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span lang=EN-US style='font-family:Verdana'>In <b>Name of add-in, </b>type
+	<b>MyButton:Title</b>.<br><br></span>
+	<img border="0" src="mybutton.gif" width="977" height="415"></p></li>
+	<li>
+	<p class=MsoNormal style='background:white'><span lang=EN-US>
+	<font face="Verdana">Save the card and exit the 
+	Card Editor.</font></span></p></li>
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span style="background-position: 0 0"><font face="Verdana">O</font></span><span lang=EN-US><font face="Verdana">pen 
+	File Explorer on the vault and select a checked-out text
+file. </font></span></p></li>
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span style="background-position: 0 0"><font face="Verdana">C</font></span><span lang=EN-US><font face="Verdana">lick 
+	<b>Browse</b> 
+	in the file's data card.</font></span></p></li>
+	<li>
+	<p class=MsoNormal style='background:white'><span lang=EN-US>
+	<font face="Verdana">The 
+	Select File for Title dialog box pops up. </font></span></p></li>
+	<li>
+	<p class=MsoNormal style='background:white'><span lang=EN-US>
+	<font face="Verdana">Browse to and select the 
+	checked-out text file. </font></span></p></li>
+	<li>
+	<p class=MsoNormal style='background:white'><span lang=EN-US>
+	<font face="Verdana">Click </font><strong><font face="Verdana">Open</font></strong><span lang=EN-US style='font-family:Arial'><font face="Verdana">
+	to copy the path of the selected file to the <b>Title</b> field of the 
+	file's data card.</font><o:p></o:p></span></span></p></li>
+</ol>
+
+<h2 style='background:white'><strong><font face="Verdana"><span lang=EN-US>Remarks</span></font><span lang=EN-US
+style='font-size:10.0pt;font-family:Arial'> </span></strong><span
+lang=EN-US style='font-size:10.0pt;font-family:Arial'><o:p></o:p></span></h2>
+
+<p class=MsoNormal style='background:white'>
+<span lang=EN-US style='font-family:Verdana'>In this example, the value of a variable 
+is set using
+<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmEnumeratorVariable5~SetVar.html">IEdmEnumeratorVariable5::SetVar</a>. You 
+can also read values using
+<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmEnumeratorVariable5~GetVar.html">IEdmEnumeratorVariable5::GetVar</a>.<o:p></o:p></span></p>
+
+<p class=MsoNormal style='background:white'><span style="font-family: Verdana">
+Using</span><span lang=EN-US style='font-family:Verdana'> a button handler like this 
+add-in, you can also:</span></p>
+<ul>
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span style="font-family: Verdana">R</span><span lang=EN-US style='font-family:Verdana'>etrieve
+the number of configurations, layouts, or both, in the file by inspecting the
+	<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmdData~mpoExtra.html">EdmCmdData::mpoExtra</a> 
+	variable, which contains
+	<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.IEdmStrLst5.html">IEdmStrLst5</a> 
+	of file interfaces.</span></p></li>
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span style="font-family: Verdana">S</span><span lang=EN-US style='font-family:Verdana'>witch the active configuration.</span></p>
+	</li>
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span style="font-family: Verdana">S</span><span lang=EN-US style='font-family:Verdana'>et focus to a certain
+control using the members of
+	<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmdData.html">EdmCmdData</a>. 
+	</span></p></li>
+	<li>
+	<p class=MsoNormal style='background:white'>
+	<span style="font-family: Verdana">Close the card</span><span lang=EN-US style='font-family:Verdana'> automatically after 
+	the button handler
+returns by setting the
+	<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCmdData~mlLongData1.html">EdmCmdData::mlLongData1</a>
+variable to one of the 
+	<a href="EPDM.Interop.epdm~EPDM.Interop.epdm.EdmCardFlag.html">EdmCardFlag</a> constants.</span><span lang=EN-GB style='font-family:Verdana;mso-ansi-language:EN-GB'><o:p>&nbsp;</o:p></span></p>
+	</li>
+</ul>
+
+</div>
+
+</body>
+
+</html>

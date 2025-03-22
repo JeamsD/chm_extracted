@@ -1,0 +1,871 @@
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<html>
+
+<!--(==============================================================)-->
+<!--(Document created with RoboEditor. )============================-->
+<!--(==============================================================)-->
+
+<head>
+
+<title>Get More DimXpert Feature Examples (VBA)</title>
+
+<!--(Meta)==========================================================-->
+
+<meta http-equiv=content-type content="text/html; charset=windows-1252">
+<meta name=MS-HKWD content="VBA examples,compound hole feature">
+<meta name=MS-HKWD content="VBA examples,compound notch feature">
+<meta name=generator content="RoboHELP by eHelp Corporation - www.ehelp.com">
+<meta name=generator-major-version content=0.1>
+<meta name=generator-minor-version content=1>
+<meta name=filetype content=kadov>
+<meta name=filetype-version content=1>
+<meta name=page-count content=1>
+<meta name=layout-height content=6868>
+<meta name=layout-width content=1395>
+
+
+<!--(Links)=========================================================-->
+
+<link rel="StyleSheet" href="ApiHelp.css">
+
+
+
+</head>
+
+<!--(Body)==========================================================-->
+
+
+<body>
+
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS API 
+ Help</span></h1>
+
+<h1>Get More DimXpert Feature Examples (VBA)</h1>
+
+<p>This example shows how to build and get attributes for 
+ the following DimXpert features:</p>
+
+<p>&nbsp;<!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->* 
+ <!--kadov_tag{{<spaces>}}-->&nbsp;<!--kadov_tag{{</spaces>}}-->Hole</p>
+
+<p>&nbsp;<!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->* 
+ <!--kadov_tag{{<spaces>}}-->&nbsp;<!--kadov_tag{{</spaces>}}-->Notch</p>
+
+<p class=apiCode>'---------------------------------------------------------------------------</p>
+
+<p class=apiCode>' Preconditions:</p>
+
+<p class=apiCode>' <!--kadov_tag{{<spaces>}}-->1. 
+ Open<span style="font-style: italic;"> </span><i>public_documents</i><span 
+ style="font-weight: bold;">\samples\tutorial\api\cover_with_dimensions.sldprt.</span></p>
+
+<p class=apiCode>' <!--kadov_tag{{<spaces>}}--><!--kadov_tag{{</spaces>}}-->2. 
+ Open the DimXpert toolbar from <b>View &gt; Toolbars</b>.</p>
+
+<p class=apiCode>' <!--kadov_tag{{<spaces>}}-->3. 
+ Observe the following DimXpert features on the DimXpertManager tab: <!--kadov_tag{{<spaces>}}-->&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+<p class=apiCode>'&nbsp;&nbsp;&nbsp; Simple 
+ Hole and, Notch1.</p>
+
+<p class=apiCode>' <!--kadov_tag{{<spaces>}}-->4. 
+ Open the Immediate window.</p>
+
+<p class=apiCode>' <!--kadov_tag{{<spaces>}}-->5. 
+ Ensure that the latest SOLIDWORKS DimXpert type library is loaded </p>
+<p class=apiCode>'&nbsp;&nbsp;&nbsp; in <b>Tools 
+ &gt; References</b>.</p>
+
+<p class=apiCode>' <!--kadov_tag{{<spaces>}}--><!--kadov_tag{{</spaces>}}-->6. 
+ Step through this macro (F8).</p>
+
+<p class=apiCode>'</p>
+
+<p class=apiCode>' Postconditions: Compare 
+ the output in the Immediate window </p>
+<p class=apiCode>' with the features displayed on the DimXpertManager tab of the Management Panel.</p>
+<p class=apiCode>'</p>
+
+<p class=apiCode>' <!--kadov_tag{{<spaces>}}-->NOTE: 
+ Because this part is used elsewhere, do not save changes.</p>
+
+<p class=apiCode>'--------------------------------------------------------------------------</p>
+
+<p class=apiCode>Option Explicit</p>
+
+<p class=apiCode>Dim swApp As SldWorks.SldWorks</p>
+
+<p class=apiCode>Dim swModel As ModelDoc2</p>
+
+<p class=apiCode>Dim swModelDocExt As ModelDocExtension</p>
+
+<p class=apiCode>Dim swSelMgr As SelectionMgr</p>
+
+<p class=apiCode>Dim swConfig As Configuration</p>
+
+<p class=apiCode>Dim swFeature As feature</p>
+
+<p class=apiCode>Dim swAnn As feature</p>
+
+<p class=apiCode>Dim swSchema As DimXpertManager</p>
+
+<p class=apiCode>Dim swDXPart As DimXpertPart</p>
+
+<p class=apiCode>Dim featureType As swDimXpertFeatureType_e</p>
+
+<p class=apiCode>Dim holeType As <span style="font-weight: bold;">swDimXpertCompoundHoleType_e</span></p>
+
+<p class=apiCode>Dim features As Variant</p>
+
+<p class=apiCode>Dim appliedFeatures As Variant</p>
+
+<p class=apiCode>Dim appliedAnnotations As Variant</p>
+
+<p class=apiCode>Dim appliedAnnotation As DimXpertAnnotation</p>
+
+<p class=apiCode>Dim feature As DimXpertFeature</p>
+
+<p class=apiCode>Dim appliedFeature As DimXpertFeature</p>
+
+<p class=apiCode>Dim msgStr As String</p>
+
+<p class=apiCode>Dim msgStr2 As String</p>
+
+<p class=apiCode>Dim msgStr3 As String</p>
+
+<p class=apiCode>Dim msgStr4 As String</p>
+
+<p class=apiCode>Dim n As Long</p>
+
+<p class=apiCode>Dim o As Long</p>
+
+<p class=apiCode>Dim p As Long</p>
+
+<p class=apiCode>Dim boolstatus As Boolean</p>
+
+<p class=apiCode>Sub main()</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ swApp = Application.SldWorks</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ swModel = swApp.ActiveDoc</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ swModelDocExt = swModel.Extension</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ swSelMgr = swModel.SelectionManager</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get the default DimXpert schema using IModelDocExtension.DimXpertManager()</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ swSchema = swModelDocExt.DimXpertManager(&quot;Default&quot;, True)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get IDimXpertPart from the IDimXpertManager</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ swDXPart = swSchema.DimXpertPart</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ featCount As Long</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->featCount 
+ = swDXPart.GetFeatureCount</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;Total of &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = featCount</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = msgStr + msgStr2 + &quot; features in &quot; + (swSchema.SchemaName)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ &quot;&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get IDimXpert features through IDimXpertPart</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->features 
+ = swDXPart.GetFeatures</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = (swSchema.SchemaName) + &quot; has the following features: &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ &quot;&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->For 
+ n = 0 To UBound(features)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ feature = features(n)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ &quot; <!--kadov_tag{{<spaces>}}-->&nbsp;<!--kadov_tag{{</spaces>}}-->&quot; 
+ + &quot;Feature name: &quot; + (feature.Name)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->featureType 
+ = feature.Type</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Call 
+ GetPatternType(featureType, msgStr2)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot; <!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Feature 
+ type &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr3 
+ = &quot; is suppressed on the DimXpertManager tab? &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr4 
+ = feature.IsSuppressed()</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2 + msgStr3 + msgStr4</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot; <!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->&quot; 
+ + &quot;Model feature: &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ swFeature = feature.GetModelFeature()</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ Not (swFeature Is Nothing) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = swFeature.GetTypeName2()</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->End 
+ If</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot; <!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->&quot; 
+ + &quot;Number of SOLIDWORKS face entities in this feature: &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = feature.GetFaceCount</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot; <!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->&quot; 
+ + &quot;Number of applied features: &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = feature.GetAppliedFeatureCount()</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->appliedFeatures 
+ = feature.GetAppliedFeatures()</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ Not (IsEmpty(appliedFeatures)) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->For 
+ o = 0 To UBound(appliedFeatures)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ appliedFeature = appliedFeatures(o)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ &quot; <!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->&quot; 
+ + &quot;Applied feature name: &quot; + (appliedFeature.Name)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Next</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->End 
+ If</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot; <!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->&quot; 
+ + &quot;Number of applied annotations: &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = feature.GetAppliedAnnotationCount()</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->appliedAnnotations 
+ = feature.GetAppliedAnnotations()</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ Not (IsEmpty(appliedAnnotations)) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->For 
+ p = 0 To UBound(appliedAnnotations)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ appliedAnnotation = appliedAnnotations(p)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ &quot; <!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->&quot; 
+ + &quot;Applied annotation name: &quot; + (appliedAnnotation.Name)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Next</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->End 
+ If</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ &quot; <!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Next</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ If you know the name of a DimXpert feature, you can get it directly using 
+ IDimXpertPart.GetFeature(&quot;name&quot;),</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ which can return a general IDimXpertFeature or a more specific interface 
+ on the feature</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get <span style="font-weight: bold;">IDimXpertCompoundHoleFeature</span> 
+ for the Simple Hole2 feature</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ holeFeature As <span style="font-weight: bold;">IDimXpertCompoundHoleFeature</span></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ holeFeature = swDXPart.GetFeature(&quot;Simple Hole2&quot;)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = holeFeature.<span style="font-weight: bold;">Name</span> + &quot; is 
+ a DimXpert feature&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ &quot;&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ &quot;&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get the bottom feature if one exists</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ bottomFeature As IDimXpertFeature</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ bottomFeature = holeFeature.<span style="font-weight: bold;">GetBottomFeature</span></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ Not (bottomFeature Is Nothing) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;Bottom feature is &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = bottomFeature.Name</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->End 
+ If</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get the reference feature</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ refFeature As IDimXpertFeature</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ refFeature = holeFeature.<span style="font-weight: bold;">GetReferenceFeature</span></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;Reference feature for dimensioning is &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = refFeature.Name</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get the sub-feature count</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ count As Integer</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->count 
+ = holeFeature.<span style="font-weight: bold;">GetSubFeatureCount</span></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;Number of subfeatures is &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = count</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode
+	style="margin-left: 40px;">' Get the sub-features</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ subfeatures As Variant</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->subfeatures 
+ = holeFeature.<span style="font-weight: bold;">GetSubFeatures</span></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->For 
+ n = 0 To UBound(subfeatures)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ feature = subfeatures(n)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ &quot; <!--kadov_tag{{<spaces>}}-->&nbsp;<!--kadov_tag{{</spaces>}}-->&quot; 
+ + &quot;Sub-feature name: &quot; + (feature.Name)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Next</p>
+
+<p class=apiCode>&nbsp;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get whether the hole is blind</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;Hole feature is blind and not through: &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = holeFeature.<span style="font-weight: bold;">Blind</span></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get the type of the hole</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->holeType 
+ = holeFeature.<span style="font-weight: bold;">CompoundHoleType</span></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;Hole feature is type: &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Call 
+ GetHoleType(holeType, msgStr2)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get <span style="font-weight: bold;">IDimXpertCompoundNotchFeature</span> 
+ for the Notch1 feature</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ notchFeature As <span style="font-weight: bold;">IDimXpertCompoundNotchFeature</span></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Set 
+ notchFeature = swDXPart.GetFeature(&quot;Notch1&quot;)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = notchFeature.<span style="font-weight: bold;">Name</span> + &quot; is 
+ a DimXpert feature&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ &quot;&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ &quot;&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->' 
+ Get the nominal notch coordinates</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ width As Double</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ length As Double</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ x As Double</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ y As Double</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ z As Double</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ i As Double</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ j As Double</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ k As Double</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ longitudeI As Double</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ longitudeJ As Double</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Dim 
+ longitudeK As Double</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ &quot;Nominal notch of Notch1&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ &quot;&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->boolstatus 
+ = notchFeature.<span style="font-weight: bold;">GetNominalNotch(</span>width, 
+ length, x, y, z, i, j, k, longitudeI, longitudeJ, longitudeK<span style="font-weight: bold;">)</span></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;Width is &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = width</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;Length is &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = length</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;X-coordinate is &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = x</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;Y-coordinate is &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = y</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;Z-coordinate is &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = z</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;I-component of pierce vector is &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = i</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;J-component of pierce vector is &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = j</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;K-component of pierce vector is &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = k</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;I-component of longitudinal unit vector is &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = longitudeI</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;J-component of longitudinal unit vector is &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = longitudeJ</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr 
+ = &quot;K-component of longitudinal unit vector is &quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = longitudeK</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ msgStr + msgStr2</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->Debug.Print 
+ &quot;&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode>End Sub</p>
+
+<p class=apiCode>Public Sub GetPatternType(ByRef featureType, ByRef msgStr2)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ (featureType = swDimXpertFeature_Plane) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;Plane&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (featureType = swDimXpertFeature_Cylinder) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;Cylinder&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (featureType = swDimXpertFeature_Cone) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;Cone&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (featureType = swDimXpertFeature_Extrude) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;Extrude&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (featureType = swDimXpertFeature_Fillet) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;Fillet&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (featureType = swDimXpertFeature_Chamfer) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;Chamfer&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (featureType = <span style="font-weight: bold;">swDimXpertFeature_CompoundHole</span>) 
+ Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;CompoundHole&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (featureType = swDimXpertFeature_CompoundWidth) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;CompoundWidth&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (featureType = <span style="font-weight: bold;">swDimXpertFeature_CompoundNotch</span>) 
+ Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;CompoundNotch&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (featureType = swDimXpertFeature_CompoundClosedSlot3D) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;CompoundClosedSlot3D&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (featureType = swDimXpertFeature_IntersectPoint) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;IntersectPoint&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (featureType = swDimXpertFeature_IntersectLine) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;IntersectLine&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (featureType = swDimXpertFeature_IntersectCircle) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;IntersectCircle&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (featureType = swDimXpertFeature_IntersectPlane) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;IntersectPlane&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (featureType = swDimXpertFeature_Pattern) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;Pattern&quot;</p>
+
+<p class=apiCode>ElseIf (featureType = swDimXpertFeature_Sphere) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;Sphere&quot;</p>
+
+<p class=apiCode>ElseIf (featureType = swDimXpertFeature_BestfitPlane) 
+ Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;Bestfit plane&quot;</p>
+
+<p class=apiCode>ElseIf (featureType = swDimXpertFeature_Surface) Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;Surface&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->End 
+ If</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode>End Sub</p>
+
+<p class=apiCode>Public Sub GetHoleType(ByRef holeType, ByRef msgStr2)</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->If 
+ (holeType = s<span style="font-weight: bold;">wDimXpertCompoundHoleType_Compound</span>) 
+ Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;Compound&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (holeType = <span style="font-weight: bold;">swDimXpertCompoundHoleType_Counterbore</span>) 
+ Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;Counterbore&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (holeType = <span style="font-weight: bold;">swDimXpertCompoundHoleType_Countersink</span>) 
+ Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;Countersink&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->ElseIf 
+ (holeType = <span style="font-weight: bold;">swDimXpertCompoundHoleType_Simple</span>) 
+ Then</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->msgStr2 
+ = &quot;Simple&quot;</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}-->End 
+ If</p>
+
+<p class=apiCode><!--kadov_tag{{<spaces>}}-->&nbsp;&nbsp;&nbsp;&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode>End Sub</p>
+
+</body>
+
+</html>

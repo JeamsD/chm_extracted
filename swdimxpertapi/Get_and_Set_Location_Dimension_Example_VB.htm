@@ -1,0 +1,266 @@
+<html>
+
+<head>
+<title>Get and Set Location Dimension Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,distance-between dimension tolerance">
+<meta name=MS-HKWD content="VBA examples,angle-between dimension tolerance">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS API 
+ Help</span></h1>
+<h1>Get and Set Location Dimension Example (VBA)</h1>
+<p>This example shows how to get and set DimXpert distance-between or angle-between dimensions.</p>
+<p class="APICODE"><br>
+'---------------------------------------------------------------------------</p>
+<p class="APICODE">' Preconditions:</p>
+<p class="APICODE">'&nbsp;1. Open <i>public_documents</i><b>\samples\tutorial\dimxpert\bracket_ads_plusminus.sldprt</b>.<br>
+'&nbsp;2. Multi-select two faces that: <br>
+'&nbsp;&nbsp;&nbsp;&nbsp;a. share a common edge to get the 
+angle-between dimension. <br>
+'&nbsp;&nbsp;&nbsp;&nbsp;b. do not share a common edge to get 
+the distance-between dimension. <br>
+'&nbsp;3. Open an Immediate window.<br>
+'&nbsp;4. Ensure that the latest SOLIDWORKS DimXpert type library is loaded:<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;a. Select <b>Tools &gt; References</b>.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;b. Click Browse.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;c. Find and select <i>install_dir</i><b>\swdimxpert.tlb</b>.<br>
+'<br>
+' Postconditions:</p>
+<p class="APICODE">'&nbsp;1. Inspect the Immediate window.<br>
+'&nbsp;2. Observe the DistanceBetween1 or AngleBetween1 annotation 
+on the<br>
+'&nbsp;&nbsp;&nbsp; DimXpertManager tab.<br>
+'<br>
+'&nbsp;NOTE: Because this part is used elsewhere, do not save changes.<br>
+'----------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit<br>
+Dim dimXpertPart As dimXpertPart</p>
+<p class="APICODE">Sub Main()</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim swapp As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Set swapp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim swModelDoc As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Set swModelDoc = swapp.ActiveDoc<br>
+&nbsp;&nbsp;&nbsp; Dim annoType As Long<br>
+</p>
+<p class="APICODE">   &nbsp;&nbsp; If swModelDoc Is Nothing Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp; Exit Sub<br>
+&nbsp;&nbsp; End If</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim dimXpertMgr As SldWorks.DimXpertManager<br>
+&nbsp;&nbsp;&nbsp; Set dimXpertMgr = swapp.IActiveDoc2.Extension.DimXpertManager(swapp.IActiveDoc2.IGetActiveConfiguration().Name, True)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Model: &quot; &amp; swapp.IActiveDoc2.GetPathName</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim dimXpertPartObj As dimXpertPart<br>
+&nbsp;&nbsp;&nbsp; Set dimXpertPartObj = dimXpertMgr.dimXpertPart<br>
+&nbsp;&nbsp;&nbsp; Set dimXpertPart = dimXpertPartObj<br>
+&nbsp;&nbsp;&nbsp;
+    </p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim dimOption As DimXpertDimensionOption<br>
+&nbsp;&nbsp;&nbsp; Set dimOption = dimXpertPart.<b>GetDimOption</b><br>
+&nbsp;&nbsp;&nbsp;
+    </p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' Specify a dimension along the normal to the face<br>
+&nbsp;&nbsp;&nbsp; dimOption.<b>DimensionPositionOption</b> = 0<br>
+&nbsp;&nbsp;&nbsp;
+    </p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' Insert the dimension<br>
+&nbsp;&nbsp;&nbsp; dimXpertPart.<b>InsertLocationDimension</b> dimOption<br>
+&nbsp;&nbsp;&nbsp;
+    </p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim vAnnotations As Variant<br>
+&nbsp;&nbsp;&nbsp; vAnnotations = dimXpertPart.GetAnnotations()</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Debug.Print &quot;------------------------&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Annotations...&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;------------------------&quot;</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim annotationTemp As DimXpertAnnotation<br>
+&nbsp;&nbsp;&nbsp; Dim annotationIndex As Long<br>
+&nbsp;&nbsp;&nbsp; For annotationIndex = 0 To UBound(vAnnotations)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set annotationTemp = vAnnotations(annotationIndex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Call GeneralInfo(annotationTemp)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annoType = annotationTemp.Type<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Call DimensionToleranceData(annotationTemp)<br>
+&nbsp;&nbsp;&nbsp; Next</p>
+<p class="APICODE">End Sub<br>
+<br>
+
+</p>
+<p class="APICODE">Private Sub GeneralInfo(annotation As DimXpertAnnotation)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim annoType As String<br>
+&nbsp;&nbsp;&nbsp; Dim modelObj As Object<br>
+&nbsp;&nbsp;&nbsp; Dim modelFeature As SldWorks.feature</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Name: &quot; + annotation.Name)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; annoType = annotationTypeNameFromObject(annotation)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Debug.Print (&quot;Type: &quot; + annoType)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Display Entity: &quot; + DisplayEntity(annotation))<br>
+</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Set modelObj = annotation.GetModelFeature<br>
+&nbsp;&nbsp;&nbsp; Set modelFeature = modelObj<br>
+&nbsp;&nbsp;&nbsp; If Not (modelFeature Is Nothing) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;ModelFeature: &quot; + modelFeature.Name + &quot; (&quot; + modelFeature.GetTypeName2() + &quot;)&quot;)<br>
+&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Private Sub DimensionToleranceData(annotation As DimXpertDimensionTolerance)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim isAngleType As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim annoType As Long<br>
+&nbsp;&nbsp;&nbsp; Dim upper As Double, lower As Double<br>
+&nbsp;&nbsp;&nbsp; Dim plus As Double, minus As Double<br>
+&nbsp;&nbsp;&nbsp; Dim boolstatus As Boolean</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; annoType = annotation.Type<br>
+&nbsp;&nbsp;&nbsp; isAngleType = False</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Dimension Tolerance Compartment&quot;)<br>
+&nbsp;&nbsp;&nbsp;
+    </p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; If annoType = swDimXpertDimTol_DistanceBetween Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim distancebetween As DimXpertDistanceBetweenDimTol<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set distancebetween = annotation<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Call DistanceBetweenData(distancebetween)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ElseIf annoType = swDimXpertDimTol_AngleBetween Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; isAngleType = True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim angleBetween As IDimXpertAngleBetweenDimTol<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set angleBetween = annotation</p>
+<p class="APICODE">        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' the origin and tolerance feature<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Origin Feature: &quot; + angleBetween.<b>OriginFeature</b>.Name)</p>
+<p class="APICODE">        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' is supplement angle<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Supplement Angle: &quot; + IIf(angleBetween.<b>Supplement</b>, &quot;True&quot;, &quot;False&quot;))</p>
+<p class="APICODE">   &nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; <br>
+    
+</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' conversion for radians to degrees when dimension type is angle</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim dbl As Double<br>
+&nbsp;&nbsp;&nbsp; If isAngleType Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; dbl = 57.2957795130823<br>
+&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; dbl = 1#<br>
+&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' the nominal, and upper and lower limits of size of the dimension</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Debug.Print (&quot;&quot;)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Compute Nominal Dimension: &quot; + FormatDouble(annotation.GetNominalValue * dbl))<br>
+&nbsp;&nbsp;&nbsp; boolstatus = annotation.GetUpperAndLowerLimit(upper, lower)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Get Upper Limit: &quot; + FormatDouble(upper * dbl))<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Get Lower Limit: &quot; + FormatDouble(lower * dbl))</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' the upper and lower tolerance value by type<br>
+&nbsp;&nbsp;&nbsp; Select Case annotation.DimensionType</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Case swDimXpertDimTolType_BlockTolerance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Dimension Type: Block Tolerance&quot;)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' block tolerance</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Case swDimXpertDimTolType_BlockToleranceNoNominal<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim blockTols As DimXpertBlockTolerances<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set blockTols = dimXpertPart.GetBlockTolerances</p>
+<p class="APICODE">        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Select Case blockTols.Type</p>
+<p class="APICODE">            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case swDimXpertBlockToleranceType_ASMEInch<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Dimension Type: Block Tolerance No Nominal&quot;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If isAngleType Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Angular Block Tolerance&quot;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Block Tolerance Decimal Places: &quot; + Format(annotation.BlockToleranceDecimalPlaces, &quot;##,##0&quot;))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Case swDimXpertBlockToleranceType_ISO2768<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Dimension Type: General Tolerance&quot;)</p>
+<p class="APICODE">        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End Select</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Case swDimXpertDimTolType_ISOLimitsAndFits<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Dimension Type: Limits and Fits&quot;)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' limits and fits tolerance<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertDimTolType_ISOLimitsAndFitsNoNominal</p>
+<p class="APICODE">        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Dimension Type: Limits and Fits No Nominal&quot;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Limits and Fits: &quot; + annotation.LimitsAndFitsCode)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' limit dimension<br>
+&nbsp;&nbsp;&nbsp; Case swDimXpertDimTolType_LimitDimension</p>
+<p class="APICODE">        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Dimension Type: Limit Dimension&quot;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; boolstatus = annotation.GetUpperAndLowerLimit(upper, lower)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Get Upper Limit: &quot; + FormatDouble(upper * dbl))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Get Lower Limit: &quot; + FormatDouble(lower * dbl))</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Case swDimXpertDimTolType_MAXTolerance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Dimension Type: MAXTolerance&quot;)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Case swDimXpertDimTolType_MINTolerance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Dimension Type: MINTolerance&quot;)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Case swDimXpertDimTolType_NoTolerance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Dimension Type: NoTolerance&quot;)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Case swDimXpertDimTolType_PlusMinusDimension<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Dimension Type: Plus Minus Dimension&quot;)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' plus and minus dimension</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Case swDimXpertDimTolType_PlusMinusNoNominal<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Dimension Type: Plus Minus No Nominal&quot;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; boolstatus = annotation.GetPlusAndMinusTolerance(plus, minus)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Plus&nbsp; Tolerance: &quot; + FormatDouble(plus * dbl))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Minus Tolerance: &quot; + FormatDouble(minus * dbl))</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; End Select</p>
+<p class="APICODE">        
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+End Sub</p>
+<p class="APICODE">Private Sub DistanceBetweenData(annotation As DimXpertDistanceBetweenDimTol)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim feature As DimXpertFeature<br>
+&nbsp;&nbsp;&nbsp; Dim featureFosUsage As Long<br>
+&nbsp;&nbsp;&nbsp; Dim I As Double, J As Double, K As Double<br>
+&nbsp;&nbsp;&nbsp; Dim boolstatus As Boolean</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' the origin and tolerance feature along with their feature of size usage (min, max, center)<br>
+&nbsp;&nbsp;&nbsp; boolstatus = annotation.<b>GetOriginFeature</b>(feature, featureFosUsage)</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Debug.Print (&quot;&quot;)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Origin Feature: &quot; + feature.Name + &quot; @ &quot; + FosUsage(featureFosUsage))<br>
+&nbsp;&nbsp;&nbsp; boolstatus = annotation.<b>GetFeature</b>(feature, featureFosUsage)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Tolerance Feature: &quot; + feature.Name + &quot; @ &quot; + FosUsage(featureFosUsage))</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; ' The direction vector</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; boolstatus = annotation.<b>GetDirectionVector</b>(I, J, K)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;&quot;)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (&quot;Direction Vector: &quot; + FormatVector(I, J, K))</p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Private Function annotationTypeNameFromObject(anno As DimXpertAnnotation) As String<br>
+&nbsp;&nbsp;&nbsp; annotationTypeNameFromObject = annotationTypeNameFromTypeNumber(anno.Type)<br>
+End Function</p>
+<p class="APICODE">Private Function annotationTypeNameFromTypeNumber(annoTypeIndex As Long) As String</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Select Case annoTypeIndex</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Case swDimXpertDimTol_DistanceBetween<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; annotationTypeNameFromTypeNumber = &quot;DistanceBetween Dim&quot;</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; End Select</p>
+<p class="APICODE">End Function</p>
+<p class="APICODE">Private Function DisplayEntity(annotation As DimXpertAnnotation) As String</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim str As String<br>
+&nbsp;&nbsp;&nbsp; Dim dispEnt As Object<br>
+&nbsp;&nbsp;&nbsp; Dim swAnnot As SldWorks.annotation</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Set dispEnt = annotation.GetDisplayEntity</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; If Not dispEnt Is Nothing Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If TypeOf dispEnt Is SldWorks.annotation Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set swAnnot = dispEnt<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; str = swAnnot.GetName<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; DisplayEntity = str</p>
+<p class="APICODE">End Function</p>
+<p class="APICODE">Private Function FosUsage(value As Long) As String</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim str As String<br>
+&nbsp;&nbsp;&nbsp; Select Case value</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Case swDimXpertDistanceFosUsage_Center<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; str = &quot;Center&quot;</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Case swDimXpertDistanceFosUsage_MaximumSide<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; str = &quot;Max&quot;</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Case swDimXpertDistanceFosUsage_MinimumSide<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; str = &quot;Min&quot;</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Case Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; str = &quot;N/A&quot;</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; End Select</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; FosUsage = str</p>
+<p class="APICODE">End Function</p>
+<p class="APICODE">Private Function FormatVector(I As Double, J As Double, K As Double) As String</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim str As String<br>
+&nbsp;&nbsp;&nbsp; str = FormatDouble(I) + &quot;, &quot; + FormatDouble(J) + &quot;, &quot; + FormatDouble(K)<br>
+&nbsp;&nbsp;&nbsp; FormatVector = str</p>
+<p class="APICODE">End Function</p>
+<p class="APICODE">Private Function FormatDouble(value As Double) As String</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim str<br>
+&nbsp;&nbsp;&nbsp; str = Format(value, &quot;##,##0.0000&quot;)<br>
+&nbsp;&nbsp;&nbsp; FormatDouble = str</p>
+<p class="APICODE">End Function</p>
+<p class="APICODE">Private Function RadiansToDegrees(value As Double) As String</p>
+<p class="APICODE">    &nbsp;&nbsp;&nbsp; Dim str<br>
+&nbsp;&nbsp;&nbsp; str = Format((value * 57.2957795130823), &quot;##,##0.00&quot;)<br>
+&nbsp;&nbsp;&nbsp; RadiansToDegrees = str</p>
+<p class="APICODE">End Function</p>
+<p>&nbsp;</p>
+
+</body>
+
+</html>

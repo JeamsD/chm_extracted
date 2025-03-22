@@ -1,0 +1,390 @@
+<html>
+
+<head>
+<title>Get Free Body Forces and Moments Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,free body forces">
+<meta name=MS-HKWD content="VBA examples,forces">
+
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Get Free Body Forces and Moments Example (VBA)</h1>
+<p>This example shows how to get the free body forces and moments for selected 
+entities.</p>
+<p><span style="font-weight: bold;">NOTE:</span> To get persistent reference 
+ identifiers (PIDs) for model selections, you can use
+<a href="GettingStarted-swsimulationapi.html">pidcollector.exe</a> 
+ or IModelDocExtension::GetPersistReference3.</p>
+<p class="APICODE">
+'---------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Add the SOLIDWORKS Constant type library as a reference<br>
+'&nbsp;&nbsp;&nbsp; (in the IDE, click <b>Tools &gt; References &gt;<br>
+'&nbsp;&nbsp;&nbsp; SOLIDWORKS version Constant type library</b>).<br>
+' 4. Modify the path to the specified model.<br>
+' 5. Open the Immediate window.<br>
+'<br>
+' Postconditions: Inspect the Immediate window for the free body forces and 
+moments.<br>
+'<br>
+' NOTE: Because this assembly document is used by<br>
+' SOLIDWORKS Simulation tutorial, do not save any<br>
+' changes when closing the document.<br>
+'-------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Function VerifyLong(SwApp As SldWorks.SldWorks, lExpected As 
+Long, lActual As Long, sMessage As String) As Boolean<br>
+&nbsp;&nbsp;&nbsp; 'This function will compare two long values for equivalence.<br>
+&nbsp;&nbsp;&nbsp; 'If they are different, an error message is reported with {sMessage}<br>
+&nbsp;&nbsp;&nbsp; 'as title, and the function returns false.<br>
+&nbsp;&nbsp;&nbsp; 'If equivalent, the function returns true.<br>
+&nbsp;&nbsp;&nbsp; VerifyLong = True<br>
+&nbsp;&nbsp;&nbsp; If lActual &lt;&gt; lExpected Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, sMessage &amp; &quot;: 
+Expected = &quot; &amp; CStr(lExpected) &amp; &quot; , Actual = &quot; &amp; CStr(lActual)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; VerifyLong = False<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+End Function</p>
+<p class="APICODE">Function VerifyTolerance(SwApp As SldWorks.SldWorks, 
+dExpected As Double, dActual As Double, dTol As Double, sMessage As String) As 
+Boolean<br>
+&nbsp;&nbsp;&nbsp; 'This function will compare two double values to ensure that 
+the actual<br>
+&nbsp;&nbsp;&nbsp; 'value is within the specified tolerance range<br>
+&nbsp;&nbsp;&nbsp; 'of the expected value.&nbsp; If the actual is not within the 
+tolerance range, <br>
+&nbsp;&nbsp;&nbsp; 'an error message is reported with {sMessage}<br>
+&nbsp;&nbsp;&nbsp; 'as title, and the function returns false. Otherwise, the 
+function returns<br>
+&nbsp;&nbsp;&nbsp; 'true to indicate equivalence/success.<br>
+&nbsp;&nbsp;&nbsp; VerifyTolerance = True<br>
+&nbsp;&nbsp;&nbsp; If (dActual &lt; ((1 - dTol) * dExpected)) Or (dActual &gt; ((1 + 
+dTol) * dExpected)) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, sMessage &amp; &quot;: 
+Expected = &quot; &amp; CStr(dExpected) &amp; &quot; , Actual = &quot; &amp; CStr(dActual) &amp; &quot; , Tolerance 
+= &quot; &amp; CStr(dTol) &amp; &quot; percent&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; VerifyTolerance = False<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+End Function</p>
+<p class="APICODE">Function SelectByPID(Part As SldWorks.ModelDoc2, PIDName As 
+String, PIDCollection As Collection) As Object<br>
+&nbsp;&nbsp;&nbsp; Dim PID()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Byte<br>
+&nbsp;&nbsp;&nbsp; Dim PIDVariant&nbsp; As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim PIDString&nbsp;&nbsp; As String<br>
+&nbsp;&nbsp;&nbsp; Dim i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Integer<br>
+&nbsp;&nbsp;&nbsp; Dim SelObj&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Object<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get the string from the collection<br>
+&nbsp;&nbsp;&nbsp; PIDString = &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDString = PIDCollection.Item(PIDName)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Parse the string into an array<br>
+&nbsp;&nbsp;&nbsp; PIDVariant = Split(PIDString, &quot;,&quot;)<br>
+&nbsp;&nbsp;&nbsp; ReDim PID(UBound(PIDVariant))<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Change to a byte array<br>
+&nbsp;&nbsp;&nbsp; For i = 0 To (UBound(PIDVariant) - 1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PID(i) = PIDVariant(i)<br>
+&nbsp;&nbsp;&nbsp; Next i<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Select the entity<br>
+&nbsp;&nbsp;&nbsp; Set SelObj = 
+Part.<b>Extension</b>.<b>GetObjectByPersistReference</b>((PID))<br>
+&nbsp;&nbsp;&nbsp; Set SelectByPID = SelObj<br>
+&nbsp;&nbsp;&nbsp; Set SelObj = Nothing<br>
+End Function</p>
+<p class="APICODE">Function PIDInitializer() As Collection<br>
+&nbsp;&nbsp;&nbsp; Dim PIDCollection As New Collection<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim selection1 As String</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Constants<br>
+&nbsp;&nbsp;&nbsp; selection1 = 
+&quot;35,29,213,113,218,129,72,162,168,88,152,178,27,137,239,153,161,1,0,0,16,1,0,0,120,1,109,80,77,75,195,64,20,156,42,181,181,234,65,40,232,197,163,224,69,239,182,232,197,84,44,20,34,155,30,60,8,33,110,54,98,219,36,18,183,224,69,200,143,232,111,240,230,69,252,7,30,253,79,141,243,92,226,7,184,135,157,125,51,243,102,121,175,215,5,86,1,84,203,138,55,177,106,96,3,105,126,30,105,163,76,18,234,198,23,13,52,5,197,201,243,244,190,216,127,25,190,142,107,116,109,59,210,86,228,105,48,181,131,204,6,243,34,25,198,202,220,135,218,201,107,34,171,80,203,15,91,124,15,30,173,127,51,49,218,58,106,155,212,89,96,139,187,236,246,34,202,226,153,33,189,172,14,60,244,112,141,75,20,200,49,129,129,134,101,29,32,101,61,101,45,90,68,213,226,129,111,69,70,20,75,28,17,35,196,56,162,123,4,143,62,133,49,214,75,166,118,254,243,173,0,31,39,125,31,184,218,237,28,186,57,221,205,134,150,199,192,132,113,115,204,24,94,159,231,214,49,246,88,188,157,246,125,217,143,140,214,149,209,178,88,246,247,103,5,205,178,253,23&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; 
+&quot;7,173,119,10,108,150,220,236,47,165,78,254,193,79,249,139,99,22,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Store constants in a collection<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection1, &quot;selection1&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim selection2 As String</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Constants<br>
+&nbsp;&nbsp;&nbsp; selection2 = 
+&quot;35,29,213,113,218,129,72,162,168,88,152,178,27,137,239,153,155,1,0,0,15,1,0,0,120,1,109,80,203,74,195,64,20,61,245,85,45,186,16,10,186,113,41,184,209,189,6,221,152,20,11,133,200,164,136,11,161,196,201,68,108,155,68,198,41,116,83,200,71,248,13,238,220,72,255,160,75,255,169,241,12,211,136,130,179,184,119,238,121,13,119,188,54,176,14,160,90,86,172,236,85,3,123,200,138,59,165,141,154,10,149,14,100,181,58,86,134,53,91,128,217,226,237,248,163,251,217,175,187,51,182,105,12,242,164,19,75,21,77,116,218,77,132,122,25,72,199,109,145,235,8,155,230,30,8,166,38,124,28,42,105,28,180,79,250,58,50,250,57,127,186,137,243,100,172,8,47,171,19,31,23,120,192,45,52,10,12,161,32,97,56,71,200,56,143,56,91,46,38,107,240,202,187,32,98,25,195,222,99,143,145,224,140,234,30,124,234,4,250,216,41,153,218,250,79,199,197,190,46,189,16,184,63,108,157,186,37,93,165,161,233,51,48,101,220,4,99,134,215,231,189,121,142,35,14,243,43,47,108,172,64,187,222,129,93,85,23,89,52,50,65,110,254,252,196,102,185,253,99,2&quot;<br>
+&nbsp;&nbsp;&nbsp; selection2 = selection2 &amp; 
+&quot;17,160,101,183,4,126,99,117,140,77,251,6,67,218,108,28,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection2 = selection2 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Store constants in a collection<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection2, &quot;selection2&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set PIDInitializer = PIDCollection<br>
+End Function</p>
+<p class="APICODE">Function ErrorMsg(SwApp As SldWorks.SldWorks, Message As 
+String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Function</p>
+<p class="APICODE">Sub main()<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim Part As ModelDoc2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS As 
+CosmosWorksLib.COSMOSWORKS, CWAddinCallBack As CosmosWorksLib.CWAddinCallBack, 
+ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager, Study As 
+CosmosWorksLib.CWStudy, CWMesh As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; Dim StudyOptions As Object, CWFeatObj As 
+CosmosWorksLib.CWResults, ActDocExt As SldWorks.ModelDocExtension<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim sModelName As String, sStudyName As 
+String<br>
+&nbsp;&nbsp;&nbsp; Dim sStudyConfig As String<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim longstatus As Long, 
+longwarnings As Long, errCode As Long<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim el As Double, el_hold As Double<br>
+&nbsp;&nbsp;&nbsp; Dim tl As Double, tl_hold As Double<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim UResMax As Double, Tol1 As Double<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim bStudyFound As 
+Boolean<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim DispArray1 As Variant, DispArray2 As 
+Variant, Force As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim iMeshUnit As Long, iSolverType As Long, iNumberOfStudies 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim ix As Long, iStudyType As Long<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; sModelName = &quot;<i>public_documents</i><b>\samples\tutorial\api\Remoteload.sldprt</b>&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'Model name<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'SOLIDWORKS configuration that study is 
+active under (Blank &quot;&quot; = use default)<br>
+&nbsp;&nbsp;&nbsp; sStudyConfig = &quot;&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; sStudyName = &quot;Study 1&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+'Study name</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; iSolverType = swsSolverTypeFFEPlus 'Solver 
+type<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim PIDCollection As New Collection<br>
+&nbsp;&nbsp;&nbsp; Set PIDCollection = PIDInitializer()<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.<b>SldWorks</b><br>
+&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Exit Sub<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>OpenDoc6</b>(sModelName, 
+swDocPART, 1, &quot;&quot;, longstatus, longwarnings)<br>
+&nbsp;&nbsp;&nbsp; If Part Is Nothing Then ErrorMsg SwApp, &quot;Failed to open: &quot; &amp; 
+sModelName: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = 
+SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, 
+&quot;CWAddinCallBack object not found&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;COSMOSWORKS 
+object not found&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get active document<br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b><br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'If needed, rebuild the model<br>
+&nbsp;&nbsp;&nbsp; Set ActDocExt = Part.<b>Extension</b><br>
+&nbsp;&nbsp;&nbsp; If (ActDocExt.<b>NeedsRebuild</b> = True) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Part.<b>ForceRebuild3</b> (False)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'If needed, change the SOLIDWORKS configuration to 
+activate the study<br>
+&nbsp;&nbsp;&nbsp; If sStudyConfig &lt;&gt; &quot;&quot; Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Part.<b>ShowConfiguration2</b> 
+(sStudyConfig)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b><br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;StudyMngr 
+object not there&quot;: GoTo Lastline<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Find the study<br>
+&nbsp;&nbsp;&nbsp; bStudyFound = False<br>
+&nbsp;&nbsp;&nbsp; iNumberOfStudies = StudyMngr.<b>StudyCount</b><br>
+&nbsp;&nbsp;&nbsp; For ix = 0 To iNumberOfStudies<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = ix<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(ix)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg 
+SwApp, &quot;Failed to get study number: &quot; &amp; ix: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If UCase(Study.<b>Name</b>) = 
+UCase(sStudyName) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bStudyFound = 
+True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Exit For<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; Next<br>
+&nbsp;&nbsp;&nbsp; If bStudyFound = False Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;Failed to find 
+study 
+named: &quot; &amp; sStudyName: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create mesh<br>
+&nbsp;&nbsp;&nbsp; Set CWMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CWMesh Is Nothing Then ErrorMsg SwApp, &quot;No mesh object&quot;: GoTo Lastline<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Check if need to use the default 
+element size or tolerance<br>
+&nbsp;&nbsp;&nbsp; If ((el = 0) Or (tl = 0)) Then<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Get the default 
+element size and tolerance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Call 
+CWMesh.<b>GetDefaultElementSizeAndTolerance</b>(iMeshUnit, el_hold, tl_hold)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'If element size was not 
+entered, use the default<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If el = 0 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; el = el_hold<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'If tolerance size 
+was not entered, use the default<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If tl = 0 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tl = tl_hold<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create Mesh<br>
+&nbsp;&nbsp;&nbsp; 'Using the curvature-based mesher?<br>
+&nbsp;&nbsp;&nbsp; If CWMesh.<b>MesherType</b> = swsMesherTypeAlternate Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Yes, set the mininum element size 
+equal to the maximum element size<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, el, el)<br>
+&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'No, using the standard mesher<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;CreateMesh failed: 
+Error code = &quot; &amp; CStr(errCode): GoTo Lastline<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Validate mesh...<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Check the mesh stat<br>
+&nbsp;&nbsp;&nbsp; If VerifyLong(SwApp, swsMeshStateExistsAndCurrent, 
+CWMesh.<b>MeshState</b>, &quot;MeshState indicates that mesh is not current and/or doesn't 
+exist&quot;) = False Then GoTo Lastline</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Check the number of components that 
+failed to mesh<br>
+&nbsp;&nbsp;&nbsp; If VerifyLong(SwApp, 0, CWMesh.<b>GetNoOfFailedComponents</b>, 
+&quot;GetNoOfFailedComponents indicates mesh failure&quot;) = False Then GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get analysis type<br>
+&nbsp;&nbsp;&nbsp; iStudyType = Study.<b>AnalysisType</b><br>
+&nbsp;&nbsp;&nbsp; If iStudyType = swsAnalysisStudyTypeStatic Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = 
+Study.<b>StaticStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf iStudyType = swsAnalysisStudyTypeThermal Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = 
+Study.<b>ThermalStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf iStudyType = swsAnalysisStudyTypeFrequency Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = 
+Study.<b>FrequencyStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf iStudyType = swsAnalysisStudyTypeBuckling Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = 
+Study.<b>BucklingStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf iStudyType = swsAnalysisStudyTypeNonlinear Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = 
+Study.<b>NonlinearStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;StudyOptions for 
+this analysis type is not yet supported&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; If StudyOptions Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+get StudyOptions object&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Set solver type<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>SolverType</b> = iSolverType<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Running analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed with 
+error code &quot; &amp; errCode: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Getting results<br>
+&nbsp;&nbsp;&nbsp; Set CWFeatObj = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWFeatObj Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+result object&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; DispArray1 = Array(SelectByPID(Part, 
+&quot;selection1&quot;, PIDCollection))&nbsp; 'Face&lt;1&gt;<br>
+&nbsp;&nbsp;&nbsp; DispArray2 = Array(SelectByPID(Part, &quot;selection2&quot;, 
+PIDCollection))&nbsp; 'Vertex moment reference<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Force = 
+CWFeatObj.<b>GetFreeBodyForcesAndMoments</b>(Nothing, (DispArray2), (DispArray1), 0, 
+errCode)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Free body forces and 
+moments:&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Free body force x-components of all 
+selections: &quot; &amp; Force(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Free body force y-components of all 
+selections: &quot; &amp; Force(1)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Free body force z-components of all 
+selections: &quot; &amp; Force(2)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Resultant free body force of all 
+selections: &quot; &amp; Force(3)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Free body moment x-components of 
+all selections: &quot; &amp; Force(4)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Free body moment y-components of 
+all selections: &quot; &amp; Force(5)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Free body moment z-components of 
+all selections: &quot; &amp; Force(6)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Resultant free body moment of all 
+selections: &quot; &amp; Force(7)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Free body force x-components of 
+entire model: &quot; &amp; Force(8)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Free body force y-components of 
+entire model: &quot; &amp; Force(9)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Free body force z-components of 
+entire model: &quot; &amp; Force(10)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Resultant free body force of entire 
+model: &quot; &amp; Force(11)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Free body moment x-components of 
+entire model: &quot; &amp; Force(12)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Free body moment y-components of 
+entire model: &quot; &amp; Force(13)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Free body moment z-components of 
+entire model: &quot; &amp; Force(14)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Resultant free body moment of 
+entire model: &quot; &amp; Force(15)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, 
+&quot;Failed to get free body force result&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; UResMax = 100<br>
+&nbsp;&nbsp;&nbsp; Tol1 = 0.1&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Check resultant free body force<br>
+&nbsp;&nbsp;&nbsp; If VerifyTolerance(SwApp, UResMax, CDbl(Force(3)), Tol1, &quot; 
+Resultant free body force of all selections is beyond tolerance&quot;) = False Then GoTo Lastline</p>
+<p class="APICODE">Lastline:<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Sub</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

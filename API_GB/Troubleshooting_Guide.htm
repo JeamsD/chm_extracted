@@ -1,0 +1,248 @@
+<html>
+
+<head>
+<title>PDM Professional API Troubleshooting Guide</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+<style>
+<!--
+div.Section1
+	{page:Section1;}
+-->
+</style>
+</head>
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>PDM Professional API Troubleshooting Guide</h1>
+<p><a name="top"></a>The examples provided with the PDM APIs are thorough and 
+extensive. You should use them carefully when you develop your own PDM 
+applications and add-ins. This topic discusses several important steps in the 
+PDM API examples that are often overlooked by PDM developers. It also answers 
+some questions that have been frequently asked of API Support.</p>
+<p><a href="#Answer1">Why am I getting &quot;The parameter is incorrect. (Exception 
+from HRESULT: 0x80070057 (E_INVALIDARG)&quot; when my PDM API application <br>
+calls a method that passes an array of structures?</a></p>
+<p><a href="#Answer2">Why does adding my add-in to the Admin tool fail with the 
+message &quot;Please select at least one DLL implementing the IEdmAddin5 <br>
+interface.&quot;?</a></p>
+<p><a href="#Answer3">When I add an add-in to the Admin tool, why does it throw 
+&quot;An older version of the add-in is already loaded in memory...&quot;?</a></p>
+<p><a href="#Answer4">Why aren't I hitting breakpoints when I debug my PDM API 
+application?</a></p>
+<p><a href="#Answer5">Why are my add-in's commands not working?</a></p>
+<p><a href="#Answer6">How do you debug a task add-in?</a></p>
+<p><a href="#Answer7">Why doesn't my PDM add-in appear in the Debug Add-ins 
+window after I've selected to debug the add-in in the Admin tool?</a></p>
+<p><a href="#Answer8">How do I specify the lParentWnd parameter in methods?</a></p>
+<p><a href="#Answer9">Why am I seeing <b>Failed to extract add-in</b> and <b>
+Error loading add-ins</b> messages while my add-in is running?</a></p>
+<p><a href="#Answer10">My add-in works when compiled for .NET Framework 2.0, 
+3.0, and 3.5. But with .NET Framework 4.0, I get a runtime error, <br>
+&quot;Call to method 'OnCmd' in add-in failed. Error code = 0x080131522 (Unknown 
+error 0x080131522).&quot;</a></p>
+<p>&nbsp;</p>
+<p>
+======================================================================================<br>
+<br>
+<a name="Answer1"></a>Why am I getting &quot;The parameter is incorrect. (Exception 
+from HRESULT: 0x80070057 (E_INVALIDARG)&quot; when my PDM API application <br>
+calls a method that passes an array of structures?</p>
+<p>If you are using .NET 4.0, you must right-click 
+EPDM.Interop.epdm in References, click Properties, and set Embed Interop Types
+<br>
+to False. <br>
+<br>
+The reason is that all of the structures defined in the PDM Pro API (nothing but 
+COM API’s) are not embedded by the .Net <br>
+Framework if this property is set to true. This is a Microsoft issue with COM, 
+and there is no solution for it at the moment. See <br>
+<a href="http://social.msdn.microsoft.com/Forums/vstudio/en-US/1325d24c-db0f-43a1-9780-b68a843d816b/passing-an-array-of-structs-to-a-com-%20%20interface?forum=csharpgeneral">
+http://social.msdn.microsoft.com/Forums/vstudio/en-US/1325d24c-db0f-43a1-9780-b68a843d816b/passing-an-array-of-structs-to-a-com-
+<br>
+interface?forum=csharpgeneral</a>.<br>
+<br>
+*KEEP IN MIND THAT YOU SHOULD ONLY SET THIS PROPERTY TO FALSE FOR 
+EPDM.Interop.epdm.dll. FOR ALL OTHER EXTERNAL REFERENCES IN <br>
+YOUR PROJECT THIS PROPERTY SHOULD BE SET TO TRUE.<br>
+&nbsp;</p>
+<p><a href="#top">Back</a><br>
+&nbsp;<br>
+<a name="Answer2"></a>Why does adding my add-in to the Admin tool fail with the 
+message &quot;Please select at least one DLL implementing the IEdmAddin5 <br>
+interface.&quot;?</p>
+<p>The Admin tool did not find the ISwAddin interface for 
+some reason, usually because multiple classes were made COM-visible in <br>
+your add-in, and the Admin tool randomly chose the wrong class with which to start the add-in. To 
+correct this problem:<br>
+<br>
+1. In project properties deselect <b>Application &gt; Assembly Information&gt; Make 
+Assembly COM-visible</b>.<br>
+2. Make only the class that implements IEdmAddin5 COM-Visible as follows: <br>
+<br>
+&nbsp;&nbsp; 'VB.NET<br>
+&nbsp;&nbsp; Imports EPDM.Interop.epdm<br>
+&nbsp;&nbsp; Imports System.Runtime.InteropServices<br>
+<br>
+&nbsp;&nbsp; &lt;Guid(&quot;07a33492-234f-4e8a-8c4f-6b66d8cf16c2&quot;)&gt; _<br>
+&nbsp;&nbsp; &lt;ComVisible(True)&gt; _<br>
+&nbsp;&nbsp; Public Class SWEPDMAddin<br>
+&nbsp;&nbsp; Implements IEdmAddIn5<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Public Sub GetAddInInfo<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Public Sub OnCmd<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; …<br>
+&nbsp;&nbsp; <br>
+The Guid above is created in Visual Studio's <b>Tools &gt; Create GUID</b>. Copy 
+and paste the GUID to one class that implements the <br>
+IEDMAddin5 interface.<br>
+<br>
+3. If you are on Windows 8 or above, make sure that .Net CLR 2.0 is enabled on 
+your machine, because your add-in is using .Net Framework 3.5. Also, ensure that 
+the UAC is off on this machine. <br>
+4. In project properties select <b>Build &gt; Register for COM interop</b>.<br>
+5. Re-compile the add-in.<br>
+6. Open the task manager and kill <b>edmserver.exe</b>, <b>viewserver.exe</b> 
+and <b>explorer.exe</b>. <br>
+7. Restart the Admin tool as administrator. <br>
+8. Add the add-in dlls in the Admin tool. <br>
+&nbsp;</p>
+<p><a href="#top">Back</a></p>
+<p><br>
+<a name="Answer3"></a>When I add an add-in to the Admin tool, why does it throw 
+&quot;An older version of the add-in is already loaded in memory...&quot;?</p>
+<p>There is already an add-in with the same version in the 
+vault. <br>
+To add the add-in you must create your own GUID using Visual Studio’s <b>Tools &gt; 
+Create GUID</b>. Copy the new GUID to the class <br>
+implementing the IEdmAddin5 interface, setting the COMVisible attribute to true. 
+This uniquely identifies each add-in and <br>
+also prevents the loading of duplicate add-ins in your vault. <br>
+<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp; //C#<br>
+&nbsp;&nbsp;&nbsp;&nbsp; using System.Runtime.InteropServices;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp; namespace test<br>
+&nbsp;&nbsp;&nbsp;&nbsp; {<br>
+&nbsp;&nbsp;&nbsp;&nbsp; [Guid(&quot;E9B24B05-A4CA-401B-A644-AB59175D758E&quot;),ComVisible(true)]<br>
+&nbsp;&nbsp;&nbsp;&nbsp; public class Class1 : IEdmAddIn5<br>
+&nbsp;&nbsp;&nbsp;&nbsp; ...<br>
+&nbsp;&nbsp;&nbsp;&nbsp; }<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p><a href="#top">Back</a><br>
+<br>
+<br>
+<a name="Answer4"></a>Why aren't I hitting breakpoints when I debug my PDM API 
+application?</p>
+<p>If your project targets a .NET Framework older than 4.0, 
+you must add an application configuration file to the debug <br>
+application in order for breakpoints to work. If you are using Notepad for 
+debugging, then add the notepad config file to the <br>
+notepad exe’s location i.e. <b>C:\Windows\Notepad.exe</b>. Add 
+notepad.exe.config for .Net CLR 2 or CLR 4, depending on your .NET <br>
+framework.<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp; &lt;!-- sample notepad.exe.config --&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp; &lt;?xml version =&quot;1.0&quot;?&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp; &lt;configuration&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;startup&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+&lt;supportedRuntime version=&quot;v2.0.[version on your machine]&quot; /&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/startup&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp; &lt;/configuration&gt;<br>
+<br>
+To determine the correct [version on your machine] look in the “C:\Windows\Microsoft.NET\Framework” 
+directory for the most recent <br>
+“v2.0.xxxxx” folder.<br>
+<br>
+To understand why one needs to add an application configuration file to the 
+debug application, see:<br>
+<br>
+<a href="https://blogs.msdn.microsoft.com/debugger/2010/04/29/cant-hit-breakpoints-in-a-plug-in-or-cant-debug-net-2-03-03-5-from-a-mixed-%20%20mode-exe-project-with-visual-studio-2010/">
+https://blogs.msdn.microsoft.com/debugger/2010/04/29/cant-hit-breakpoints-in-a-plug-in-or-cant-debug-net-2-03-03-5-from-a-mixed-
+<br>
+mode-exe-project-with-visual-studio-2010/</a>.</p>
+<p class="APICODE">&nbsp;</p>
+<p><a href="#top">Back</a><br>
+<br>
+<a name="Answer5"></a>Why are my add-in's commands not working?</p>
+<p>Are you passing arguments to OnCmd() by value or by reference? PDM Pro add-ins 
+require that you implement IEdmAddIn5::OnCmd, passing arguments using ByRef:<br>
+<br>
+C#:</p>
+<p><b>public void OnCmd(ref EdmCmd poCmd, ref System.Array ppoData) {}</b></p>
+<p>VB.NET:</p>
+<p><b>Public Sub OnCmd(ByRef poCmd As EdmCmd, ByRef ppoData As System.Array) 
+Implements IEdmAddIn5.OnCmd</b></p>
+<p><a href="#top">Back</a><br>
+<br>
+<br>
+<a name="Answer6"></a>How do you debug a task add-in?</p>
+<p>The task add-in needs to be fully installed in the vault 
+before you can install it as a task or debug it. Therefore in order to debug a task <br>
+add-in, you must attach the add-in’s running process to the debugger. <br>
+<br>
+Since add-ins are loaded and unloaded at unpredictable times, you can pop up a 
+message box to force the add-in to pause <br>
+while you attach the debugger to the add-in's process. </p>
+<p><a href="#top">Back</a><br>
+<br>
+<br>
+<a name="Answer7"></a>Why doesn't my PDM add-in appear in the Debug Add-ins 
+window after I've configured the Admin tool to debug the add-in?</p>
+<p>1. In the project's properties, select <b>Application &gt; 
+Register for COM interop</b>. <br>
+2. Compile the add-in. <br>
+3. Kill <b>edmserver.exe</b>, <b>viewserver.exe</b>, and <b>explorer.exe</b> from the task manager. 
+<br>
+4. Restart 
+the Admin tool as an administrator. <br>
+5. Add the add-in for
+debugging in the Admin tool.<br>
+6. Debug the add-in.</p>
+<p class="APICODE"><a href="#top">Back</a></p>
+<p><a name="Answer8"></a>How do I specify the lParentWnd parameter in method 
+calls?</p>
+<p><br>
+The lParentWnd parameter ensures that your application’s dialog remains visible. 
+When your application displays a dialog box, you need to make sure that it is 
+not possible to switch between the dialog box and the Explorer window behind it 
+(or whatever application it is launched from). Failure to ensure this may cause your application's dialog box 
+to be hidden behind an inactive Explorer window or application, 
+leaving the impression that your program has hung. <br>
+<br>
+For methods called in Windows Forms, you can specify lParentWnd as follows:</p>
+<p>VB.NET:</p>
+<p><b>Me.Handle.ToInt32()</b></p>
+<p>C#:</p>
+<p><b>this.Handle.ToInt32()</b></p>
+<p>For non-windows-forms applications, you can specify lParentWnd with 0 (zero).<br>
+&nbsp;</p>
+<p><a href="#top">Back</a></p>
+<p><a name="Answer9"></a>Why am I seeing <b>Failed to extract add-in</b> and <b>
+Error loading add-ins</b> messages when my add-in is running?</p>
+<p><br>
+1. In Visual Studio, select <b>Compile </b>or<b> Build tab &gt; Register for COM interop</b>.
+<br>
+2. If you are on Windows 10, verify that the UAC is OFF. <br>
+3. The host application needs an elevation (i.e. it must be run with 
+administrator privileges). <br>
+4. Start the Admin Tool as Administrator and then add the add-in.<br>
+<br>
+<a href="#top">Back</a></p>
+<p><a name="Answer10"></a>My add-in works when compiled for .NET Framework 2.0, 
+3.0, and 3.5. But with .NET Framework 4.0, I get a runtime error, <br>
+&quot;Call to method 'OnCmd' in add-in failed. Error code = 0x080131522 (Unknown 
+error 0x080131522).&quot;</p>
+<p>As of PDM Pro 2013 we distribute the primary interop assembly, <b>
+EPDM.Interop.epdm.dll</b>.<br>
+Add this interop assembly to your add-in's references when compiling for .NET 
+Framework 4.0 and later.<br>
+&nbsp;</p>
+<p><a href="#top">Back</a></p>
+
+</body>
+
+</html>

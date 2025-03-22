@@ -1,0 +1,75 @@
+<html>
+
+<head>
+<title>Start Route Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,routing">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Routing API 
+ Help</span></h1>
+<h1>Start Route Example (VBA)</h1>
+<p>This example shows how to start a route using a selected routing component.</p>
+
+<pre>'----------------------------------------------------------------------------
+' Preconditions:
+' 1. Add SOLIDWORKS Routing as an add-in (select <b>Tools &gt; Add-Ins &gt; SOLIDWORKS</b>
+'    <b>Routing</b> in SOLIDWORKS).
+' 2. Add the <b>SOLIDWORKS</b> &lt;<i>version</i>&gt; <b>Routing Type Library </b>as a reference
+'    (select <b>Tools &gt; References</b> in the IDE).
+' 3. In <b>Tools &gt; Options &gt; System Options &gt; Routing &gt; Routing File Locations</b>,
+'    add the locations of your SOLIDWORKS Routing files.
+' 4. Press F5 to run the macro.
+'
+' Postconditions:
+' 1. When the macro stops, click the green checkmark in the Route 
+'    Properties PropertyManager page to create the route. 
+' 2. A route is added to the assembly. To verify, expand
+'    <b>Pipe_1StartRoute</b> and locate the Route1 feature in the
+'    FeatureManager design tree. 
+'
+' <b>NOTE</b>: Because the models are used elsewhere,
+' do not save changes when closing the models.
+' ---------------------------------------------------------------------------</pre>
+<pre>Option Explicit</pre>
+<pre>Dim SwApp               As SldWorks.SldWorks</pre>
+<pre>Sub main()</pre>
+<pre>    Dim swModel         As SldWorks.ModelDoc2
+    Dim swAssembly      As SldWorks.AssemblyDoc
+    Dim swModelDocExt   As SldWorks.ModelDocExtension
+    Dim swRouteMgr      As SWRoutingLib.RouteManager
+    Dim status          As Boolean
+    Dim warnings        As Long
+    Dim errors          As Long
+    Dim fileName        As String</pre>
+<pre>    ' Connect to SOLIDWORKS
+    Set SwApp = Application.SldWorks
+    If SwApp Is Nothing Then Exit Sub</pre>
+<pre>    ' Open the assembly and make it the active document
+    fileName = &quot;<i>public_documents</i>\tutorial\api\StartRoute.sldasm&quot;
+    SwApp.<b>OpenDoc6</b> fileName, swDocASSEMBLY, swOpenDocOptions_Silent, &quot;Default&quot;, errors, warnings
+    Set swModel = SwApp.<b>ActiveDoc</b>
+    Set swAssembly = swModel
+    Set swModelDocExt = swModel.<b>Extension</b>    </pre>
+<pre>    ' Get the RouteManager
+    Set swRouteMgr = swAssembly.<b>GetRouteManager</b></pre>
+<pre>    ' Select <b>slip on weld flange</b> component
+    status = swModelDocExt.<b>SelectByID2</b>(&quot;slip on weld flange-1@MyStartRoute&quot;, &quot;COMPONENT&quot;, 0, 0, 0, False, 0, Nothing, 0)    </pre>
+<pre>    ' Start the route
+    status = swRouteMgr.<b>StartRoute</b>(&quot;&quot;, &quot;&quot;)    </pre>
+<pre>    ' In SOLIDWORKS, click the green check mark in the Route
+    ' Properties PropertyManager page to create the route</pre>
+<pre>    ' Exit the route from edit mode
+    swRouteMgr.<b>ExitRoute</b>    </pre>
+<pre>    ' Exit editing the assembly
+    swModel.EditAssembly</pre>
+<pre>    swModel.<b>ViewZoomtofit</b></pre>
+<pre>    
+End Sub</pre>
+
+</body>
+
+</html>

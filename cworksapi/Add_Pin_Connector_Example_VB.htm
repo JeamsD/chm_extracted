@@ -1,0 +1,236 @@
+<html>
+
+<head>
+<title>Add Pin Connector Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,pin connectors">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Add Pin Connector Example (VBA)</h1>
+<p>This example shows how to add a pin connector to a static study.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE,<br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS Simulation </b><i>
+version</i><b> type library</b>).<br>
+' 3. Ensure that the specified material library exists.<br>
+' 4. Open&nbsp;<i>public_documents</i><b>\samples\Simulation Examples\pliers.sldasm</b>.<br>
+' 5. Open an Immediate window.<br>
+'<br>
+' Postconditions:<br>
+' 1. Opens the model.<br>
+' 2. Activates the <b>Ready</b> study.<br>
+' 3. Deletes the <b>pin between branches</b> connector.<br>
+' 4. Adds <b>Pin Connector-3</b> to the Connectors folder in the Simulation 
+study<br>
+'&nbsp;&nbsp;&nbsp; tree.<br>
+' 5. Prints the properties of <b>Pin Connector-3</b> to the Immediate window.<br>
+' 6. Meshes the model.<br>
+' 7. Analyzes <b>Ready</b>.<br>
+' 8. Inspect the Immediate window, the Simulation Study tree, and the<br>
+'&nbsp;&nbsp;&nbsp; graphics area.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+' ---------------------------------------------------------------------------<br>
+Dim SwApp As SldWorks.SldWorks<br>
+Dim Part As SldWorks.ModelDoc2<br>
+Dim COSMOSWORKS As CosmosWorksLib.COSMOSWORKS<br>
+Dim COSMOSObject As CosmosWorksLib.CwAddincallback<br>
+Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+Dim Study As CosmosWorksLib.CWStudy<br>
+Dim lrMngr As CosmosWorksLib.CWLoadsAndRestraintsManager<br>
+Dim pinConnector As CosmosWorksLib.CWPinConnector<br>
+Dim CwMesh As CosmosWorksLib.CwMesh<br>
+Dim str3 As String, str4 As String<br>
+Dim varArray1 As Variant, varArray2 As Variant<br>
+Dim pDisp3 As Object, pDisp4 As Object<br>
+Dim var20 As Variant, var21 As Variant<br>
+Dim errCode As Long<br>
+Dim el As Double, tl As Double<br>
+Dim longstatus As Long</p>
+<p class="APICODE">Option Explicit<br>
+</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>ActiveDoc</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set COSMOSObject = SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; If COSMOSObject Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+get Simulation add-in&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = COSMOSObject.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+COSMOSWORKS&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+active document&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+study manager&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(0)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+frequency study&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 0<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; str3 = 
+&quot;64,31,0,0,3,0,0,0,255,254,255,22,115,0,101,0,99,0,111,0,110,0,100,0,32,0,98,0,114,0,97,0,110,0,99,0,104,0,45,0,49,0,64,0,112,0,108,0,105,0,101,0,114,0,115,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,12,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,84,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,32,0,67,0,111,0,114,0,112,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,92,0,83,0,105,0,109,0,117,0,108,0,97,0,116,0,105,0,111,0,110,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,10&quot;<br>
+&nbsp;&nbsp;&nbsp; str3 = str3 &amp; 
+&quot;1,0,115,0,92,0,115,0,101,0,99,0,111,0,110,0,100,0,32,0,98,0,114,0,97,0,110,0,99,0,104,0,46,0,115,0,108,0,100,0,112,0,114,0,116,0,9,128,255,254,255,13,115,0,101,0,99,0,111,0,110,0,100,0,32,0,98,0,114,0,97,0,110,0,99,0,104,0,2,0,0,164,247,240,62,0,33,23,28,65,1,0,0,0,0,0,0,0,4,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,33,23,28,65,29,0,0,0,70,252,240,62,34,0,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,29,0,0,0,70,252,240,62,0,0,0,0,1,0,0,0,0,0,255,255,1,0,24,0,109,111,69,110,100,70,97,99,101,51,73,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,39,0,0,0,85,255,240,62,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; str3 = str3 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; str4 = 
+&quot;64,31,0,0,3,0,0,0,255,254,255,21,102,0,105,0,114,0,115,0,116,0,32,0,98,0,114,0,97,0,110,0,99,0,104,0,45,0,49,0,64,0,112,0,108,0,105,0,101,0,114,0,115,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,11,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,83,67,0,58,0,92,0,80,0,114,0,111,0,103,0,114,0,97,0,109,0,32,0,70,0,105,0,108,0,101,0,115,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,32,0,67,0,111,0,114,0,112,0,92,0,83,0,79,0,76,0,73,0,68,0,87,0,79,0,82,0,75,0,83,0,92,0,83,0,105,0,109,0,117,0,108,0,97,0,116,0,105,0,111,0,110,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0&quot;<br>
+&nbsp;&nbsp;&nbsp; str4 = str4 &amp; 
+&quot;,115,0,92,0,102,0,105,0,114,0,115,0,116,0,32,0,98,0,114,0,97,0,110,0,99,0,104,0,46,0,115,0,108,0,100,0,112,0,114,0,116,0,9,128,255,254,255,12,102,0,105,0,114,0,115,0,116,0,32,0,98,0,114,0,97,0,110,0,99,0,104,0,2,0,0,164,247,240,62,0,1,22,28,65,1,0,0,0,0,0,0,0,6,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,1,22,28,65,29,0,0,0,70,252,240,62,34,0,0,0,255,255,1,0,24,0,109,111,69,110,100,70,97,99,101,51,73,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,38,0,0,0,165,255,240,62,1,0,0,0,0,0,0,0,0,0,0,0,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,29,0,0,0,70,252,240,62,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; str4 = str4 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; StringtoArray str3, var20<br>
+&nbsp;&nbsp;&nbsp; Set pDisp3 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var20), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray str4, var21<br>
+&nbsp;&nbsp;&nbsp; Set pDisp4 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var21), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; varArray1 = Array(pDisp3)<br>
+&nbsp;&nbsp;&nbsp; varArray2 = Array(pDisp4)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set lrMngr = Study.<b>LoadsAndRestraintsManager</b><br>
+&nbsp;&nbsp;&nbsp; lrMngr.<b>DeleteLoadsAndRestraints</b> &quot;pin between branches&quot;<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Add pin connector<br>
+&nbsp;&nbsp;&nbsp; Set pinConnector = lrMngr.<b>AddPinConnector</b>((varArray1), 
+(varArray2), errCode)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; pinConnector.<b>PinConnectorBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; pinConnector.<b>IncludeStrengthData</b> = 
+True<br>
+&nbsp;&nbsp;&nbsp; pinConnector.<b>MaterialType</b> = 1<br>
+&nbsp;&nbsp;&nbsp; pinConnector.<b>SetLibraryMaterial</b> &quot;c:\Program Files\SOLIDWORKS Corp\SOLIDWORKS\lang\english\sldmaterials\solidworks materials.sldmat&quot;, &quot;Alloy 
+Steel&quot;<br>
+&nbsp;&nbsp;&nbsp; pinConnector.<b>TensileStressAreaValue</b> = 1<br>
+&nbsp;&nbsp;&nbsp; pinConnector.<b>PinStrengthValue</b> = 620422000<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Number of entities in Pin 
+Connector-3&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; At first location: &quot; &amp; 
+pinConnector.<b>GetFirstLocationEntityCount</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; At second location: &quot; &amp; 
+pinConnector.<b>GetSecondLocationEntityCount</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = pinConnector.<b>PinConnectorEndEdit</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Units of axial and rotational 
+stiffness as defined in swsUnitSystem_e: &quot; &amp; pinConnector.<b>Unit</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Prevent relative rotation 
+between cylindrical faces? &quot; &amp; pinConnector.<b>IncludeTypeWithKey</b><br>
+&nbsp;&nbsp;&nbsp; If pinConnector.<b>IncludeTypeWithKey</b> Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Axial 
+stiffness: &quot; &amp; pinConnector.<b>AxialStiffnessValue</b><br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Prevent relative axial 
+translation between cylindrical faces? &quot; &amp; pinConnector.<b>IncludeTypeWithRetainerRing</b><br>
+&nbsp;&nbsp;&nbsp; If pinConnector.<b>IncludeTypeWithRetainerRing</b> Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Rotational 
+stiffness: &quot; &amp; pinConnector.<b>RotationalStiffnessValue</b><br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Include mass in the analysis? 
+&quot; &amp; pinConnector.<b>IncludeMass</b><br>
+&nbsp;&nbsp;&nbsp; If pinConnector.<b>IncludeMass</b> Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Mass: &quot; &amp; 
+pinConnector.<b>MassValue</b><br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Include strength data in the analysis? &quot; &amp; 
+pinConnector.<b>IncludeStrengthData</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If pinConnector.<b>IncludeStrengthData</b> 
+Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;Material data:&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim libName As String, materialName 
+As String<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; pinConnector.<b>PinConnectorBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; pinConnector.<b>GetLibraryMaterial</b> 
+libName, materialName<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; pinConnector.<b>PinConnectorEndEdit</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Source 
+(1=library, 0=user-defined): &quot; &amp; pinConnector.<b>MaterialType</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Library: &quot; 
+&amp; libName<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Name: &quot; &amp; 
+materialName<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Units as 
+defined in swsUnitSystem_e: &quot; &amp; pinConnector.<b>MaterialUnit</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Poisson's 
+Ratio: &quot; &amp; pinConnector.<b>PoissonsRatio</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Young's 
+Modulus: &quot; &amp; pinConnector.<b>YoungModulus</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Coefficient 
+of thermal expansion: &quot; &amp; pinConnector.<b>ThermalCoefficient</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Mass: &quot; &amp; 
+pinConnector.<b>MassValue</b><br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print 
+&quot;Strength data:&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Tensile 
+stress area: &quot; &amp; pinConnector.<b>TensileStressAreaValue</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Units as defined in swsTensileStressAreaUnit_e: &quot; &amp; pinConnector.<b>TensileStressAreaUnit</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Pin 
+strength: &quot; &amp; pinConnector.<b>PinStrengthValue</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Units as defined in swsStrengthUnit_e: &quot; &amp; pinConnector.<b>PinStrengthUnit</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Safety 
+factor: &quot; &amp; pinConnector.<b>SafetyFactor</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Mesh model<br>
+&nbsp;&nbsp;&nbsp; Set CwMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CwMesh Is Nothing Then ErrorMsg SwApp, &quot;Failed to get mesh 
+object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CwMesh.<b>Quality</b> = 1<br>
+&nbsp;&nbsp;&nbsp; Call CwMesh.<b>GetDefaultElementSizeAndTolerance</b>(swsLinearUnitMillimeters, 
+el, tl)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(swsLinearUnitMillimeters, 
+el, tl)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to create mesh&quot;<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed&quot;</p>
+<p class="APICODE">&nbsp;&nbsp; <br>
+End Sub</p>
+<p class="APICODE">Sub StringtoArray(inputSTR As String, varEntity As Variant)</p>
+<p class="APICODE">&nbsp;&nbsp; Dim PID() As Byte<br>
+&nbsp;&nbsp; Dim i As Integer</p>
+<p class="APICODE">&nbsp;&nbsp; varEntity = Split(inputSTR, &quot;,&quot;)<br>
+&nbsp;&nbsp; ReDim PID(UBound(varEntity))</p>
+<p class="APICODE">&nbsp;&nbsp; For i = 0 To (UBound(varEntity) - 1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PID(i) = varEntity(i)<br>
+&nbsp;&nbsp; Next i</p>
+<p class="APICODE">&nbsp;&nbsp; varEntity = PID</p>
+<p class="APICODE">End Sub<br>
+</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)</p>
+<p class="APICODE">&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+</p>
+<p class="APICODE">End Sub</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

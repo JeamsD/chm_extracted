@@ -1,0 +1,75 @@
+<html>
+
+<head>
+<title>Get Size of Document Larger Than 2GB Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,documents">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Workgroup PDM API 
+ Help</span></h1>
+<h1>Get Size of Document Larger Than 2GB Example (VBA)</h1>
+<p>You can get the size of a document larger than 2GB by calling either:</p>
+<ul>
+	<li><font face="Verdana" style="font-size: 8pt">
+	IPDMWDocument::GetDocumentSize<br>
+	- or -</font></li>
+	<li><font face="Verdana" style="font-size: 8pt">IPDMWDocument::SizeH 
+	and IPDMWDocument::Size and combining their return&nbsp;values</font>.</li>
+</ul>
+<p>This example shows how to get the size of a document larger than 2GB, using both 
+ways. </p>
+<pre>' ---------------------------------------------------------------------------
+' Preconditions:
+' 1. Replace <i>&lt;your_2GB+_document&gt; </i>with the name of a document that is larger 
+'    than 2GB and that is checked into your vault.
+' 2. Open the Immediate window.
+'
+' Postconditions: Examine the Immediate window.
+'-------------------------------------------------------------------------</pre>
+<pre>Option Explicit</pre>
+<pre>Sub main()</pre>
+<pre>    Dim connection As PDMWConnection
+    Dim doc As PDMWDocument
+    Dim fileName As String    </pre>
+<pre>    Dim lSizeHi As Long
+    Dim lSizeLow As Long
+    Dim docSize As Double</pre>
+<pre>    ' Log into vault
+    Set connection = CreateObject(&quot;PDMWorks.PDMWConnection&quot;)
+    connection.Login &quot;pdmwadmin&quot;, &quot;pdmwadmin&quot;, &quot;localhost&quot;</pre>
+<pre>    fileName = &quot;<i>&lt;your_2GB+_document&gt;</i>&quot;</pre>
+<pre>    ' Name of 2GB+ document in vault
+    Set doc = connection.<b>GetSpecificDocument</b>(fileName)
+    </pre>
+<pre>    ' Using new IPDMWDocument::GetDocumentSize method
+    docSize = CDbl(doc.<b>GetDocumentSize</b>)
+    Debug.Print (&quot;Result using IPDMWDocument::GetDocumentSize method:&quot;)
+    Debug.Print (&quot;   Size of &quot; + fileName + &quot; is &quot; + Str(docSize) + &quot; bytes&quot;)
+    Debug.Print
+     </pre>
+<pre>    ' Using both IPDMWDocument::Size and IPDMWDocument::SizeH properties
+    '
+    ' NOTE: Because VB's long is signed, you must convert the long to
+    ' a positive value for both return values
+    lSizeHi = doc.<b>SizeH</b>
+    docSize = IIf(lSizeHi &lt; 0, 4294967296# + lSizeHi, lSizeHi)
+    docSize = docSize * 4294967296#</pre>
+<pre>    lSizeLow = doc.<b>Size</b>
+    docSize = docSize + IIf(lSizeLow &lt; 0, 4294967296# + lSizeLow, lSizeLow)
+    </pre>
+<pre>    Debug.Print (&quot;Result using IPDMWDocument::Size and IPDMWDocument::SizeH properties:&quot;)
+    Debug.Print (&quot;   Size of &quot; + fileName + &quot; is &quot; + Str(docSize) + &quot; bytes&quot;)
+    Debug.Print
+    </pre>
+<pre>    connection.Logout
+    </pre>
+<pre>End Sub</pre>
+<p>&nbsp;</p>
+
+</body>
+
+</html>

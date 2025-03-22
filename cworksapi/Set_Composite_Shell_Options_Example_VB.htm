@@ -1,0 +1,141 @@
+<html>
+
+<head>
+<title>Set Composite Shell Options Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,composite shells">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Set Composite Shell Options Example (VBA)</h1>
+<p>This example shows how to set composite shell options.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Verify that the specified material library exists.<br>
+' 4. Verify that the specified model document exists.<br>
+'<br>
+' Postconditions:<br>
+' 1. Opens the model.<br>
+' 2. Activates <b>Ready - 8 plies</b>.<br>
+' 3. Sets composite shell options.<br>
+' 4. Meshes the model.<br>
+' 5. Analyzes the study.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+'----------------------------------------------------------------------------<br>
+Dim SwApp As SldWorks.SldWorks<br>
+Dim COSMOSWORKS As CosmosWorksLib.COSMOSWORKS<br>
+Dim COSMOSObject As CosmosWorksLib.CWAddinCallBack<br>
+Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+Dim Study As CosmosWorksLib.CWStudy<br>
+Dim Shell As CosmosWorksLib.CWShell<br>
+Dim Mesh As CosmosWorksLib.CwMesh<br>
+Dim StaticOptions As CosmosWorksLib.CWStaticStudyOptions<br>
+Dim Part As SldWorks.ModelDoc2<br>
+Dim ShellMgr As CosmosWorksLib.CWShellManager<br>
+Dim CWShellOptions As CosmosWorksLib.CWCompositeShellOptions<br>
+Dim m As Integer<br>
+Dim errCode As Long<br>
+Dim longstatus As Long, longwarnings As Long<br>
+Dim bApp As Boolean<br>
+Dim j As Integer</p>
+<p class="APICODE">Const MeshEleSize&nbsp;&nbsp; As Double = 1.4769<br>
+Const MeshTol&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Double = 0.073847</p>
+<p class="APICODE">Option Explicit<br>
+Sub main()<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set COSMOSObject = 
+SwApp.<b>GetAddInObject</b>(&quot;CosmosWorks.CosmosWorks&quot;)<br>
+&nbsp;&nbsp;&nbsp; If COSMOSObject Is Nothing Then ErrorMsg SwApp, &quot;Simulation 
+add-in not loaded&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = COSMOSObject.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;No COSMOSWORKS 
+object&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>OpenDoc6</b>(&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2019\samples\Simulation Examples\Composites\tjoint.SLDPRT&quot;, 
+swDocPART, 2, &quot;&quot;, longstatus, longwarnings)<br>
+&nbsp;&nbsp;&nbsp; If Part Is Nothing Then ErrorMsg SwApp, &quot;Failed to open tjoint.SLDPRT&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;No study 
+manager&quot;<br>
+&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 1<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(1)<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ShellMgr = Study.<b>ShellManager</b><br>
+&nbsp;&nbsp;&nbsp; If ShellMgr Is Nothing Then ErrorMsg SwApp, &quot;No shell 
+manager&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Shell = ShellMgr.<b>GetShellAt</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No shell&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Shell.<b>ShellBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; bApp = Shell.<b>SetLibraryMaterial</b>(&quot;C:\Program Files\SOLIDWORKS Corp\SOLIDWORKS\lang\english\sldmaterials\solidworks materials.sldmat&quot;, &quot;Alloy 
+Steel&quot;)<br>
+&nbsp;&nbsp;&nbsp; Shell.<b>Formulation</b> = 2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWShellOptions = 
+Shell.<b>CompositeOptions</b><br>
+&nbsp;&nbsp;&nbsp; If CWShellOptions Is Nothing Then ErrorMsg SwApp, &quot;No 
+composite shell options&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CWShellOptions.<b>Symmetric</b> = 0<br>
+&nbsp;&nbsp;&nbsp; CWShellOptions.<b>RotateZeroDegreeReference</b> = 0<br>
+&nbsp;&nbsp;&nbsp; CWShellOptions.<b>MappingType</b> = 0<br>
+&nbsp;&nbsp;&nbsp; CWShellOptions.<b>Symmetric</b> = 0<br>
+&nbsp;&nbsp;&nbsp; CWShellOptions.<b>Sandwich</b> = 0<br>
+&nbsp;&nbsp;&nbsp; CWShellOptions.<b>PlyRelativeAngle</b> = 0<br>
+&nbsp;&nbsp;&nbsp; CWShellOptions.<b>LengthUnit</b> = 4<br>
+&nbsp;&nbsp;&nbsp; CWShellOptions.<b>AllPliesSameMaterial</b> = 1</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; m = CWShellOptions.<b>GetTotalPlies</b>()<br>
+&nbsp;&nbsp;&nbsp; For j = 0 To m - 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; errCode = CWShellOptions.<b>SetPlyParameters2</b>(j 
++ 1, 0.1 * (j + 1), 0.05 * j, &quot;solidworks materials&quot;, &quot;Cast Stainless Steel&quot;)<br>
+&nbsp;&nbsp;&nbsp; Next j<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Shell.<b>ShellEndEdit</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Mesh<br>
+&nbsp;&nbsp;&nbsp; Set Mesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; Mesh.<b>MesherType</b> = 0<br>
+&nbsp;&nbsp;&nbsp; Mesh.<b>Quality</b> = 0<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, MeshEleSize, MeshTol)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StaticOptions = 
+Study.<b>StaticStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; StaticOptions.<b>SolverType</b> = 2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;</p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

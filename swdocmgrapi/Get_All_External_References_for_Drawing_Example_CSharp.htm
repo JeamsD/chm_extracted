@@ -1,0 +1,206 @@
+<html>
+
+<head>
+<title>Get All External References for Drawing Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,external references">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Document 
+Manager API 
+ Help</span></h1>
+<h1>Get All External References for Drawing Example (C#)</h1>
+<p>This example shows how to get the external references for a drawing document.</p>
+
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p class="APICODE"><span style="color:Green">
+	//---------------------------------------------------------------------------<br>
+	// Preconditions: <br>
+	// 1. Read the SOLIDWORKS Document Manager API <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;<b>Getting Started</b> topic and ensure that <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;the required DLLs have been registered. <br>
+	// 2. Copy and paste this module into a C# <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;console application in Microsoft Visual Studio. <br>
+	// 3. Substitute the name of a drawing that has at least one custom property
+	<br>
+	//&nbsp;&nbsp;&nbsp; for <i>drawing_document_with_external_references</i>. <br>
+	// 4. Add the <b>SolidWorks.Interop.swdocumentmgr.dll</b> <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;reference to the project.<br>
+	// 5. Substitute <i>your_license_code</i> with your SOLIDWORKS <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;Document Manager license key. <br>
+	// 6. Compile and run this program in Debug mode. <br>
+	// <br>
+	// Postconditions: Inspect the Immediate Window.<br>
+	//--------------------------------------------------------------------------<br>
+	<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	SolidWorks.Interop.swdocumentmgr;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	System;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	System.Diagnostics;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	System.Collections.Generic;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	System.Text;<br>
+	<br>
+	</span><span style="color:Blue">class</span><span style="color:Black">
+	</span><span style="color:#2b91af">Program<br>
+	</span><span style="color:Black">{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">static</span><span style="color:Black">
+	</span><span style="color:Blue">void</span><span style="color:Black"> Main(</span><span style="color:Blue">string</span><span style="color:Black">[] 
+	args)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">const</span><span style="color:Black">
+	</span><span style="color:Blue">string</span><span style="color:Black"> 
+	sLicenseKey = </span><span style="color:#a31515">&quot;<i>your_license_code</i>&quot;</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//Specify your license key <br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">const</span><span style="color:Black">
+	</span><span style="color:Blue">string</span><span style="color:Black"> 
+	sDocFileName = </span><i><span style="color:#a31515">&quot;drawing_document_with_external_references&quot;</span></i><span style="color:Black"><i>;<br>
+	<br>
+	<br>
+	</i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">SwDMClassFactory</span><span style="color:Black"> 
+	swClassFact = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">SwDMClassFactory</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">SwDMApplication</span><span style="color:Black"> 
+	swDocMgr = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">SwDMApplication</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">SwDMDocument23</span><span style="color:Black"> 
+	swDoc = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">SwDMDocument23</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">SwDMSearchOption</span><span style="color:Black"> 
+	swSearchOpt = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">SwDMSearchOption</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">SwDmDocumentType</span><span style="color:Black"> 
+	nDocType = 0;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">SwDmDocumentOpenError</span><span style="color:Black"> 
+	nRetVal = 0;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black">[] 
+	vDependArr = </span><span style="color:Blue">null</span><span style="color:Black">;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>
+	<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+	<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+	SwDMDocumentLicenseType_e</span>&nbsp;licenseType&nbsp;=&nbsp;0;<br>
+	<span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// Determine type of SOLIDWORKS 
+	file based on file extension <br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> 
+	(sDocFileName.EndsWith(</span><span style="color:#a31515">&quot;slddrw&quot;</span><span style="color:Black">))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType = </span><span style="color:#2b91af">SwDmDocumentType</span><span style="color:Black">.swDmDocumentDrawing;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">else<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// Not a drawing, <br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType = </span>
+	<span style="color:#2b91af">SwDmDocumentType</span><span style="color:Black">.swDmDocumentUnknown;<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// So do not open <br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">return</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swClassFact = </span><span style="color:Blue">new</span><span style="color:Black">
+	</span><span style="color:#2b91af">SwDMClassFactory</span><span style="color:Black">();<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDocMgr = (</span><span style="color:#2b91af">SwDMApplication</span><span style="color:Black">)swClassFact.<b>GetApplication</b>(sLicenseKey);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swSearchOpt = swDocMgr.<b>GetSearchOptionObject</b>();<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDoc = (</span><span style="color:#2b91af">SwDMDocument23</span><span style="color:Black">)swDocMgr.<b>GetDocument</b>(sDocFileName, 
+	nDocType, </span><span style="color:Blue">false</span><span style="color:Black">,
+	</span><span style="color:Blue">out</span><span style="color:Black"> nRetVal);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Assert(</span><span style="color:#2b91af">SwDmDocumentOpenError</span><span style="color:Black">.swDmDocumentOpenErrorNone 
+	== nRetVal);<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;File 
+	= &quot;</span><span style="color:Black"> + swDoc.<b>FullName</b>);</span></p>
+	<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	</p>
+	<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+	licenseType&nbsp;=&nbsp;(<span style="color:#2b91af;">SwDMDocumentLicenseType_e</span>)swDoc.<b>GetLicenseType</b>();<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;License&nbsp;type&nbsp;as&nbsp;defined&nbsp;in&nbsp;SwDMDocumentLicenseType_e:&nbsp;&quot;</span>&nbsp;+&nbsp;licenseType);</p>
+	<p class="APICODE">&nbsp;<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+	<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; string</span>&nbsp;bsFileTime&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;bsLWFileTime&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDoc.<b>GetFileAvgTime</b>(<span style="color:blue;">out</span>&nbsp;bsFileTime,&nbsp;<span style="color:blue;">out</span>&nbsp;bsLWFileTime);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;File&nbsp;open&nbsp;time:&nbsp;&quot;</span>&nbsp;+&nbsp;bsFileTime);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Lightweight&nbsp;open&nbsp;time:&nbsp;&quot;</span>&nbsp;+&nbsp;bsLWFileTime);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>[]&nbsp;custprops&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;custprops&nbsp;=&nbsp;swDoc.<b>GetCustomPropertyNames</b>();<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">bool</span>&nbsp;isEditable&nbsp;=&nbsp;<span style="color:blue;">false</span>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDoc.<b>IsCustomPropertyEditable</b>(custprops[0],&nbsp;<span style="color:blue;">out</span>&nbsp;isEditable);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Custom&nbsp;property&nbsp;&quot;</span>&nbsp;+&nbsp;custprops[0]&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;is&nbsp;editable:&nbsp;&quot;</span>&nbsp;+&nbsp;isEditable);</p>
+	<p class="APICODE"><span style="color:Black"> <br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">object</span><span style="color:Black"> 
+	vBrokenRefs = </span><span style="color:Blue">null</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">object</span><span style="color:Black"> 
+	vIsVirtuals = </span><span style="color:Blue">null</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">object</span><span style="color:Black"> 
+	vTimeStamps = </span><span style="color:Blue">null</span><span style="color:Black">;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color:Blue">object</span><span style="color:Black"> 
+	vIsImported = </span><span style="color:Blue">null</span><span style="color:Black">;<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vDependArr = (</span><span style="color:Blue">string</span><span style="color:Black">[])swDoc.<b>GetAllExternalReferences5</b>(swSearchOpt,
+	</span><span style="color:Blue">out</span><span style="color:Black"> 
+	vBrokenRefs, </span><span style="color:Blue">out</span><span style="color:Black"> 
+	vIsVirtuals, </span><span style="color:Blue">out</span><span style="color:Black"> 
+	vTimeStamps, </span><span style="color:Blue">out</span><span style="color:Black"> 
+	vIsImported);<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> 
+	((vDependArr == </span><span style="color:Blue">null</span><span style="color:Black">))
+	</span><span style="color:Blue">return</span><span style="color:Black">;<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;External 
+	references&quot;</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">foreach</span><span style="color:Black"> 
+	(</span><span style="color:Blue">string</span><span style="color:Black"> 
+	vDepend </span><span style="color:Blue">in</span><span style="color:Black"> 
+	vDependArr)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot; 
+	&quot;</span><span style="color:Black"> + vDepend);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;Reference 
+	statuses as defined in swDmReferenceStatus&quot;</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">foreach</span><span style="color:Black"> 
+	(</span><span style="color:#2b91af">SwDmReferenceStatus</span><span style="color:Black"> 
+	brokenRef </span><span style="color:Blue">in</span><span style="color:Black"> 
+	(</span><span style="color:#2b91af">SwDmReferenceStatus</span><span style="color:Black">[])vBrokenRefs)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot; 
+	&quot;</span><span style="color:Black"> + brokenRef);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;Virtual 
+	components?&quot;</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">foreach</span><span style="color:Black"> 
+	(</span><span style="color:#2b91af">Boolean</span><span style="color:Black"> 
+	isVirtual </span><span style="color:Blue">in</span><span style="color:Black"> 
+	(</span><span style="color:#2b91af">Boolean</span><span style="color:Black">[])vIsVirtuals)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot; 
+	&quot;</span><span style="color:Black"> + isVirtual);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;Timestamps&quot;</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">foreach</span><span style="color:Black"> 
+	(</span><span style="color:#2b91af">Double</span><span style="color:Black"> 
+	timeStamp </span><span style="color:Blue">in</span><span style="color:Black"> 
+	(</span><span style="color:#2b91af">Int32</span><span style="color:Black">[])vTimeStamps)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot; 
+	&quot;</span><span style="color:Black"> + timeStamp);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	</span><span style="color:#2b91af">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;Imported 
+	components (empty if component is not imported)&quot;</span><span style="color:Black">);</span><p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+	<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; foreach</span>&nbsp;(<span style="color:blue;">string</span>&nbsp;isImported_loopVariable&nbsp;<span style="color:blue;">in</span>&nbsp;(<span style="color:blue;">string</span>[])vIsImported)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;Imported&nbsp;component:&nbsp;&nbsp;&quot;</span>&nbsp;+&nbsp;isImported_loopVariable);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	} </span></div>
+
+</body>
+
+</html>

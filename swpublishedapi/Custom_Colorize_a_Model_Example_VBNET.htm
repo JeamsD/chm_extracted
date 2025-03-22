@@ -1,0 +1,748 @@
+<html>
+
+<head>
+<title>Custom Colorize a Model Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples,colorizer">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS API 
+ Help</span></h1>
+<h1>Custom Colorize a Model Example (VB.NET)</h1>
+<p>This example shows how to colorize a model.</p>
+
+<p class=APICODE>'----------------------------------------------------------------------------&nbsp; </p>
+
+<p class=APICODE>' Preconditions: </p>
+
+<p class=APICODE>' 1. Create a VB.NET add-in project in Microsoft Visual Studio.</p>
+<p class=APICODE>' 2. Copy this sample code to <b>SwAddin.vb</b> of the new project.</p>
+<p class=APICODE>' 3. Ensure that <b>PMPHandler.vb</b> is implementing a compatible 
+interface.</p>
+<p class=APICODE>' 4. Compile and run the project.</p>
+<p class=APICODE>' 5. In SOLIDWORKS open <i>public_documents</i><b>\samples\tutorial\api\wrench.sldasm</b>.</p>
+<p class=APICODE>' 6. Select <b>View &gt; Display &gt; Curvature</b>.</p>
+
+<p class=APICODE>' </p>
+
+<p class=APICODE>' Postconditions:&nbsp; </p>
+<p class=APICODE>' 1. The model is colorized as a function of</p>
+
+<p class=APICODE>'&nbsp;&nbsp;&nbsp; Value1 = (double)(vertexCoordX + 
+vertexCoordY + vertexCoordZ);</p>
+<p class=APICODE>' 2. Value1 is displayed and refreshed as the cursor moves 
+over the model.</p>
+<p class=APICODE>'</p>
+
+<p class=APICODE>' <span style="font-weight: bold;">NOTE</span>: Because 
+ the model is used elsewhere,</p>
+<p class=APICODE>' do not save changes when closing it. </p>
+
+<p class=APICODE>'----------------------------------------------------------------------------</p>
+
+<p>&nbsp;</p>
+
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p class="APICODE"><span style="color:Blue">Imports</span><span style="color:Black"> 
+	System<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	System.Collections<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	System.Reflection<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	System.Runtime.InteropServices<br>
+	<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.sldworks<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.swconst<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.swpublished<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SOLIDWORKSTools<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SOLIDWORKSTools.File<br>
+	<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	System.Collections.Generic<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	System.Diagnostics<br>
+	<br>
+	&lt;</span><span style="color:#2b91af">Guid</span><span style="color:Black">(</span><span style="color:#a31515">&quot;3d612c15-6c1c-4d5e-b0f3-09e4c9cc8dc7&quot;</span><span style="color:Black">)&gt; 
+	_<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#2b91af">ComVisible</span><span style="color:Black">(</span><span style="color:Blue">True</span><span style="color:Black">)&gt; 
+	_<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#2b91af">SwAddin</span><span style="color:Black">( 
+	_<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Description:=</span><span style="color:#a31515">&quot;SwVBAddin1 
+	description&quot;</span><span style="color:Black">, _<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Title:=</span><span style="color:#a31515">&quot;SwVBAddin1&quot;</span><span style="color:Black">, 
+	_<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LoadAtStartup:=</span><span style="color:Blue">True</span><span style="color:Black"> 
+	_<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)&gt; _<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Public</span><span style="color:Black">
+	</span><span style="color:Blue">Class</span><span style="color:Black">
+	</span><span style="color:#2b91af">SwAddin</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Implements</span><span style="color:Black"> 
+	SolidWorks.Interop.swpublished.</span><span style="color:#2b91af">SwAddin</span><span style="color:Black"><br>
+	<br>
+	</span><span style="color:Blue">#Region</span><span style="color:Black">
+	</span><span style="color:#a31515">&quot;Local Variables&quot;</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black">
+	</span><span style="color:Blue">WithEvents</span><span style="color:Black"> 
+	iSwApp </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">SldWorks</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	iCmdMgr </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">ICommandManager</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	addinID </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Integer</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	openDocs </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">Hashtable</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	colorDocs </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">Hashtable</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	SwEventPtr </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">SldWorks</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	ppage </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">UserPMPage</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	iBmp </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">BitmapHandler</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Public Properties</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ReadOnly</span><span style="color:Black">
+	</span><span style="color:Blue">Property</span><span style="color:Black"> 
+	SwApp() </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">SldWorks</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Get</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Return</span><span style="color:Black"> 
+	iSwApp<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Get</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Property</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ReadOnly</span><span style="color:Black">
+	</span><span style="color:Blue">Property</span><span style="color:Black"> 
+	CmdMgr() </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">ICommandManager</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Get</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Return</span><span style="color:Black"> 
+	iCmdMgr<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Get</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Property</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ReadOnly</span><span style="color:Black">
+	</span><span style="color:Blue">Property</span><span style="color:Black"> 
+	OpenDocumentsTable() </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">Hashtable</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Get</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Return</span><span style="color:Black"> 
+	openDocs<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Get</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Property</span><span style="color:Black"><br>
+	</span><span style="color:Blue">#End</span><span style="color:Black"> </span>
+	<span style="color:Blue">Region</span><span style="color:Black"><br>
+	<br>
+	</span><span style="color:Blue">#Region</span><span style="color:Black">
+	</span><span style="color:#a31515">&quot;SOLIDWORKS Registration&quot;</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#2b91af">ComRegisterFunction</span><span style="color:Black">()&gt;
+	</span><span style="color:Blue">Public</span><span style="color:Black">
+	</span><span style="color:Blue">Shared</span><span style="color:Black">
+	</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	RegisterFunction(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	t </span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:#2b91af">Type</span><span style="color:Black">)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Get Custom Attribute: 
+	SwAddinAttribute</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	attributes() </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	SWattr </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">SwAddinAttribute</span><span style="color:Black"> 
+	= </span><span style="color:Blue">Nothing</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attributes = System.</span><span style="color:#2b91af">Attribute</span><span style="color:Black">.GetCustomAttributes(</span><span style="color:Blue">GetType</span><span style="color:Black">(</span><span style="color:#2b91af">SwAddin</span><span style="color:Black">),
+	</span><span style="color:Blue">GetType</span><span style="color:Black">(</span><span style="color:#2b91af">SwAddinAttribute</span><span style="color:Black">))<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	attributes.Length &gt; 0 </span><span style="color:Blue">Then</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SWattr = </span><span style="color:Blue">DirectCast</span><span style="color:Black">(attributes(0),
+	</span><span style="color:#2b91af">SwAddinAttribute</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">If</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Try</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	hklm </span><span style="color:Blue">As</span><span style="color:Black"> 
+	Microsoft.Win32.</span><span style="color:#2b91af">RegistryKey</span><span style="color:Black"> 
+	= Microsoft.Win32.</span><span style="color:#2b91af">Registry</span><span style="color:Black">.LocalMachine<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	hkcu </span><span style="color:Blue">As</span><span style="color:Black"> 
+	Microsoft.Win32.</span><span style="color:#2b91af">RegistryKey</span><span style="color:Black"> 
+	= Microsoft.Win32.</span><span style="color:#2b91af">Registry</span><span style="color:Black">.CurrentUser<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	keyname </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black"> =
+	</span><span style="color:#a31515">&quot;SOFTWARE\SOLIDWORKS\Addins\{&quot;</span><span style="color:Black"> 
+	+ t.GUID.ToString() + </span><span style="color:#a31515">&quot;}&quot;</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	addinkey </span><span style="color:Blue">As</span><span style="color:Black"> 
+	Microsoft.Win32.</span><span style="color:#2b91af">RegistryKey</span><span style="color:Black"> 
+	= hklm.CreateSubKey(keyname)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;addinkey.SetValue(</span><span style="color:Blue">Nothing</span><span style="color:Black">, 
+	0)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;addinkey.SetValue(</span><span style="color:#a31515">&quot;Description&quot;</span><span style="color:Black">, 
+	SWattr.Description)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;addinkey.SetValue(</span><span style="color:#a31515">&quot;Title&quot;</span><span style="color:Black">, 
+	SWattr.Title)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;keyname = </span><span style="color:#a31515">&quot;Software\SOLIDWORKS\AddInsStartup\{&quot;</span><span style="color:Black"> 
+	+ t.GUID.ToString() + </span><span style="color:#a31515">&quot;}&quot;</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;addinkey = hkcu.CreateSubKey(keyname)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;addinkey.SetValue(</span><span style="color:Blue">Nothing</span><span style="color:Black">, 
+	SWattr.LoadAtStartup, Microsoft.Win32.</span><span style="color:#2b91af">RegistryValueKind</span><span style="color:Black">.DWord)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Catch</span><span style="color:Black"> 
+	nl </span><span style="color:Blue">As</span><span style="color:Black"> 
+	System.</span><span style="color:#2b91af">NullReferenceException</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Console</span><span style="color:Black">.WriteLine(</span><span style="color:#a31515">&quot;There 
+	was a problem registering this dll: SWattr is null.\n &quot;</span><span style="color:Black"> 
+	&amp; nl.Message)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.Windows.Forms.</span><span style="color:#2b91af">MessageBox</span><span style="color:Black">.Show(</span><span style="color:#a31515">&quot;There 
+	was a problem registering this dll: SWattr is null.\n&quot;</span><span style="color:Black"> 
+	&amp; nl.Message)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Catch</span><span style="color:Black"> 
+	e </span><span style="color:Blue">As</span><span style="color:Black"> 
+	System.</span><span style="color:#2b91af">Exception</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Console</span><span style="color:Black">.WriteLine(</span><span style="color:#a31515">&quot;There 
+	was a problem registering this dll: &quot;</span><span style="color:Black"> &amp; 
+	e.Message)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.Windows.Forms.</span><span style="color:#2b91af">MessageBox</span><span style="color:Black">.Show(</span><span style="color:#a31515">&quot;There 
+	was a problem registering this dll: &quot;</span><span style="color:Black"> &amp; 
+	e.Message)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Try</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#2b91af">ComUnregisterFunction</span><span style="color:Black">()&gt;
+	</span><span style="color:Blue">Public</span><span style="color:Black">
+	</span><span style="color:Blue">Shared</span><span style="color:Black">
+	</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	UnregisterFunction(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	t </span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:#2b91af">Type</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Try</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	hklm </span><span style="color:Blue">As</span><span style="color:Black"> 
+	Microsoft.Win32.</span><span style="color:#2b91af">RegistryKey</span><span style="color:Black"> 
+	= Microsoft.Win32.</span><span style="color:#2b91af">Registry</span><span style="color:Black">.LocalMachine<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	hkcu </span><span style="color:Blue">As</span><span style="color:Black"> 
+	Microsoft.Win32.</span><span style="color:#2b91af">RegistryKey</span><span style="color:Black"> 
+	= Microsoft.Win32.</span><span style="color:#2b91af">Registry</span><span style="color:Black">.CurrentUser<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	keyname </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black"> =
+	</span><span style="color:#a31515">&quot;SOFTWARE\SOLIDWORKS\Addins\{&quot;</span><span style="color:Black"> 
+	+ t.GUID.ToString() + </span><span style="color:#a31515">&quot;}&quot;</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hklm.DeleteSubKey(keyname)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;keyname = </span><span style="color:#a31515">&quot;Software\SOLIDWORKS\AddInsStartup\{&quot;</span><span style="color:Black"> 
+	+ t.GUID.ToString() + </span><span style="color:#a31515">&quot;}&quot;</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hkcu.DeleteSubKey(keyname)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Catch</span><span style="color:Black"> 
+	nl </span><span style="color:Blue">As</span><span style="color:Black"> 
+	System.</span><span style="color:#2b91af">NullReferenceException</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Console</span><span style="color:Black">.WriteLine(</span><span style="color:#a31515">&quot;There 
+	was a problem unregistering this dll: SWattr is null.\n &quot;</span><span style="color:Black"> 
+	&amp; nl.Message)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.Windows.Forms.</span><span style="color:#2b91af">MessageBox</span><span style="color:Black">.Show(</span><span style="color:#a31515">&quot;There 
+	was a problem unregistering this dll: SWattr is null.\n&quot;</span><span style="color:Black"> 
+	&amp; nl.Message)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Catch</span><span style="color:Black"> 
+	e </span><span style="color:Blue">As</span><span style="color:Black"> 
+	System.</span><span style="color:#2b91af">Exception</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Console</span><span style="color:Black">.WriteLine(</span><span style="color:#a31515">&quot;There 
+	was a problem unregistering this dll: &quot;</span><span style="color:Black"> &amp; 
+	e.Message)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.Windows.Forms.</span><span style="color:#2b91af">MessageBox</span><span style="color:Black">.Show(</span><span style="color:#a31515">&quot;There 
+	was a problem unregistering this dll: &quot;</span><span style="color:Black"> &amp; 
+	e.Message)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Try</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub</span><span style="color:Black"><br>
+	<br>
+	</span><span style="color:Blue">#End</span><span style="color:Black"> </span>
+	<span style="color:Blue">Region</span><span style="color:Black"><br>
+	<br>
+	</span><span style="color:Blue">#Region</span><span style="color:Black">
+	</span><span style="color:#a31515">&quot;ISwAddin Implementation&quot;</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Function</span><span style="color:Black"> 
+	ConnectToSW(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	ThisSW </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black">,
+	</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	Cookie </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Integer</span><span style="color:Black">)
+	</span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">Boolean</span><span style="color:Black"> </span>
+	<span style="color:Blue">Implements</span><span style="color:Black"> 
+	SolidWorks.Interop.swpublished.</span><span style="color:#2b91af">SwAddin</span><span style="color:Black">.ConnectToSW<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iSwApp = ThisSW<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;addinID = Cookie<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Setup callbacks</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iSwApp.SetAddinCallbackInfo(0, </span><span style="color:Blue">Me</span><span style="color:Black">, 
+	addinID)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Setup the Event Handlers</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SwEventPtr = iSwApp<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;openDocs = </span><span style="color:Blue">New</span><span style="color:Black">
+	</span><span style="color:#2b91af">Hashtable</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colorDocs = </span><span style="color:Blue">New</span><span style="color:Black">
+	</span><span style="color:#2b91af">Hashtable</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AttachEventHandlers()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ConnectToSW = </span><span style="color:Blue">True</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Function</span><span style="color:Black"> 
+	DisconnectFromSW() </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Boolean</span><span style="color:Black">
+	</span><span style="color:Blue">Implements</span><span style="color:Black"> 
+	SolidWorks.Interop.swpublished.</span><span style="color:#2b91af">SwAddin</span><span style="color:Black">.DisconnectFromSW<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DetachEventHandlers()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.Runtime.InteropServices.</span><span style="color:#2b91af">Marshal</span><span style="color:Black">.ReleaseComObject(iCmdMgr)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iCmdMgr = </span><span style="color:Blue">Nothing</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.Runtime.InteropServices.</span><span style="color:#2b91af">Marshal</span><span style="color:Black">.ReleaseComObject(iSwApp)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iSwApp = </span><span style="color:Blue">Nothing</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'The addin _must_ call GC.Collect() 
+	here in order to retrieve all managed code pointers </span>
+	<span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">GC</span><span style="color:Black">.Collect()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">GC</span><span style="color:Black">.WaitForPendingFinalizers()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">GC</span><span style="color:Black">.Collect()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">GC</span><span style="color:Black">.WaitForPendingFinalizers()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DisconnectFromSW = </span><span style="color:Blue">True</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"><br>
+	</span><span style="color:Blue">#End</span><span style="color:Black"> </span>
+	<span style="color:Blue">Region</span><span style="color:Black"><br>
+	<br>
+	</span><span style="color:Blue">#Region</span><span style="color:Black">
+	</span><span style="color:#a31515">&quot;Event Methods&quot;</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	AttachEventHandlers()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AttachSWEvents()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Listen for events on all currently 
+	open docs</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AttachEventsToAllDocuments()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	DetachEventHandlers()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DetachSWEvents()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Close events on all currently open 
+	docs</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	docHandler </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">DocumentEventHandler</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	key </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">ModelDoc2</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	numKeys </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Integer</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numKeys = openDocs.Count<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	numKeys &gt; 0 </span><span style="color:Blue">Then</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	keys() </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black"> =
+	</span><span style="color:Blue">New</span><span style="color:Black"> </span>
+	<span style="color:Blue">Object</span><span style="color:Black">(numKeys - 
+	1) {}<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'Remove all document event 
+	handlers</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;openDocs.Keys.CopyTo(keys, 0)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">For</span><span style="color:Black">
+	</span><span style="color:Blue">Each</span><span style="color:Black"> key
+	</span><span style="color:Blue">In</span><span style="color:Black"> keys<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;docHandler = openDocs.Item(key)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;docHandler.DetachEventHandlers() </span>
+	<span style="color:Green">'This also removes the pair from the hash</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;docHandler = </span><span style="color:Blue">Nothing</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;key = </span><span style="color:Blue">Nothing</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Next</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">If</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	AttachSWEvents()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Try</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">AddHandler</span><span style="color:Black"> 
+	iSwApp.ActiveDocChangeNotify, </span><span style="color:Blue">AddressOf</span><span style="color:Black">
+	</span><span style="color:Blue">Me</span><span style="color:Black">.SldWorks_ActiveDocChangeNotify<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">AddHandler</span><span style="color:Black"> 
+	iSwApp.DocumentLoadNotify2, </span><span style="color:Blue">AddressOf</span><span style="color:Black">
+	</span><span style="color:Blue">Me</span><span style="color:Black">.SldWorks_DocumentLoadNotify2<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">AddHandler</span><span style="color:Black"> 
+	iSwApp.FileNewNotify2, </span><span style="color:Blue">AddressOf</span><span style="color:Black">
+	</span><span style="color:Blue">Me</span><span style="color:Black">.SldWorks_FileNewNotify2<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">AddHandler</span><span style="color:Black"> 
+	iSwApp.ActiveModelDocChangeNotify, </span><span style="color:Blue">AddressOf</span><span style="color:Black">
+	</span><span style="color:Blue">Me</span><span style="color:Black">.SldWorks_ActiveModelDocChangeNotify<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">AddHandler</span><span style="color:Black"> 
+	iSwApp.FileOpenPostNotify, </span><span style="color:Blue">AddressOf</span><span style="color:Black">
+	</span><span style="color:Blue">Me</span><span style="color:Black">.SldWorks_FileOpenPostNotify<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Catch</span><span style="color:Black"> 
+	e </span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:#2b91af">Exception</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Console</span><span style="color:Black">.WriteLine(e.Message)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Try</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	DetachSWEvents()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Try</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">RemoveHandler</span><span style="color:Black"> 
+	iSwApp.ActiveDocChangeNotify, </span><span style="color:Blue">AddressOf</span><span style="color:Black">
+	</span><span style="color:Blue">Me</span><span style="color:Black">.SldWorks_ActiveDocChangeNotify<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">RemoveHandler</span><span style="color:Black"> 
+	iSwApp.DocumentLoadNotify2, </span><span style="color:Blue">AddressOf</span><span style="color:Black">
+	</span><span style="color:Blue">Me</span><span style="color:Black">.SldWorks_DocumentLoadNotify2<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">RemoveHandler</span><span style="color:Black"> 
+	iSwApp.FileNewNotify2, </span><span style="color:Blue">AddressOf</span><span style="color:Black">
+	</span><span style="color:Blue">Me</span><span style="color:Black">.SldWorks_FileNewNotify2<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">RemoveHandler</span><span style="color:Black"> 
+	iSwApp.ActiveModelDocChangeNotify, </span><span style="color:Blue">AddressOf</span><span style="color:Black">
+	</span><span style="color:Blue">Me</span><span style="color:Black">.SldWorks_ActiveModelDocChangeNotify<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">RemoveHandler</span><span style="color:Black"> 
+	iSwApp.FileOpenPostNotify, </span><span style="color:Blue">AddressOf</span><span style="color:Black">
+	</span><span style="color:Blue">Me</span><span style="color:Black">.SldWorks_FileOpenPostNotify<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Catch</span><span style="color:Black"> 
+	e </span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:#2b91af">Exception</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Console</span><span style="color:Black">.WriteLine(e.Message)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Try</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	AttachEventsToAllDocuments()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	modDoc </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">ModelDoc2</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;modDoc = iSwApp.GetFirstDocument()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">While</span><span style="color:Black">
+	</span><span style="color:Blue">Not</span><span style="color:Black"> modDoc
+	</span><span style="color:Blue">Is</span><span style="color:Black"> </span>
+	<span style="color:Blue">Nothing</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black">
+	</span><span style="color:Blue">Not</span><span style="color:Black"> 
+	openDocs.Contains(modDoc) </span><span style="color:Blue">Then</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AttachModelDocEventHandler(modDoc)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">If</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;modDoc = modDoc.GetNext()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">While</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Function</span><span style="color:Black"> 
+	AttachModelDocEventHandler(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	modDoc </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">ModelDoc2</span><span style="color:Black">)
+	</span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">Boolean</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	modDoc </span><span style="color:Blue">Is</span><span style="color:Black">
+	</span><span style="color:Blue">Nothing</span><span style="color:Black">
+	</span><span style="color:Blue">Then</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Return</span><span style="color:Black">
+	</span><span style="color:Blue">False</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">If</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	docHandler </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">DocumentEventHandler</span><span style="color:Black"> 
+	= </span><span style="color:Blue">Nothing</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black">
+	</span><span style="color:Blue">Not</span><span style="color:Black"> 
+	openDocs.Contains(modDoc) </span><span style="color:Blue">Then</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	modExt </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">ModelDocExtension</span><span style="color:Black"> 
+	= modDoc.Extension<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	colorInt </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">New</span><span style="color:Black"> </span>
+	<span style="color:#2b91af">ColorContour</span><span style="color:Black">()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;modExt.InstallModelColorizer(colorInt)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colorDocs.Add(modDoc, colorInt)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Select</span><span style="color:Black">
+	</span><span style="color:Blue">Case</span><span style="color:Black"> 
+	modDoc.GetType<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black">
+	</span><span style="color:#2b91af">swDocumentTypes_e</span><span style="color:Black">.swDocPART<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;docHandler = </span><span style="color:Blue">New</span><span style="color:Black">
+	</span><span style="color:#2b91af">PartEventHandler</span><span style="color:Black">()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black">
+	</span><span style="color:#2b91af">swDocumentTypes_e</span><span style="color:Black">.swDocASSEMBLY<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;docHandler = </span><span style="color:Blue">New</span><span style="color:Black">
+	</span><span style="color:#2b91af">AssemblyEventHandler</span><span style="color:Black">()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black">
+	</span><span style="color:#2b91af">swDocumentTypes_e</span><span style="color:Black">.swDocDRAWING<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;docHandler = </span><span style="color:Blue">New</span><span style="color:Black">
+	</span><span style="color:#2b91af">DrawingEventHandler</span><span style="color:Black">()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Select</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;docHandler.Init(iSwApp, </span><span style="color:Blue">Me</span><span style="color:Black">, 
+	modDoc)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;docHandler.AttachEventHandlers()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;openDocs.Add(modDoc, docHandler)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">If</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	DetachModelEventHandler(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	modDoc </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">ModelDoc2</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	docHandler </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:#2b91af">DocumentEventHandler</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;docHandler = openDocs.Item(modDoc)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;openDocs.Remove(modDoc)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;modDoc = </span><span style="color:Blue">Nothing</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;docHandler = </span><span style="color:Blue">Nothing</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub</span><span style="color:Black"><br>
+	</span><span style="color:Blue">#End</span><span style="color:Black"> </span>
+	<span style="color:Blue">Region</span><span style="color:Black"><br>
+	<br>
+	</span><span style="color:Blue">#Region</span><span style="color:Black">
+	</span><span style="color:#a31515">&quot;Event Handlers&quot;</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Function</span><span style="color:Black"> 
+	SldWorks_ActiveDocChangeNotify() </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Integer</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'TODO: Add your implementation here</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Function</span><span style="color:Black"> 
+	SldWorks_DocumentLoadNotify2(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	docTitle </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black">,
+	</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	docPath </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black">)
+	</span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">Integer</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Function</span><span style="color:Black"> 
+	SldWorks_FileNewNotify2(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	newDoc </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black">,
+	</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	doctype </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Integer</span><span style="color:Black">,
+	</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	templateName </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black">)
+	</span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">Integer</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AttachEventsToAllDocuments()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Function</span><span style="color:Black"> 
+	SldWorks_ActiveModelDocChangeNotify() </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Integer</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">'TODO: Add your implementation here</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Function</span><span style="color:Black"> 
+	SldWorks_FileOpenPostNotify(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	FileName </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black">)
+	</span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">Integer</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AttachEventsToAllDocuments()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"><br>
+	</span><span style="color:Blue">#End</span><span style="color:Black"> </span>
+	<span style="color:Blue">Region</span><span style="color:Black"><br>
+	<br>
+	<br>
+	</span><span style="color:Blue">End</span><span style="color:Black"> </span>
+	<span style="color:Blue">Class</span><span style="color:Black"><br>
+	</span><span style="color:Blue">Public</span><span style="color:Black">
+	</span><span style="color:Blue">Class</span><span style="color:Black">
+	</span><span style="color:#2b91af">ColorContour</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Implements</span><span style="color:Black">
+	</span><span style="color:#2b91af">ISwColorContour1</span><span style="color:Black"><br>
+	<br>
+	</span><span style="color:Blue">#Region</span><span style="color:Black">
+	</span><span style="color:#a31515">&quot;ISwColorContour Members&quot;</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Public</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"> <b>
+	Color</b>(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	Value1 </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Double</span><span style="color:Black">)
+	</span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">Integer</span><span style="color:Black"> </span>
+	<span style="color:Blue">Implements</span><span style="color:Black"> 
+	SolidWorks.Interop.swpublished.</span><span style="color:#2b91af">ISwColorContour1</span><span style="color:Black">.Color<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Assign colors to Value ranges</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	(Value1 &gt; 0.0) </span><span style="color:Blue">And</span><span style="color:Black"> 
+	(Value1 &lt;= 0.025) </span><span style="color:Blue">Then</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Return</span><span style="color:Black"> 
+	System.Drawing.</span><span style="color:#2b91af">ColorTranslator</span><span style="color:Black">.ToWin32(System.Drawing.</span><span style="color:#2b91af">Color</span><span style="color:Black">.Coral)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	(Value1 &gt; 0.025) </span><span style="color:Blue">And</span><span style="color:Black"> 
+	(Value1 &lt;= 0.05) </span><span style="color:Blue">Then</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Return</span><span style="color:Black"> 
+	System.Drawing.</span><span style="color:#2b91af">ColorTranslator</span><span style="color:Black">.ToWin32(System.Drawing.</span><span style="color:#2b91af">Color</span><span style="color:Black">.Salmon)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	Value1 &gt; 0.05 </span><span style="color:Blue">Then</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Return</span><span style="color:Black"> 
+	System.Drawing.</span><span style="color:#2b91af">ColorTranslator</span><span style="color:Black">.ToWin32(System.Drawing.</span><span style="color:#2b91af">Color</span><span style="color:Black">.Pink)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Else</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Return</span><span style="color:Black"> 
+	System.Drawing.</span><span style="color:#2b91af">ColorTranslator</span><span style="color:Black">.ToWin32(System.Drawing.</span><span style="color:#2b91af">Color</span><span style="color:Black">.Red)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">If</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Public</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"> <b>
+	DisplayString</b>(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	Value1 </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Double</span><span style="color:Black">)
+	</span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">String</span><span style="color:Black"> </span>
+	<span style="color:Blue">Implements</span><span style="color:Black"> 
+	SolidWorks.Interop.swpublished.</span><span style="color:#2b91af">ISwColorContour1</span><span style="color:Black">.DisplayString<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Return what is displayed in the 
+	view for the given Value</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Return</span><span style="color:Black">
+	</span><span style="color:#a31515">&quot;Value is: &quot;</span><span style="color:Black"> 
+	+ Value1.ToString()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Public</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"> <b>
+	NeedsUpdate</b>() </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Boolean</span><span style="color:Black">
+	</span><span style="color:Blue">Implements</span><span style="color:Black"> 
+	SolidWorks.Interop.swpublished.</span><span style="color:#2b91af">ISwColorContour1</span><span style="color:Black">.NeedsUpdate<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Return whether SOLIDWORKS needs 
+	to refresh the view</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Return</span><span style="color:Black">
+	</span><span style="color:Blue">True</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Public</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"> <b>
+	Value</b>(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	face </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object</span><span style="color:Black">,
+	</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	vertexCoordX </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Single</span><span style="color:Black">,
+	</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	vertexCoordY </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Single</span><span style="color:Black">,
+	</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	vertexCoordZ </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Single</span><span style="color:Black">,
+	</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	normalCoordsX </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Single</span><span style="color:Black">,
+	</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	normalCoordsY </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Single</span><span style="color:Black">, _<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+	normalCoordsZ </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Single</span><span style="color:Black">,
+	</span><span style="color:Blue">ByRef</span><span style="color:Black"> 
+	Value1 </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Double</span><span style="color:Black">)
+	</span><span style="color:Blue">As</span><span style="color:Black"> </span>
+	<span style="color:Blue">Integer</span><span style="color:Black"> </span>
+	<span style="color:Blue">Implements</span><span style="color:Black"> 
+	SolidWorks.Interop.swpublished.</span><span style="color:#2b91af">ISwColorContour1</span><span style="color:Black">.Value<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Define a Value for the selected 
+	coordinates</span><span style="color:Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Value1 = </span><span style="color:Blue">CDbl</span><span style="color:Black">(vertexCoordX 
+	+ vertexCoordY + vertexCoordZ)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Return</span><span style="color:Black"> 
+	0<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Function</span><span style="color:Black"><br>
+	<br>
+	</span><span style="color:Blue">#End</span><span style="color:Black"> </span>
+	<span style="color:Blue">Region</span><span style="color:Black"><br>
+	</span><span style="color:Blue">End</span><span style="color:Black"> </span>
+	<span style="color:Blue">Class</span><span style="color:Black"><br>
+	<br>
+&nbsp;</span></div>
+
+</body>
+
+</html>

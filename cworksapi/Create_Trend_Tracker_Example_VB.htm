@@ -1,0 +1,134 @@
+<html>
+
+<head>
+<title>Create Trend Tracker Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,Trend Tracker">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Create Trend Tracker Example (VBA)</h1>
+<p>This example shows how to create a Trend Tracker for a static study.</p>
+
+<p class="APICODE">
+'---------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Copy <i>public_documents</i><b>\samples\tutorial\api\tjoint.sldprt</b> to another name 
+and replace<br>
+'&nbsp;&nbsp;&nbsp; <i>file_name</i> in the code with the new name.<br>
+' 4. Open the Immediate window.<br>
+'<br>
+' Postconditions:<br>
+'&nbsp; 1. Opens the model document.<br>
+'&nbsp; 2. Gets the static study.<br>
+'&nbsp; 3. Meshes the model.<br>
+'&nbsp; 4. Sets the solver type.<br>
+'&nbsp; 5. Analyzes the study.<br>
+'&nbsp; 6. Click <b>Yes</b> if asked to save the model.<br>
+'&nbsp; 7. Adds <b>Trend Tracker</b> to the Simulation study tree.<br>
+'&nbsp; 8. Sets the baseline of <b>Trend Tracker</b> to the current results.<br>
+'&nbsp; 9. Deletes <b>Pressure-1</b>.<br>
+' 10. Meshes the model and analyzes the study.<br>
+' 11. Appends new results to <b>Trend Tracker</b>.<br>
+' 12. Inspect<b> Trend Tracker (-Iteration 2-)</b> to verify that the Simulation study 
+<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; tree contains:<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * <b>Trend Journal</b><br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * <b>Mass1</b><br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * <b>Stress1</b><br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * <b>Displacement1</b><br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+'---------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim Part&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Dim fileName&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+String<br>
+&nbsp;&nbsp;&nbsp; Dim errors&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim warnings&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+Long<br>
+&nbsp;&nbsp;&nbsp; Dim errCode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim StaticOptions&nbsp;&nbsp; As 
+CosmosWorksLib.CWStaticStudyOptions<br>
+&nbsp;&nbsp;&nbsp; Dim trendTracker&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWTrendTracker<br>
+&nbsp;&nbsp;&nbsp; Dim LARManager&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWLoadsAndRestraintsManager<br>
+&nbsp;&nbsp;&nbsp; Dim CWFeatObj&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWMesh</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Const MeshEleSize&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Double = 1.4769 'mm<br>
+&nbsp;&nbsp;&nbsp; Const MeshTol&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Double = 0.073847 'mm</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Exit Sub</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; fileName = &quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\api\<i>file_name</i>.sldprt&quot;<br>
+&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>OpenDoc6</b>(fileName, swDocPART, 1, &quot;&quot;, errors, 
+warnings)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = 
+SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(0)<br>
+&nbsp;&nbsp;&nbsp; Study.<b>ActivateConfiguration</b><br>
+&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 0</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Mesh<br>
+&nbsp;&nbsp;&nbsp; Set CWFeatObj = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; CWFeatObj.<b>MesherType</b> = 0<br>
+&nbsp;&nbsp;&nbsp; CWFeatObj.<b>Quality</b> = 0<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, MeshEleSize, MeshTol)<br>
+&nbsp;&nbsp;&nbsp; Set CWFeatObj = Nothing</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Set solver type to FFEPlus<br>
+&nbsp;&nbsp;&nbsp; Set StaticOptions = Study.<b>StaticStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; StaticOptions.<b>SolverType</b> = 2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Add Trend Tracker<br>
+&nbsp;&nbsp;&nbsp; Set trendTracker = Study.<b>CreateTrendTracker</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Set baseline of Trend Tracker to current 
+results<br>
+&nbsp;&nbsp;&nbsp; errCode = trendTracker.<b>SetBaseLine</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Delete a load<br>
+&nbsp;&nbsp;&nbsp; Set LARManager = Study.<b>LoadsAndRestraintsManager</b><br>
+&nbsp;&nbsp;&nbsp; LARManager.<b>DeleteLoadsAndRestraints</b> (&quot;Pressure-1&quot;)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Study.<b>MeshAndRun</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Delete Trend Tracker<br>
+&nbsp;&nbsp;&nbsp; 'errCode = Study.<b>DeleteTrendTracker</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Sub</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

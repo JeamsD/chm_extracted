@@ -1,0 +1,218 @@
+<html>
+
+<head>
+<title>Get External References Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples,external references">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Document 
+ Manager API Help</span></h1>
+<h1>Get External References Example (VB.NET)</h1>
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p>This example shows how to get 
+	all of the external references for the base part using the SOLIDWORKS Document Manager API.<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+		<p class="APICODE"><span style="color:Green">
+		'----------------------------------------------------------------------------
+		<br>
+		' Preconditions:<br>
+		'&nbsp;1. Read the SOLIDWORKS Document Manager API <br>
+		'&nbsp;&nbsp;&nbsp;&nbsp;<b>Getting Started</b> topic and ensure that the <br>
+		'&nbsp;&nbsp;&nbsp;&nbsp;required DLLs are registered.<br>
+		' 2. Copy and paste this code into a VB.NET console application<br>
+		'&nbsp;&nbsp;&nbsp;&nbsp;in Microsoft Visual Studio.</span><span style="color:Green"><br>
+		'&nbsp;3. Modify the path to the specified assembly. <br>
+		'&nbsp;4. Add the <b>SolidWorks.Interop.swdocumentmgr.dll </b><br>
+		'&nbsp;&nbsp;&nbsp;&nbsp;reference to the project:<br>
+		'&nbsp;&nbsp;&nbsp;&nbsp;a. Right-click the solution in Solution Explorer.<br>
+		'&nbsp;&nbsp;&nbsp;&nbsp;b. Click <b>Add Reference</b>. <br>
+		'&nbsp;&nbsp;&nbsp;&nbsp;c. Click <b>Browse</b>.<br>
+		'&nbsp;&nbsp;&nbsp;&nbsp;d. Click:<br>
+		'&nbsp;&nbsp; <i>&nbsp;&nbsp;&nbsp; install_dir</i><b>\api\redist\SolidWorks.Interop.swdocumentmgr.dll</b><br>
+		'&nbsp;5. Substitute <i>your_license_key</i> with your SOLIDWORKS Document Manager license key.</span><span style="color: #008000"><br>
+		' 6. Ensure that <b>c:\temp</b> exists.</span><span style="color:Green"> </span>
+		<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+			<p class="APICODE"><span style="color:Green">' Postconditions: <br>
+			' 1. Inspect the Immediate Window for the external references and 
+			their</span><span style="color: #008000"><br>
+			'&nbsp;&nbsp;&nbsp; 
+			configurations</span><span style="color:Green">.<br>
+			' 2. Inspect <b>c:\temp\extRef.xml</b> for more information about 
+			the external</span><span style="color: #008000"><br>
+			'&nbsp;&nbsp; </span>
+			<span style="color:Green">&nbsp;references.<br>
+			'--------------------------------------------------------------------------</span>
+		</p>
+		</div>
+		<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+			<p class="APICODE"><span style="color:Blue">Imports</span><span style="color:Black"> 
+			SolidWorks.Interop.swdocumentmgr<br>
+			</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+			System<br>
+			</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+			System.Diagnostics<br>
+			<br>
+			</span><span style="color:Blue">Module</span><span style="color:Black"> 
+			Module1<br>
+			<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			dmClassFact </span><span style="color:Blue">As</span><span style="color:Black"> 
+			SwDMClassFactory<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			dmDocMgr </span><span style="color:Blue">As</span><span style="color:Black"> 
+			SwDMApplication4<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			dmDoc </span><span style="color:Blue">As</span><span style="color:Black"> 
+			SwDMDocument18<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			dmDocType </span><span style="color:Blue">As</span><span style="color:Black"> 
+			SwDmDocumentType<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			dmSearchOpt </span><span style="color:Blue">As</span><span style="color:Black"> 
+			SwDMSearchOption<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			status </span><span style="color:Blue">As</span><span style="color:Black"> 
+			SwDmDocumentOpenError<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			dmExtRefOption </span><span style="color:Blue">As</span><span style="color:Black"> 
+			SwDMExternalReferenceOption2<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			numExtRefs </span><span style="color:Blue">As</span><span style="color:Black">
+			</span><span style="color:Blue"> Integer</span><span style="color:Blue"><br>
+			&nbsp;&nbsp;&nbsp; Dim
+			</span>xmlError<span style="color:Blue"> As Integer<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Const</span><span style="color:Black"> 
+			docPath </span><span style="color:Blue">As</span><span style="color:Black">
+			</span><span style="color:Blue">String</span><span style="color:Black"> 
+			= </span><span style="color:#a31515">&quot;<i>public_documents</i>\samples\tutorial\api\assem2.sldasm&quot;<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Const</span><span style="color:Black"> 
+			licenseKey </span><span style="color:Blue">As</span><span style="color:Black">
+			</span><span style="color:Blue">String</span><span style="color:Black"> 
+			= </span><span style="color:#a31515">&quot;<i>your_license_key</i>&quot;<br>
+			&nbsp;</span><div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+				<p class="APICODE"><span style="color:Blue">&nbsp;&nbsp;&nbsp; 
+				Sub</span><span style="color:Black"> main()<br>
+				<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setDocType()<br>
+				<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmClassFact = CreateObject(</span><span style="color:#a31515">&quot;SwDocumentMgr.SwDMClassFactory&quot;</span><span style="color:Black">)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDocMgr = dmClassFact.GetApplication(licenseKey)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDoc = dmDocMgr.GetDocument(docPath, dmDocType, </span>
+				<span style="color:Blue">True</span><span style="color:Black">, 
+				status)<br>
+				<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black">
+				</span><span style="color:Blue">Not</span><span style="color:Black"> 
+				(dmDoc </span><span style="color:Blue">Is</span><span style="color:Black">
+				</span><span style="color:Blue">Nothing</span><span style="color:Black">)
+				</span><span style="color:Blue">Then<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NewMethod()<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDoc.<b>GetXmlStream</b>(</span><span style="color:#a31515">&quot;c:\temp\extRef.xml&quot;</span><span style="color:Black">, 
+				xmlError)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDoc.<b>CloseDoc</b>()<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Else<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Unable 
+				to open document. Check 'docPath' variable.&quot;</span><span style="color:Black">)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+				</span><span style="color:Blue">If<br>
+				<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+				</span><span style="color:Blue">Sub<br>
+				<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+				NewMethod()<br>
+				<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmExtRefOption = dmDocMgr.<b>GetExternalReferenceOptionObject2</b><br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmSearchOpt = dmDocMgr.<b>GetSearchOptionObject</b><br>
+				<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmExtRefOption.<b>SearchOption</b> = dmSearchOpt<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmExtRefOption.<b>Configuration</b> = </span>
+				<span style="color:#a31515">&quot;Default&quot;<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmExtRefOption.<b>NeedSuppress</b> 
+				= </span><span style="color:Blue">True<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numExtRefs = dmDoc.<b>GetExternalFeatureReferences2</b>(dmExtRefOption)<br>
+				<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;External 
+				references:&quot;</span><span style="color:Black">)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PrintStrings(</span><span style="color:#a31515">&quot;FilePath&quot;</span><span style="color:Black">, 
+				dmExtRefOption.<b>ExternalReferences</b>)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&quot;</span><span style="color:Black">)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Configurations 
+				of external references:&quot;</span><span style="color:Black">)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PrintStrings(</span><span style="color:#a31515">&quot;ConfigName&quot;</span><span style="color:Black">, 
+				dmExtRefOption.<b>ReferencedConfigurations</b>)<br>
+				<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmSearchOpt = </span><span style="color:Blue">Nothing<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmExtRefOption = </span>
+				<span style="color:Blue">Nothing<br>
+				<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+				</span><span style="color:Blue">Sub<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+				setDocType()<br>
+				<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+				typeStr </span><span style="color:Blue">As</span><span style="color:Black">
+				</span><span style="color:Blue">String<br>
+				<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typeStr = Mid$(docPath, 
+				(Len(docPath) + 1 - 6), 6)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;typeStr = UCase$(typeStr)<br>
+				<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+				(typeStr = </span><span style="color:#a31515">&quot;SLDPRT&quot;</span><span style="color:Black">)
+				</span><span style="color:Blue">Then<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDocType = 
+				SwDmDocumentType.swDmDocumentPart<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+				(typeStr = </span><span style="color:#a31515">&quot;SLDASM&quot;</span><span style="color:Black">)
+				</span><span style="color:Blue">Then<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDocType = 
+				SwDmDocumentType.swDmDocumentAssembly<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+				</span><span style="color:Blue">If<br>
+				<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+				</span><span style="color:Blue">Sub<br>
+				<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+				PrintStrings(</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+				name </span><span style="color:Blue">As</span><span style="color:Black">
+				</span><span style="color:Blue">String</span><span style="color:Black">,
+				</span><span style="color:Blue">ByVal</span><span style="color:Black"> 
+				varInp </span><span style="color:Blue">As</span><span style="color:Black">
+				</span><span style="color:Blue">Object</span><span style="color:Black">)<br>
+				<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+				I </span><span style="color:Blue">As</span><span style="color:Black">
+				</span><span style="color:Blue"> Integer</span><span style="color:Blue"><br>
+				<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">For</span><span style="color:Black"> 
+				I = LBound(varInp) </span><span style="color:Blue">To</span><span style="color:Black"> 
+				UBound(varInp)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+				str </span><span style="color:Blue">As</span><span style="color:Black">
+				</span><span style="color:Blue">String<br>
+				</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;str = varInp(I)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(name &amp; </span>
+				<span style="color:#a31515">&quot; : &quot;</span><span style="color:Black"> 
+				&amp; str)<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Next</span><span style="color:Black"> 
+				I<br>
+				<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+				</span><span style="color:Blue">Sub<br>
+				<br>
+				End</span><span style="color:Black"> </span>
+				<span style="color:Blue">Module</span>
+			</div>
+		</div>
+		</div>
+</div>
+
+</body>
+
+</html>

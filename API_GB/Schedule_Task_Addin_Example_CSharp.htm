@@ -1,0 +1,347 @@
+<html>
+
+<head>
+<title>Create a Task that Finds Approved Files Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="Add-ins, C#">
+<meta name=MS-HKWD content="C# add-ins">
+<meta name=MS-HKWD content="C# add-ins,tasks">
+<meta name=MS-HKWD content="C# add-ins,hooks">
+<meta name=MS-HKWD content="C# add-ins,workflows">
+<meta name=MS-HKWD content="C# add-ins,states">
+<meta name=MS-HKWD content="C# add-ins,searches">
+<meta name=MS-HKWD content="C# add-ins,notifications">
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Create a Task that Finds Approved Files Example (C#)</h1>
+<p>This example shows how to create a task add-in that notifies the logged-in 
+user as to which files in 
+the vault are in the Approved state.</p>
+
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE"><span style="color:green;">//--------------------------------------------------------------------------------------</span><br>
+<span style="color:green;">//&nbsp;Preconditions:</span><br>
+<span style="color:green;">//&nbsp;1.&nbsp;Start&nbsp;Microsoft&nbsp;Visual&nbsp;Studio.</span><br>
+<span style="color:green;">//&nbsp;2.&nbsp;Click&nbsp;<b>File&nbsp;&gt;&nbsp;New&nbsp;&gt;&nbsp;Project&nbsp;&gt;&nbsp;Visual 
+C#&nbsp;&gt;&nbsp;Class&nbsp;Library (.NET Framework)</b>.</span><br>
+<span style="color:green;">//&nbsp;3. Select&nbsp;<b>.NET&nbsp;Framework&nbsp;</b><strong>4.5</strong> 
+or later&nbsp;in&nbsp;the&nbsp;dropdown.</span><br>
+<span style="color:green;">//&nbsp;4. Type&nbsp;<b>TaskAddinExample</b>&nbsp;in&nbsp;<b>Name</b>.</span><br>
+<span style="color:green;">//&nbsp;5. Click&nbsp;<b>Browse</b>&nbsp;and&nbsp;navigate&nbsp;to&nbsp;the&nbsp;folder&nbsp;where&nbsp;to&nbsp;create&nbsp;the&nbsp;project.</span><br>
+<span style="color:green;">//&nbsp;6. Click&nbsp;<b>OK</b>.&nbsp;</span><br>
+<span style="color:green;">//&nbsp;7.&nbsp;Right-click&nbsp;the&nbsp;project&nbsp;name&nbsp;in&nbsp;the Solution&nbsp;Explorer&nbsp;and&nbsp;click&nbsp;<b>Add&nbsp;Reference</b>.&nbsp;</span><br>
+<span style="color:green;">//&nbsp;8. In&nbsp;the&nbsp;Add&nbsp;Reference&nbsp;dialog:&nbsp;&nbsp;&nbsp;</span><br>
+<span style="color: #008000; background-position: 0 0">//</span><font size="2"><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Add&nbsp;the 
+SOLIDWORKS&nbsp;PDM&nbsp;Professional interop assembly&nbsp;as&nbsp;a&nbsp;reference&nbsp;(click&nbsp;<strong>Browse</strong>&nbsp;in&nbsp;the</span><br>
+<span style="color: #008000">//</span><span style="color:green;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;left-side&nbsp;panel,&nbsp;click 
+<strong>EPDM.Interop.epdm.dll</strong>,&nbsp;<br>
+//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; and click&nbsp;<strong>OK</strong>).</span></font><span style="color:green;"><br>
+//&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Add&nbsp;<b>System.Windows.Forms</b>&nbsp;as&nbsp;a&nbsp;reference&nbsp;(click&nbsp;<b>Assemblies 
+&gt; Framework</b>&nbsp;in&nbsp;the</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;left-side&nbsp;panel,&nbsp;click&nbsp;<b>System.Windows.Forms</b>,&nbsp;and&nbsp;click&nbsp;<strong>OK</strong>).</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;<b>Close</b>.<br>
+</span><span style="color: #008000; background-position: 0 0">//</span><font size="2"><span style="color:green;"> 
+9. Right-click the project name in the Solution Explorer and click <b>
+Properties</b>.<br>
+//10. In the Properties window:<br>
+//&nbsp;&nbsp;&nbsp; a. On the Application tab, click <b>Assembly Information</b>.<br>
+//&nbsp;&nbsp;&nbsp; b. De-select <b>Make assembly COM-Visible</b>.<br>
+//&nbsp;&nbsp;&nbsp; c. On the Build tab, select <b>Any CPU, </b>de-select<b> 
+Prefer 32-bit, </b>and select<b> Register for COM interop</b>.<br>
+//11. Save the project.<br>
+//12. Copy the code below to <b>Class1.cs</b>.<br>
+//13. </span></font><font size="2"><font color="#008000">To populate the GUID 
+	attribute, click <b>Tools &gt; Create GUID</b> in the IDE, <br>
+//&nbsp;&nbsp;&nbsp; select GUID Format 5, click <b>Copy</b>, and click <b>Exit</b>. 
+Populate [</font><span style="color:#008000;">Guid</span><font color="#008000">(</font><span style="color:#008000;">&quot;&quot;</span><font color="#008000">), 
+...] with <br>
+//&nbsp;&nbsp;&nbsp; the copied string.</font><br>
+<span style="color: #008000">//14</span><span style="color:green;">.&nbsp;Click <b>
+Build &gt; Build Solution</b>.</span></font><br>
+<span style="color:green;">//</span><br>
+<span style="color:green;">//&nbsp;Postconditions:&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;1.&nbsp;Open&nbsp;the&nbsp;SOLIDWORKS 
+PDM&nbsp;Administration&nbsp;tool,&nbsp;expand&nbsp;a&nbsp;<i>vault_name</i>&nbsp;node,&nbsp;<br>
+//&nbsp;&nbsp;&nbsp;&nbsp; and&nbsp;log&nbsp;in&nbsp;as&nbsp;Admin.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;2.&nbsp;Ensure&nbsp;that&nbsp;Default&nbsp;Workflow&nbsp;with&nbsp;an&nbsp;Approved&nbsp;state&nbsp;exists&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;under&nbsp;<i>vault_name</i><b>&nbsp;&gt;&nbsp;Workflows</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;3.&nbsp;</span><span style="color:green;">Under&nbsp;<i>vault_name, </i>
+right-click&nbsp;<b>Add-ins</b>&nbsp;and&nbsp;click&nbsp;<b>New&nbsp;Add-in</b>.<br>
+//&nbsp;&nbsp;&nbsp;&nbsp; a. Navigate to the </span>
+<span style="color:green;"><b>bin\Debug </b></span><span style="color:green;">directory of your built 
+project.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Click&nbsp;<b>EPDM.Interop.epdm.dll</b>&nbsp;and&nbsp;<b>TaskAddinExample.dll</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;<b>Open</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click&nbsp;<b>OK</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;4.&nbsp;Click&nbsp;<b>OK</b>&nbsp;after&nbsp;reading&nbsp;the&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;warning&nbsp;dialog.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;5.&nbsp;In&nbsp;the&nbsp;taskbar&nbsp;notification&nbsp;area:</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Click&nbsp;the&nbsp;SOLIDWORKS PDM&nbsp;icon.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Click&nbsp;<b>Task&nbsp;Host&nbsp;Configuration</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Select&nbsp;<i>vault_name</i>&nbsp;in&nbsp;the&nbsp;<b>File&nbsp;Vault</b>&nbsp;dropdown.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Select&nbsp;<b>Permit</b>&nbsp;next&nbsp;to&nbsp;the&nbsp;add-in&nbsp;you&nbsp;installed&nbsp;in&nbsp;step&nbsp;3.<br>
+//&nbsp;&nbsp;&nbsp;&nbsp; e. Click <b>OK</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;6.&nbsp;In the Administration tool 
+under the&nbsp;<i>vault_name</i><b>, </b>right-click<b> Tasks&nbsp;</b>and click<b> 
+New&nbsp;Task</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Type&nbsp;<b>Approved&nbsp;Files&nbsp;Task</b>&nbsp;in&nbsp;the&nbsp;upper-left&nbsp;text&nbsp;box.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Select&nbsp;the&nbsp;<b>C#&nbsp;Task&nbsp;Add-in</b>&nbsp;from&nbsp;the&nbsp;<b>Add-in</b>&nbsp;dropdown.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;When&nbsp;the&nbsp;attach&nbsp;debugger&nbsp;message&nbsp;box&nbsp;appears:</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.&nbsp;In&nbsp;the&nbsp;IDE,&nbsp;click&nbsp;<b>Debug&nbsp;&gt;&nbsp;Attach&nbsp;to&nbsp;Process&nbsp;&gt;&nbsp;ConisioAdmin.exe</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.&nbsp;Click&nbsp;<b>Attach</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.&nbsp;Click&nbsp;<b>OK</b>&nbsp;to&nbsp;close&nbsp;the&nbsp;message&nbsp;box.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click&nbsp;<b>Next</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e.&nbsp;On&nbsp;the&nbsp;Execution&nbsp;Method&nbsp;properties&nbsp;page,&nbsp;select&nbsp;the&nbsp;local&nbsp;computer.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f.&nbsp;Click&nbsp;<b>Next</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g.&nbsp;On&nbsp;the&nbsp;Scheduling&nbsp;properties&nbsp;page,&nbsp;select&nbsp;<b>This&nbsp;task&nbsp;is&nbsp;not&nbsp;scheduled</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;h.&nbsp;Click&nbsp;<b>Next</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i.&nbsp;On&nbsp;the&nbsp;Permissions&nbsp;property&nbsp;page,&nbsp;select&nbsp;<b>Admin</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;j.&nbsp;Click&nbsp;<b>Next</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;k.&nbsp;On&nbsp;the&nbsp;Success&nbsp;Notification&nbsp;property&nbsp;page:</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.&nbsp;Select&nbsp;<b>Notify&nbsp;the&nbsp;user&nbsp;who&nbsp;launched&nbsp;the&nbsp;task</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.&nbsp;In&nbsp;the&nbsp;<b>Subject</b>&nbsp;field,&nbsp;type&nbsp;<b>Success</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.&nbsp;In&nbsp;the&nbsp;<b>Text</b>&nbsp;field,&nbsp;type&nbsp;<b>The&nbsp;task&nbsp;successfully&nbsp;completed&nbsp;at</b>,&nbsp;type 
+a space, </span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;click&nbsp;<b>&gt;</b>,&nbsp;and&nbsp;click&nbsp;<b>Current Time</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l.&nbsp;Click&nbsp;<b>OK</b>&nbsp;to&nbsp;close&nbsp;the&nbsp;New Task&nbsp;dialog.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;7.&nbsp;Expand&nbsp;<i>vault_name</i>&nbsp;<b>&gt;&nbsp;Tasks</b>&nbsp;and&nbsp;double-click&nbsp;<b>Task&nbsp;List</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;8.&nbsp;Click&nbsp;<b>Add&nbsp;Task</b>.&nbsp;</span><br>
+<span style="color:green;">//&nbsp;&nbsp;9. In&nbsp;the&nbsp;Add&nbsp;Task&nbsp;dialog:</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Select&nbsp;<b>Approved&nbsp;Files&nbsp;Task</b>&nbsp;from&nbsp;the&nbsp;dropdown.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Click&nbsp;<b>OK</b>.</span><br>
+<span style="color:green;">//&nbsp;10.&nbsp;When&nbsp;the&nbsp;attach&nbsp;debugger&nbsp;message&nbsp;box&nbsp;appears:</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;In&nbsp;the&nbsp;IDE,&nbsp;click&nbsp;<b>Debug&nbsp;&gt;&nbsp;Attach&nbsp;to&nbsp;Process&nbsp;&gt;&nbsp;TaskExecutor.exe</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Click&nbsp;<b>Attach</b>.</span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;<b>OK</b>&nbsp;to&nbsp;close&nbsp;the&nbsp;message&nbsp;box.</span><br>
+<span style="color:green;">//&nbsp;11.&nbsp;The&nbsp;task&nbsp;appears&nbsp;in&nbsp;the&nbsp;<b>Pending&nbsp;tasks&nbsp;</b>list.&nbsp;Observe&nbsp;the&nbsp;task&nbsp;status.</span><br>
+<span style="color:green;">//&nbsp;12.&nbsp;When&nbsp;the&nbsp;task&nbsp;completes,&nbsp;the&nbsp;task&nbsp;moves&nbsp;to&nbsp;the&nbsp;<b>Completed&nbsp;tasks</b></span><br>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list.&nbsp;The&nbsp;logged-in&nbsp;user&nbsp;receives&nbsp;a&nbsp;notification&nbsp;with&nbsp;the&nbsp;list&nbsp;of&nbsp;approved&nbsp;files.</span><br>
+<span style="color:green;">//---------------------------------------------------------------------------------------</span><br>
+<span style="color:blue;">using</span>&nbsp;Microsoft.VisualBasic;<br>
+<span style="color:blue;">using</span>&nbsp;System;<br>
+<span style="color:blue;">using</span>&nbsp;System.Collections;<br>
+<span style="color:blue;">using</span>&nbsp;System.Collections.Generic;<br>
+<span style="color:blue;">using</span>&nbsp;System.Data;<br>
+<span style="color:blue;">using</span>&nbsp;System.Diagnostics;<br>
+<span style="color:blue;">using</span>&nbsp;System.Windows.Forms;<br>
+<span style="color:blue;">using</span>&nbsp;EPDM.Interop.epdm;<br>
+<span style="color:blue;">using</span>&nbsp;System.Runtime.InteropServices;<br>
+<br>
+[<font face="Courier New" size="2"><span style="color:#2b91af;">Guid</span>(<span style="color:#a31515;">&quot;&quot;</span>),
+<span style="color:#2b91af;">ComVisible</span>(<span style="color: #0000FF">t</span><span style="color:blue;">rue</span>)]&nbsp;</font><br>
+ 
+<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">TaskAddinExample</span>&nbsp;:&nbsp;<span style="color:#2b91af;">IEdmAddIn5</span><br>
+{<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;GetAddInInfo(<span style="color:blue;">ref</span>&nbsp;<span style="color:#2b91af;">EdmAddInInfo</span>&nbsp;poInfo,&nbsp;<span style="color:#2b91af;">IEdmVault5</span>&nbsp;poVault,&nbsp;<span style="color:#2b91af;">IEdmCmdMgr5</span>&nbsp;poCmdMgr)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.<b>mbsAddInName</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;C#&nbsp;Task&nbsp;Add-In&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.<b>mbsCompany</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Dassault&nbsp;Systemes&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.<b>mbsDescription</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Exercise&nbsp;demonstrating&nbsp;a&nbsp;task&nbsp;that&nbsp;lists&nbsp;files&nbsp;in&nbsp;the&nbsp;Approved&nbsp;state.&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.<b>mlAddInVersion</b>&nbsp;=&nbsp;1;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Minimum&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;version</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//needed&nbsp;for&nbsp;C#&nbsp;Task&nbsp;Add-Ins&nbsp;is&nbsp;10.0</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.<b>mlRequiredVersionMajor</b>&nbsp;=&nbsp;10;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poInfo.<b>mlRequiredVersionMinor</b>&nbsp;=&nbsp;0;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Register&nbsp;this&nbsp;add-in&nbsp;as&nbsp;a&nbsp;task&nbsp;add-in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poCmdMgr.<b>AddHook</b>(<span style="color:#2b91af;">EdmCmdType</span>.EdmCmd_TaskRun);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Register&nbsp;this&nbsp;add-in&nbsp;to&nbsp;be&nbsp;called&nbsp;when</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//selected&nbsp;as&nbsp;a&nbsp;task&nbsp;in&nbsp;the&nbsp;Administration&nbsp;tool</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;poCmdMgr.<b>AddHook</b>(<span style="color:#2b91af;">EdmCmdType</span>.EdmCmd_TaskSetup);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;&nbsp;ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;OnCmd(<span style="color:blue;">ref</span>&nbsp;<span style="color:#2b91af;">EdmCmd</span>&nbsp;poCmd,&nbsp;<span style="color:blue;">ref</span>&nbsp;System.<span style="color:#2b91af;">Array</span>&nbsp;ppoData)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PauseToAttachProcess(poCmd.<b>meCmdType</b>.ToString());<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">switch</span>&nbsp;(poCmd.<b>meCmdType</b>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">case</span>&nbsp;<span style="color:#2b91af;">EdmCmdType</span>.<b>EdmCmd_TaskRun</b>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OnTaskRun(<span style="color:blue;">ref</span>&nbsp;poCmd,&nbsp;<span style="color:blue;">ref</span>&nbsp;ppoData);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">break</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">case</span>&nbsp;<span style="color:#2b91af;">EdmCmdType</span>.<b>EdmCmd_TaskSetup</b>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OnTaskSetup(<span style="color:blue;">ref</span>&nbsp;poCmd,&nbsp;<span style="color:blue;">ref</span>&nbsp;ppoData);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">break</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;OnTaskRun(<span style="color:blue;">ref</span>&nbsp;<span style="color:#2b91af;">EdmCmd</span>&nbsp;poCmd,&nbsp;<span style="color:blue;">ref</span>&nbsp;System.<span style="color:#2b91af;">Array</span>&nbsp;ppoData)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Get&nbsp;the&nbsp;task&nbsp;instance&nbsp;interface</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmTaskInstance</span>&nbsp;inst&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmTaskInstance</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inst&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmTaskInstance</span>)poCmd.<b>mpoExtra</b>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Keep&nbsp;the&nbsp;Task&nbsp;List&nbsp;status&nbsp;up&nbsp;to&nbsp;date</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inst.<b>SetStatus</b>(<span style="color:#2b91af;">EdmTaskStatus</span>.<b>EdmTaskStat_Running</b>);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Format&nbsp;a&nbsp;message&nbsp;that&nbsp;will&nbsp;be&nbsp;displayed</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//in&nbsp;the&nbsp;task&nbsp;list</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inst.<b>SetProgressRange</b>(10,&nbsp;1,&nbsp;<span style="color:#a31515;">&quot;Task&nbsp;is&nbsp;running.&quot;</span>);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">List</span>&lt;<span style="color:#2b91af;">EdmSelItem2</span>&gt;&nbsp;Items&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">List</span>&lt;<span style="color:#2b91af;">EdmSelItem2</span>&gt;();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inst.<b>SetProgressPos</b>(4,&nbsp;<span style="color:#a31515;">&quot;Task&nbsp;is&nbsp;searching.&quot;</span>);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmSearch6</span>&nbsp;Search&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmSearch6</span>)((<span style="color:#2b91af;">IEdmVault5</span>)(poCmd.<b>mpoVault</b>)).<b>CreateSearch</b>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(Search&nbsp;==&nbsp;<span style="color:blue;">null</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">return</span>;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Search.<b>SetToken</b>(<span style="color:#2b91af;">EdmSearchToken</span>.<b>Edmstok_FindFiles</b>,&nbsp;<span style="color:blue;">true</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Search.<b>SetToken</b>(<span style="color:#2b91af;">EdmSearchToken</span>.<b>Edmstok_WorkflowName</b>,&nbsp;<span style="color:#a31515;">&quot;Default&nbsp;Workflow&quot;</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Search.<b>SetToken</b>(<span style="color:#2b91af;">EdmSearchToken</span>.<b>Edmstok_StateName</b>,&nbsp;<span style="color:#a31515;">&quot;Approved&quot;</span>);<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</p><font size="1">
+
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+<font color="#008000">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+//Uncomment and modify the following lines to look for files <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //that have a 
+card variable with values in a specific range</font></p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<font color="#008000">//object varName1 = &quot;<i>Card_Variable_ID_or_Name</i>&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //object 
+varValue1 = &quot;<i>Card_Variable_Value_1</i>&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //int varOp1 
+= <i>EdmVarOp_NumberGreaterThan;</i><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //object 
+varValue2 = &quot;<i>Card_Variable_Value_2</i>&quot;;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //int varOp2 
+= <i>EdmVarOp_NumberLessThan;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </i>//Search.<b>BeginAND();</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+//Search.<b>AddVariable2</b>(ref varName1, ref varValue1, varOp1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+//Search.<b>AddVariable2</b>(ref varName1, ref varValue2, varOp2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //Search.<b>EndAND();</b></font></font></p>
+<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE"><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmSearchResult5</span>&nbsp;SearchResult&nbsp;=&nbsp;Search.<b>GetFirstResult</b>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">while</span>&nbsp;((SearchResult&nbsp;!=&nbsp;<span style="color:blue;">null</span>))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">EdmSelItem2</span>&nbsp;SelItem&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmSelItem2</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SelItem.<b>mlID</b>&nbsp;=&nbsp;SearchResult.<b>ID</b>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SelItem.<b>mlParentID</b>&nbsp;=&nbsp;SearchResult.<b>ParentFolderID</b>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SelItem.<b>meType</b>&nbsp;=&nbsp;SearchResult.<b>ObjectType</b>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SelItem.<b>mlVersion</b>&nbsp;=&nbsp;SearchResult.<b>Version</b>;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Items.Add(SelItem);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SearchResult&nbsp;=&nbsp;Search.<b>GetNextResult</b>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inst.<b>SetProgressPos</b>(7,&nbsp;<span style="color:#a31515;">&quot;Task&nbsp;finished&nbsp;searching.&quot;</span>);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">EdmSelItem2</span>[]&nbsp;NotificationArray&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmSelItem2</span>[Items.Count];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Items.CopyTo(NotificationArray);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">string</span>&nbsp;ProgresssMsg&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;((Items.Count&nbsp;&gt;&nbsp;0))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ProgresssMsg&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Found&nbsp;&quot;</span>&nbsp;+&nbsp;Items.Count.ToString()&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;files.&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">else</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ProgresssMsg&nbsp;=&nbsp;(<span style="color:#a31515;">&quot;No&nbsp;files&nbsp;found.&quot;</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inst.<b>SetProgressPos</b>(10,&nbsp;ProgresssMsg);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inst.<b>SetStatus</b>(<span style="color:#2b91af;">EdmTaskStatus</span>.<b>EdmTaskStat_DoneOK</b>,&nbsp;0,&nbsp;<span style="color:#a31515;">&quot;&quot;</span>,&nbsp;NotificationArray,&nbsp;ProgresssMsg);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inst.<b>SetStatus</b>(<span style="color:#2b91af;">EdmTaskStatus</span>.<b>EdmTaskStat_DoneFailed</b>,&nbsp;ex.ErrorCode,&nbsp;<span style="color:#a31515;">&quot;The&nbsp;test&nbsp;task&nbsp;failed!&quot;</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;OnTaskSetup(<span style="color:blue;">ref</span>&nbsp;<span style="color:#2b91af;">EdmCmd</span>&nbsp;poCmd,&nbsp;<span style="color:blue;">ref</span>&nbsp;System.<span style="color:#2b91af;">Array</span>&nbsp;ppoData)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Get&nbsp;the&nbsp;property&nbsp;interface&nbsp;used&nbsp;to</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//access&nbsp;the&nbsp;framework</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">IEdmTaskProperties</span>&nbsp;props&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmTaskProperties</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;props&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmTaskProperties</span>)poCmd.<b>mpoExtra</b>;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Set&nbsp;the&nbsp;property&nbsp;flag&nbsp;that&nbsp;says&nbsp;you&nbsp;want&nbsp;a</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//menu&nbsp;item&nbsp;for&nbsp;the&nbsp;user&nbsp;to&nbsp;launch&nbsp;the&nbsp;task</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//and&nbsp;a&nbsp;flag&nbsp;to&nbsp;support&nbsp;scheduling</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;props.<b>TaskFlags</b>&nbsp;=&nbsp;(<span style="color:blue;">int</span>)<span style="color:#2b91af;">EdmTaskFlag</span>.<b>EdmTask_SupportsInitExec</b>&nbsp;+&nbsp;(<span style="color:blue;">int</span>)<span style="color:#2b91af;">EdmTaskFlag</span>.<b>EdmTask_SupportsScheduling</b>;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Set&nbsp;up&nbsp;the&nbsp;menu&nbsp;commands&nbsp;to&nbsp;launch&nbsp;this&nbsp;task</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">EdmTaskMenuCmd</span>[]&nbsp;cmds&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmTaskMenuCmd</span>[1];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmds[0].<b>mbsMenuString</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;List&nbsp;Approved&nbsp;files&nbsp;task&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmds[0].<b>mbsStatusBarHelp</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;This&nbsp;command&nbsp;runs&nbsp;the&nbsp;task&nbsp;add-in&nbsp;to&nbsp;get&nbsp;the&nbsp;names&nbsp;of&nbsp;the&nbsp;files&nbsp;in&nbsp;the&nbsp;Approved&nbsp;state.&quot;</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmds[0].<b>mlCmdID</b>&nbsp;=&nbsp;1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmds[0].<b>mlEdmMenuFlags</b>&nbsp;=&nbsp;(<span style="color:blue;">int</span>)<span style="color:#2b91af;">EdmMenuFlags</span>.<b>EdmMenu_Nothing</b>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;props.<b>SetMenuCmds</b>(cmds);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;PauseToAttachProcess(<span style="color:blue;">string</span>&nbsp;callbackType)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//If&nbsp;the&nbsp;debugger&nbsp;isn't&nbsp;already&nbsp;attached&nbsp;to&nbsp;a</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//process,&nbsp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(!<span style="color:#2b91af;">Debugger</span>.IsAttached)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Launch&nbsp;the&nbsp;debug&nbsp;dialog</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Debugger.Launch()</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//or</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//use&nbsp;a&nbsp;MsgBox&nbsp;dialog&nbsp;to&nbsp;pause&nbsp;execution</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//and&nbsp;allow&nbsp;the&nbsp;user&nbsp;time&nbsp;to&nbsp;attach&nbsp;it</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;Attach&nbsp;debugger&nbsp;to&nbsp;process&nbsp;\&quot;&quot;</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Process</span>.GetCurrentProcess().ProcessName&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\&quot;&nbsp;for&nbsp;callback&nbsp;\&quot;&quot;</span>&nbsp;+&nbsp;callbackType&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\&quot;&nbsp;before&nbsp;clicking&nbsp;OK.&quot;</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+}</p>
+
+</body>
+
+</html>

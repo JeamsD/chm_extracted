@@ -1,0 +1,135 @@
+<html>
+
+<head>
+<title>Get PNG Preview Bitmap and Stream for Configuration Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta NAME=MS-HKWD CONTENT="VB.NET examples,previews">
+<meta NAME=MS-HKWD CONTENT="VB.NET examples,bitmaps">
+<meta NAME=MS-HKWD CONTENT="VB.NET examples,parts">
+<meta NAME=MS-HKWD CONTENT="VB.NET examples,assemblies">
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Document 
+ Manager API Help</span></h1>
+<h1>Get PNG Preview Bitmap and Stream for Configuration Example (VB.NET)</h1>
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p>This example shows how to 
+	get the name of the stream and the PNG preview bitmap for a configuration.
+	<span style="color:Green"><br><br></span><font face="Verdana"><b>NOTE</b>: To get the name of the stream and a preview bitmap of the sheet 
+	active when the drawing was last saved, use ISwDMDocument10::GetPreviewBitmap and 
+	ISwDMDocument10::PreviewStreamName. To get the name of the streams and 
+	the preview bitmaps for all sheets in a drawing, use 
+	ISwDMSheet2::GetPreviewPNGBitmap and ISwDMSheet2::PreviewPNGStreamName.</font><span style="color:Green"><font size="1" face="Verdana">
+	</font></span>
+	<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><span style="color:green;">'-----------------------------------------------------------------------------</span>
+<span style="color:green;">'&nbsp;Preconditions:</span>
+<span style="color:green;">'&nbsp;1.&nbsp;Read&nbsp;the&nbsp;SOLIDWORKS&nbsp;Document&nbsp;Manager&nbsp;API&nbsp;<b>Getting&nbsp;Started</b>&nbsp;topic&nbsp;&nbsp;</span>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;verify&nbsp;that&nbsp;the&nbsp;required&nbsp;DLLs&nbsp;are&nbsp;registered.
+' 2. Create a VB.NET console application in Microsoft Visual Studio.</span>
+<span style="color:green;">'&nbsp;3.&nbsp;Copy&nbsp;<a href="#Main">Module1</a>&nbsp;into&nbsp;<b>Module1.vb</b>.</span>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Specify&nbsp;<i>your_license_key</i>.</span>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Verify&nbsp;that&nbsp;the&nbsp;specified&nbsp;file&nbsp;to&nbsp;open&nbsp;exists.</span>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Add&nbsp;a reference to&nbsp;<b>SolidWorks.Interop.swdocumentmgr.dll</b>:</span>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.&nbsp;Right-click&nbsp;the&nbsp;solution&nbsp;in&nbsp;the Solution&nbsp;Explorer.&nbsp;</span>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.&nbsp;Click&nbsp;<b>Add&nbsp;Reference</b>.&nbsp;</span>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.&nbsp;Click&nbsp;<b>Browse</b>.&nbsp;</span>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.&nbsp;Click&nbsp;<i>install_dir</i><b>\api\redist\SolidWorks.Interop.swdocumentmgr.dll</b>.</span>
+<span style="color:green;">'&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Add&nbsp;references&nbsp;to&nbsp;<b>System.Windows.Forms, System.Drawing,</b>&nbsp;and&nbsp;<b>stdole</b>.</span>
+<span style="color:green;">'&nbsp;4.&nbsp;Create&nbsp;a&nbsp;class&nbsp;and&nbsp;copy&nbsp;<a href="#Class1">Class1</a>&nbsp;into&nbsp;<b>Class1.vb</b>.</span>
+<span style="color:green;">'&nbsp;5.&nbsp;Verify&nbsp;that&nbsp;<b>C:\temp</b>&nbsp;exists.&nbsp;</span>
+<span style="color:green;">'&nbsp;6.&nbsp;Open&nbsp;the&nbsp;Immediate&nbsp;Window.</span>
+<span style="color:green;">'</span>
+<span style="color:green;">'&nbsp;Postconditions:&nbsp;</span>
+<span style="color:green;">'&nbsp;1.&nbsp;Creates&nbsp;a&nbsp;preview&nbsp;bitmap&nbsp;of&nbsp;the&nbsp;<b>Default</b>&nbsp;configuration.&nbsp;</span>
+<span style="color:green;">'&nbsp;2.&nbsp;Right-click&nbsp;<b>C:\temp\Default.PNG</b>&nbsp;and&nbsp;click&nbsp;<b>Preview</b>.</span>
+<span style="color:green;">'&nbsp;3.&nbsp;Examine&nbsp;the&nbsp;Immediate&nbsp;Window.&nbsp;</span>
+<span style="color:green;">'---------------------------------------------------------------------------</span>
+<span style="color:green;"><a name="Main"></a>'Module1&nbsp;</span>
+<span style="color:blue;">Imports</span>&nbsp;SolidWorks.Interop.swdocumentmgr
+<span style="color:blue;">Imports</span>&nbsp;System.Drawing.Image
+<span style="color:blue;">Imports</span>&nbsp;stdole
+<span style="color:blue;">Imports</span>&nbsp;System
+<span style="color:blue;">Imports</span>&nbsp;System.Diagnostics</pre>
+</div>
+<pre style="font-family: Consolas; font-size: 13; color: black; background: white"><font face="Courier New"><span style="color:blue;">Module</span>&nbsp;<span style="color:#2b91af;">Module1</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Sub</span>&nbsp;Main()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Const</span>&nbsp;sDocFileName&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">String</span>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\multibody\multi_inter.sldprt&quot;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;swClassFact&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">SwDMClassFactory</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;swDocMgr&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">SwDMApplication</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;swDoc&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">SwDMDocument</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;swCfgMgr&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">SwDMConfigurationMgr</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;vCfgNameArr&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Object</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;vCfgName&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Object</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;swCfg&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">SwDMConfiguration7</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;nDocType&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;nRetVal&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'&nbsp;Determine&nbsp;type&nbsp;of&nbsp;SOLIDWORKS&nbsp;file&nbsp;based&nbsp;on&nbsp;file&nbsp;extension</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;InStr(LCase(sDocFileName),&nbsp;<span style="color:#a31515;">&quot;sldprt&quot;</span>)&nbsp;&gt;&nbsp;0&nbsp;<span style="color:blue;">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType&nbsp;=&nbsp;<span style="color:#2b91af;">SwDmDocumentType</span>.swDmDocumentPart
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">ElseIf</span>&nbsp;InStr(LCase(sDocFileName),&nbsp;<span style="color:#a31515;">&quot;sldasm&quot;</span>)&nbsp;&gt;&nbsp;0&nbsp;<span style="color:blue;">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType&nbsp;=&nbsp;<span style="color:#2b91af;">SwDmDocumentType</span>.swDmDocumentAssembly
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">ElseIf</span>&nbsp;InStr(LCase(sDocFileName),&nbsp;<span style="color:#a31515;">&quot;slddrw&quot;</span>)&nbsp;&gt;&nbsp;0&nbsp;<span style="color:blue;">Then</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType&nbsp;=&nbsp;<span style="color:#2b91af;">SwDmDocumentType</span>.swDmDocumentDrawing
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Else</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'&nbsp;Probably&nbsp;not&nbsp;a&nbsp;SOLIDWORKS&nbsp;file,</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'&nbsp;so&nbsp;cannot&nbsp;open</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType&nbsp;=&nbsp;<span style="color:#2b91af;">SwDmDocumentType</span>.swDmDocumentUnknown
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Exit&nbsp;Sub</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'&nbsp;Because&nbsp;drawing&nbsp;documents&nbsp;do&nbsp;not&nbsp;have&nbsp;configurations,&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'&nbsp;only&nbsp;continue&nbsp;running&nbsp;the&nbsp;macro&nbsp;if&nbsp;the&nbsp;document</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'&nbsp;is&nbsp;a&nbsp;part&nbsp;or&nbsp;assembly&nbsp;document</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;(nDocType&nbsp;&lt;&gt;&nbsp;<span style="color:#2b91af;">SwDmDocumentType</span>.swDmDocumentDrawing)&nbsp;<span style="color:blue;">Then</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swClassFact&nbsp;=&nbsp;CreateObject(<span style="color:#a31515;">&quot;SwDocumentMgr.SwDMClassFactory&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDocMgr&nbsp;=&nbsp;swClassFact.<b>GetApplication</b>(<span style="color:#a31515;">&quot;<i>your_license_key</i>&quot;)
+</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDoc&nbsp;=&nbsp;swDocMgr.<b>GetDocument</b>(sDocFileName,&nbsp;nDocType,&nbsp;<span style="color:blue;">True</span>,&nbsp;nRetVal)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swCfgMgr&nbsp;=&nbsp;swDoc.<b>ConfigurationManager</b>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;File&nbsp;=&nbsp;&quot;</span>&nbsp;&amp;&nbsp;swDoc.<b>FullName</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Active&nbsp;configuration&nbsp;name&nbsp;=&nbsp;&quot;</span>&nbsp;&amp;&nbsp;swCfgMgr.<b>GetActiveConfigurationName</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vCfgNameArr&nbsp;=&nbsp;swCfgMgr.<b>GetConfigurationNames</b>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">For</span>&nbsp;<span style="color:blue;">Each</span>&nbsp;vCfgName&nbsp;<span style="color:blue;">In</span>&nbsp;vCfgNameArr
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swCfg&nbsp;=&nbsp;swCfgMgr.<b>GetConfigurationByName</b>(vCfgName)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;objBitMap&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Object</span>&nbsp;=&nbsp;swCfg.<b>GetPreviewBitmap</b>(nRetVal)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;imgPreview&nbsp;<span style="color:blue;">As</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Image</span>&nbsp;=&nbsp;<span style="color:#2b91af;">PictureDispConverter</span>.Convert(objBitMap)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;imgPreview.Save(<span style="color:#a31515;">&quot;C:\\temp\\&quot;</span>&nbsp;+&nbsp;vCfgName&nbsp;+&nbsp;<span style="color:#a31515;">&quot;.PNG&quot;</span>,&nbsp;Drawing.Imaging.<span style="color:#2b91af;">ImageFormat</span>.Bmp)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;imgPreview.Dispose()
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&quot;</span>&nbsp;&amp;&nbsp;vCfgName)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;&nbsp;PNG&nbsp;preview&nbsp;stream&nbsp;=&nbsp;&quot;</span>&nbsp;&amp;&nbsp;swCfg.<b>PreviewPNGStreamName</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&quot;</span>)
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Next</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDoc.<b>CloseDoc</b>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span>
+ 
+<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Module</span></font></pre>
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><span style="color:green;"><a name="Class1"></a>'Class1&nbsp;</span>
+<span style="color:blue;">Public</span>&nbsp;<span style="color:blue;">Class</span>&nbsp;<span style="color:#2b91af;">PictureDispConverter</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Inherits</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">AxHost</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Public</span>&nbsp;<span style="color:blue;">Sub</span>&nbsp;<span style="color:blue;">New</span>()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">MyBase</span>.New(<span style="color:#a31515;">&quot;56174C86-1546-4778-8EE6-B6AC606875E7&quot;</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Public</span>&nbsp;<span style="color:blue;">Shared</span>&nbsp;<span style="color:blue;">Function</span>&nbsp;Convert(<span style="color:blue;">ByVal</span>&nbsp;objIDispImage&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Object</span>)&nbsp;<span style="color:blue;">As</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Image</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;objPicture&nbsp;<span style="color:blue;">As</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Image</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;objPicture&nbsp;=&nbsp;<span style="color:blue;">CType</span>(System.Windows.Forms.<span style="color:#2b91af;">AxHost</span>.GetPictureFromIPicture(objIDispImage),&nbsp;System.Drawing.<span style="color:#2b91af;">Image</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Return</span>&nbsp;objPicture
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Function</span>
+ 
+<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Class</span></pre>
+
+</body>
+
+</html>

@@ -1,0 +1,756 @@
+<html>
+
+<head>
+<title>Add and Remove User and Group from Folder Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,users">
+<meta name=MS-HKWD content="C# examples,groups">
+<meta name=MS-HKWD content="C# examples,folders">
+<meta name=MS-HKWD content="C# examples,permissions">
+<meta name=MS-HKWD content="C# examples,notifications">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Add and Remove User and Group from Folder Example (C#)</h1>
+<font size="1">
+<p><a name="Top"></a>This example shows how to:</p></font>
+<ul>
+	<li><font face="Verdana" style="font-size: 8pt">add and remove users to and 
+	from a vault.</font></li>
+	<li><font face="Verdana" style="font-size: 8pt">add a user of a group to a 
+	folder in a vault.</font></li>
+	<li><font face="Verdana" style="font-size: 8pt">remove a user of a group 
+	from a folder and from a vault.</font></li>
+</ul>
+<font size="1">
+<p><b>NOTE</b>: If using the primary interop assembly 
+provided with SOLIDWORKS PDM Professional, see
+<a href="Using_NET_Framework_in_Applications.htm">Using .NET Framework 4.0 in 
+Stand-alone Applications</a>.</p>
+<p><img border="0" src="AddRemoveUsersGroups.gif" width="349" height="367"></p>
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><span style="color:green;">//--------------------------------------------------------------------&nbsp;</span>
+<span style="color:green;">//&nbsp;Preconditions:</span>
+<span style="color:green;">//&nbsp;&nbsp;1.&nbsp;Start&nbsp;Microsoft&nbsp;Visual&nbsp;Studio&nbsp;2010.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Click&nbsp;<b>File&nbsp;&gt;&nbsp;New&nbsp;&gt;&nbsp;Project&nbsp;&gt;&nbsp;Visual&nbsp;C#&nbsp;&gt;&nbsp;Windows&nbsp;Forms&nbsp;Application</b>.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Type&nbsp;<b>AddRemoveUsersGroupsCSharp</b>&nbsp;in&nbsp;<b>Name</b>.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;<b>Browse</b>&nbsp;and&nbsp;navigate&nbsp;to&nbsp;the&nbsp;folder&nbsp;where&nbsp;to&nbsp;create&nbsp;the&nbsp;project.&nbsp;</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click&nbsp;<b>OK</b>.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e.&nbsp;Click&nbsp;<b>Show&nbsp;All&nbsp;Files</b>&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer&nbsp;toolbar&nbsp;and&nbsp;expand&nbsp;</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Form1.cs</b>&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f.&nbsp;Replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>Form1.cs</b>&nbsp;with&nbsp;<a href="#Form1">this&nbsp;code</a>.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g.&nbsp;To&nbsp;create&nbsp;the&nbsp;form,&nbsp;replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>Form1.Designer.cs</b>&nbsp;with&nbsp;</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Designer">this&nbsp;code</a>.</span>
+<span style="color:green;">//&nbsp;&nbsp;2.&nbsp;Add&nbsp;<b>EPDM.Interop.epdm.dll&nbsp;</b>as&nbsp;a&nbsp;reference&nbsp;(right-click&nbsp;the&nbsp;project</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer,&nbsp;click&nbsp;<b>Add&nbsp;Reference</b>,&nbsp;click&nbsp;</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Assemblies&nbsp;&gt;&nbsp;Framework</b>&nbsp;in&nbsp;the&nbsp;left-side&nbsp;panel,&nbsp;browse&nbsp;to&nbsp;the&nbsp;top&nbsp;folder&nbsp;of&nbsp;</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;your&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;installation,&nbsp;locate&nbsp;and&nbsp;click&nbsp;</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>EPDM.Interop.epdm.dll</b>,&nbsp;click&nbsp;<b>Open</b>,&nbsp;click&nbsp;<b>Add</b>,&nbsp;and&nbsp;click&nbsp;<b>Close</b>).</span>
+<span style="color:green;">//&nbsp;&nbsp;3.&nbsp;Right-click&nbsp;<b>EPDM.Interop.epdm</b>&nbsp;in&nbsp;References,&nbsp;click&nbsp;<b>Properties</b>,&nbsp;and&nbsp;set&nbsp;</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Embed&nbsp;Interop&nbsp;Types</b>&nbsp;to&nbsp;<b>False</b>&nbsp;to&nbsp;handle&nbsp;methods&nbsp;that&nbsp;pass&nbsp;arrays&nbsp;of&nbsp;</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;structures.</span>
+<span style="color:green;">//&nbsp;&nbsp;4.&nbsp;Ensure&nbsp;that&nbsp;the&nbsp;following&nbsp;folder&nbsp;and&nbsp;group&nbsp;exist&nbsp;in&nbsp;the&nbsp;targeted&nbsp;vault:</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Folder&nbsp;in&nbsp;the&nbsp;vault&nbsp;root&nbsp;named&nbsp;Test.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Group&nbsp;named&nbsp;Management.</span>
+<span style="color:green;">//&nbsp;&nbsp;5.&nbsp;Click&nbsp;<b>Debug&nbsp;&gt;&nbsp;Start&nbsp;Debugging</b>&nbsp;or&nbsp;press&nbsp;F5.</span>
+<span style="color:green;">//</span>
+<span style="color:green;">//Postconditions:&nbsp;</span>
+<span style="color:green;">//&nbsp;1.&nbsp;Displays&nbsp;a&nbsp;dialog.</span>
+<span style="color:green;">//&nbsp;2.&nbsp;Select&nbsp;a&nbsp;vault.</span>
+<span style="color:green;">//&nbsp;3.&nbsp;Perform&nbsp;these&nbsp;user&nbsp;actions.&nbsp;Click&nbsp;<b>OK</b>&nbsp;to&nbsp;close&nbsp;each&nbsp;message&nbsp;box.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Click&nbsp;<b>Traverse&nbsp;users</b>.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Displays a message&nbsp;box&nbsp;showing&nbsp;the&nbsp;users&nbsp;in&nbsp;the&nbsp;vault.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Click&nbsp;<b>Add&nbsp;users</b>.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Displays a&nbsp;message&nbsp;box&nbsp;informing&nbsp;you&nbsp;that&nbsp;rrabbit&nbsp;</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;efudd&nbsp;were&nbsp;added&nbsp;as&nbsp;users&nbsp;to&nbsp;the&nbsp;vault.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;<b>Traverse&nbsp;users</b>&nbsp;to&nbsp;verify&nbsp;that&nbsp;rrabbit&nbsp;and&nbsp;efudd&nbsp;</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;were&nbsp;added&nbsp;to&nbsp;the&nbsp;vault.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Displays a&nbsp;message&nbsp;box&nbsp;showing&nbsp;the&nbsp;users&nbsp;in&nbsp;the&nbsp;vault.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click&nbsp;<b>Remove&nbsp;user</b>.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Displays a&nbsp;message&nbsp;box&nbsp;informing&nbsp;you&nbsp;that&nbsp;rrabbit&nbsp;was&nbsp;</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;removed&nbsp;from&nbsp;the&nbsp;vault.&nbsp;</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;e.&nbsp;Click&nbsp;<b>Traverse&nbsp;users</b>&nbsp;to&nbsp;verify&nbsp;that&nbsp;rrabbit&nbsp;was&nbsp;removed&nbsp;</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;from&nbsp;the&nbsp;vault.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Displays a&nbsp;message&nbsp;box&nbsp;showing&nbsp;the&nbsp;users&nbsp;in&nbsp;the&nbsp;vault.</span>
+<span style="color:green;">//&nbsp;4.&nbsp;Perform&nbsp;these&nbsp;group&nbsp;actions.&nbsp;Click&nbsp;<b>OK</b>&nbsp;to&nbsp;close&nbsp;each&nbsp;message&nbsp;box.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Click&nbsp;<b>Traverse&nbsp;groups</b>.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Displays a&nbsp;message&nbsp;box&nbsp;showing&nbsp;the&nbsp;groups&nbsp;in&nbsp;the&nbsp;vault.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Click&nbsp;<b>Traverse&nbsp;group&nbsp;members</b>.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Displays a&nbsp;message&nbsp;box&nbsp;showing&nbsp;the&nbsp;users&nbsp;in&nbsp;the&nbsp;groups&nbsp;
+//       in&nbsp;the&nbsp;vault.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;<b>Add&nbsp;group&nbsp;member</b>.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Displays a&nbsp;message&nbsp;box&nbsp;informing&nbsp;you&nbsp;that&nbsp;efudd</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;was&nbsp;added&nbsp;to&nbsp;the&nbsp;Management&nbsp;group.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click&nbsp;T<b>raverse&nbsp;group&nbsp;members</b>&nbsp;to&nbsp;verify&nbsp;that</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;efudd&nbsp;is&nbsp;shown&nbsp;in&nbsp;the&nbsp;Management&nbsp;group.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Displays a&nbsp;message&nbsp;box&nbsp;showing&nbsp;the users in the groups</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;the&nbsp;vault.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;e.&nbsp;Click&nbsp;<b>Add&nbsp;group&nbsp;member&nbsp;to&nbsp;folder</b>.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Displays a&nbsp;message&nbsp;box&nbsp;informing&nbsp;you&nbsp;that&nbsp;efudd&nbsp;in</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;Management&nbsp;group&nbsp;was&nbsp;added&nbsp;to&nbsp;the&nbsp;Test&nbsp;folder.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;f.&nbsp;To&nbsp;verify&nbsp;the&nbsp;previous&nbsp;step:</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.&nbsp;Open&nbsp;a&nbsp;File&nbsp;Explorer&nbsp;window.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.&nbsp;Right-click&nbsp;the&nbsp;Test&nbsp;folder&nbsp;in&nbsp;the&nbsp;selected&nbsp;vault</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;click&nbsp;<b>Properties</b>&nbsp;to&nbsp;open&nbsp;the&nbsp;Test&nbsp;Properties</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dialog&nbsp;box.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.&nbsp;Click&nbsp;<b>Group&nbsp;Memberships</b>.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.&nbsp;Click&nbsp;<b>Management</b>&nbsp;to&nbsp;verify&nbsp;that&nbsp;efudd&nbsp;is&nbsp;selected.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5.&nbsp;Click&nbsp;<b>OK </b>to&nbsp;close&nbsp;the&nbsp;Test&nbsp;Properties&nbsp;dialog&nbsp;box.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;g.&nbsp;Click&nbsp;<b>Remove&nbsp;group&nbsp;member&nbsp;and&nbsp;user</b>.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Displays a&nbsp;message&nbsp;box&nbsp;informing&nbsp;you&nbsp;that&nbsp;efudd&nbsp;was</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;removed&nbsp;from&nbsp;the&nbsp;vault.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;h.&nbsp;Click&nbsp;<b>Traverse&nbsp;group&nbsp;members</b>&nbsp;to&nbsp;verify&nbsp;that</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;efudd&nbsp;was&nbsp;removed&nbsp;from&nbsp;the&nbsp;Management&nbsp;group.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Displays a&nbsp;message&nbsp;box&nbsp;showing&nbsp;the&nbsp;users&nbsp;in&nbsp;the&nbsp;
+//       groups&nbsp;in&nbsp;the&nbsp;vault.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;i.&nbsp;Click&nbsp;T<b>raverse&nbsp;users</b>&nbsp;to&nbsp;verify&nbsp;that&nbsp;efudd&nbsp;was</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;removed&nbsp;as a user from&nbsp;the vault.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Displays a&nbsp;message&nbsp;box showing&nbsp;the&nbsp;users&nbsp;in&nbsp;the&nbsp;vault.</span>
+<span style="color:green;">//&nbsp;5.&nbsp;Close&nbsp;the&nbsp;dialog.
+//    Sends two SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;messages</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;logged-in&nbsp;users&nbsp;and&nbsp;group&nbsp;members&nbsp;who&nbsp;have&nbsp;</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;permission&nbsp;to&nbsp;update&nbsp;users&nbsp;and&nbsp;groups.&nbsp;
+// 6. To&nbsp;open&nbsp;these&nbsp;messages,&nbsp;click:</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;the&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;tray&nbsp;icon.</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;or&nbsp;-</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;<b>Tools&nbsp;&gt;&nbsp;Inbox</b>&nbsp;in&nbsp;File&nbsp;Explorer.</span>
+<span style="color:green;">//--------------------------------------------------------------------</span></pre>
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><span style="color: #008000"><a name="Form1"></a>//Form1.cs</span>
+</pre>
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><span style="color:blue;">using</span>&nbsp;System;
+<span style="color:blue;">using</span>&nbsp;System.Windows.Forms;
+<span style="color:blue;">using</span>&nbsp;EPDM.Interop.epdm;
+ 
+<span style="color:blue;">namespace</span>&nbsp;AddRemoveUsersGroupsCSharp
+{
+	<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">partial</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Form1</span>&nbsp;:&nbsp;<span style="color:#2b91af;">Form</span>
+	{
+		<span style="color:blue;">public</span>&nbsp;Form1()
+		{
+			InitializeComponent();
+		}
+			<span style="color:#2b91af;">IEdmVault8</span>&nbsp;vault;
+			<span style="color:#2b91af;">EdmVault5</span>&nbsp;vault1;
+			<span style="color:#2b91af;">EdmUserData2</span>[]&nbsp;UserData&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmUserData2</span>[2];
+			<span style="color:#2b91af;">IEdmUserMgr10</span>&nbsp;UsrMgr;
+			<span style="color:#2b91af;">IEdmUser9</span>&nbsp;user;
+			<span style="color:#2b91af;">IEdmUserGroup8</span>&nbsp;mngmtGroup;
+			<span style="color:#2b91af;">EdmMemberFolder</span>[]&nbsp;folderMembers&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmMemberFolder</span>[1];
+ 
+	<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;AddRemoveUsersGroupsCSharp_Load(System.<span style="color:#2b91af;">Object</span>&nbsp;sender,&nbsp;System.<span style="color:#2b91af;">EventArgs</span>&nbsp;e)
+	{
+ 
+		vault1&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmVault5</span>();
+		vault&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmVault8</span>)vault1;
+		<span style="color:#2b91af;">EdmViewInfo</span>[]&nbsp;Views&nbsp;=&nbsp;{};
+ 
+		vault.<b>GetVaultViews</b>(<span style="color:blue;">out</span>&nbsp;Views,&nbsp;<span style="color:blue;">false</span>);
+		VaultsComboBox.Items.Clear();
+		<span style="color:blue;">foreach</span>&nbsp;(<span style="color:#2b91af;">EdmViewInfo</span>&nbsp;View&nbsp;<span style="color:blue;">in</span>&nbsp;Views)&nbsp;{
+			VaultsComboBox.Items.Add(View.<b>mbsVaultName</b>);
+		}
+		<span style="color:blue;">if</span>&nbsp;(VaultsComboBox.Items.Count&nbsp;&gt;&nbsp;0)&nbsp;{
+			VaultsComboBox.Text&nbsp;=&nbsp;(<span style="color:blue;">string</span>)VaultsComboBox.Items[0];
+		}
+	}
+ 
+	<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;TraverseUsersButton_Click(System.<span style="color:#2b91af;">Object</span>&nbsp;sender,&nbsp;System.<span style="color:#2b91af;">EventArgs</span>&nbsp;e)
+	{
+		<span style="color:blue;">try</span>&nbsp;{
+ 
+			<span style="color:blue;">if</span>&nbsp;(!vault.<b>IsLoggedIn</b>)&nbsp;{
+				<span style="color:green;">//Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+				vault.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());
+			}
+ 
+			UsrMgr&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUserMgr10</span>)vault;
+ 
+			<span style="color:green;">//Traverse&nbsp;users</span>
+			<span style="color:blue;">string</span>&nbsp;Users&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span>;
+			<span style="color:#2b91af;">IEdmPos5</span>&nbsp;UserPos&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmPos5</span>);
+			UserPos&nbsp;=&nbsp;UsrMgr.<b>GetFirstUserPosition</b>();
+			<span style="color:blue;">while</span>&nbsp;(!UserPos.<b>IsNull</b>)&nbsp;{
+				user&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUser9</span>)UsrMgr.<b>GetNextUser</b>(UserPos);
+				Users&nbsp;=&nbsp;Users&nbsp;+&nbsp;user.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>;
+			}
+			<span style="color:#2b91af;">MessageBox</span>.Show(Users,&nbsp;vault.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;Vault&nbsp;Users&quot;</span>,&nbsp;<span style="color:#2b91af;">MessageBoxButtons</span>.OK,&nbsp;<span style="color:#2b91af;">MessageBoxIcon</span>.Information);
+ 
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>&nbsp;+&nbsp;ex.Message);
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);
+ 
+		}
+	}
+ 
+	<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;TraverseGroupsButton_Click(System.<span style="color:#2b91af;">Object</span>&nbsp;sender,&nbsp;System.<span style="color:#2b91af;">EventArgs</span>&nbsp;e)
+	{
+		<span style="color:blue;">try</span>&nbsp;{
+ 
+			<span style="color:blue;">if</span>&nbsp;(!vault.<b>IsLoggedIn</b>)&nbsp;{
+				<span style="color:green;">//Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+				vault.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());
+			}
+ 
+			UsrMgr&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUserMgr10</span>)vault;
+ 
+			<span style="color:green;">//Traverse&nbsp;groups</span>
+			<span style="color:blue;">string</span>&nbsp;Groups&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span>;
+			<span style="color:#2b91af;">IEdmPos5</span>&nbsp;UserGroupPos&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmPos5</span>);
+			UserGroupPos&nbsp;=&nbsp;UsrMgr.<b>GetFirstUserGroupPosition</b>();
+			<span style="color:blue;">while</span>&nbsp;(!UserGroupPos.<b>IsNull</b>)&nbsp;{
+				mngmtGroup&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUserGroup8</span>)UsrMgr.<b>GetNextUserGroup</b>(UserGroupPos);
+				Groups&nbsp;=&nbsp;Groups&nbsp;+&nbsp;mngmtGroup.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>;
+			}
+			<span style="color:#2b91af;">MessageBox</span>.Show(Groups,&nbsp;vault.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;Vault&nbsp;Groups&quot;</span>,&nbsp;<span style="color:#2b91af;">MessageBoxButtons</span>.OK,&nbsp;<span style="color:#2b91af;">MessageBoxIcon</span>.Information);
+ 
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>&nbsp;+&nbsp;ex.Message);
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);
+ 
+		}
+	}
+ 
+	<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;TraverseGroupMembersButton_Click(System.<span style="color:#2b91af;">Object</span>&nbsp;sender,&nbsp;System.<span style="color:#2b91af;">EventArgs</span>&nbsp;e)
+	{
+		<span style="color:blue;">try</span>&nbsp;{
+ 
+			<span style="color:blue;">if</span>&nbsp;(!vault.<b>IsLoggedIn</b>)&nbsp;{
+				<span style="color:green;">//Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+				vault.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());
+			}
+ 
+			UsrMgr&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUserMgr10</span>)vault;
+ 
+			<span style="color:green;">//Traverse&nbsp;group&nbsp;members</span>
+			<span style="color:blue;">string</span>&nbsp;Groups&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span>;
+			<span style="color:#2b91af;">IEdmPos5</span>&nbsp;UserGroupPos&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmPos5</span>);
+			UserGroupPos&nbsp;=&nbsp;UsrMgr.<b>GetFirstUserGroupPosition</b>();
+			<span style="color:blue;">while</span>&nbsp;(!UserGroupPos.<b>IsNull</b>)&nbsp;
+			{
+				mngmtGroup&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUserGroup8</span>)UsrMgr.<b>GetNextUserGroup</b>(UserGroupPos);
+				Groups&nbsp;=&nbsp;Groups&nbsp;+&nbsp;mngmtGroup.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;Members:&quot;</span>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>;
+				Groups&nbsp;=&nbsp;Groups&nbsp;+&nbsp;GetMembers(mngmtGroup);
+			}
+			<span style="color:#2b91af;">MessageBox</span>.Show(Groups,&nbsp;vault.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;Vault&nbsp;Group&nbsp;Users&quot;</span>,&nbsp;<span style="color:#2b91af;">MessageBoxButtons</span>.OK,&nbsp;<span style="color:#2b91af;">MessageBoxIcon</span>.Information);
+ 
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>&nbsp;+&nbsp;ex.Message);
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);
+ 
+		}
+	}
+ 
+	<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">string</span>&nbsp;GetMembers(<span style="color:#2b91af;">IEdmUserGroup8</span>&nbsp;UserGroup)
+	{
+		<span style="color:blue;">string</span>&nbsp;functionReturnValue&nbsp;=&nbsp;<span style="color:blue;">null</span>;
+		<span style="color:blue;">try</span>&nbsp;{
+ 
+			<span style="color:blue;">if</span>&nbsp;(!vault.<b>IsLoggedIn</b>)&nbsp;{
+				<span style="color:green;">//Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+				vault.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());
+			}
+ 
+			<span style="color:green;">//Get&nbsp;group&nbsp;members</span>
+			functionReturnValue&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span>;
+			<span style="color:blue;">string</span>&nbsp;Users&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span>;
+			<span style="color:#2b91af;">IEdmPos5</span>&nbsp;UserPos&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmPos5</span>);
+			UserPos&nbsp;=&nbsp;UserGroup.<b>GetFirstUserPosition</b>();
+			<span style="color:blue;">while</span>&nbsp;(!UserPos.<b>IsNull</b>)&nbsp;{
+				user&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUser9</span>)UserGroup.<b>GetNextUser</b>(UserPos);
+				Users&nbsp;=&nbsp;Users&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;user.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>;
+			}
+			functionReturnValue&nbsp;=&nbsp;Users;
+ 
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>&nbsp;+&nbsp;ex.Message);
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);
+		}
+		<span style="color:blue;">return</span>&nbsp;functionReturnValue;
+ 
+	}
+ 
+ 
+ 
+	<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;AddUsersButton_Click(System.<span style="color:#2b91af;">Object</span>&nbsp;sender,&nbsp;System.<span style="color:#2b91af;">EventArgs</span>&nbsp;e)
+	{
+		<span style="color:blue;">try</span>&nbsp;{
+			<span style="color:blue;">if</span>&nbsp;(!vault.<b>IsLoggedIn</b>)&nbsp;{
+				<span style="color:green;">//Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+				vault.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());
+			}
+ 
+			UsrMgr&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUserMgr10</span>)vault;
+ 
+			<span style="color:green;">//Add&nbsp;users&nbsp;to&nbsp;EdmUserData2</span>
+			UserData[0].<b>mbsCompleteName</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Roger&nbsp;Rabbit&quot;</span>;
+			UserData[0].<b>mbsEmail</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;rrabbit@animatedcharacters.com&quot;</span>;
+			UserData[0].<b>mbsInitials</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;RR&quot;</span>;
+			UserData[0].<b>mbsUserName</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;rrabbit&quot;</span>;
+ 
+			UserData[1].<b>mbsCompleteName</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Elmer&nbsp;J.&nbsp;Fudd&quot;</span>;
+			UserData[1].<b>mbsEmail</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;efudd@animatedcharacters.com&quot;</span>;
+			UserData[1].<b>mbsInitials</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;EJF&quot;</span>;
+			UserData[1].<b>mbsUserName</b>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;efudd&quot;</span>;
+ 
+			<span style="color:green;">//Return&nbsp;user's&nbsp;interface&nbsp;in&nbsp;mpoUser</span>
+			UserData[0].<b>mlFlags</b>&nbsp;=&nbsp;(<span style="color:blue;">int</span>)<span style="color:#2b91af;">EdmUserDataFlags</span>.Edmudf_GetInterface;
+			UserData[1].<b>mlFlags</b>&nbsp;=&nbsp;(<span style="color:blue;">int</span>)<span style="color:#2b91af;">EdmUserDataFlags</span>.Edmudf_GetInterface;
+ 
+			<span style="color:green;">//Add&nbsp;these&nbsp;users&nbsp;even&nbsp;if&nbsp;other&nbsp;users&nbsp;in&nbsp;the&nbsp;array&nbsp;cannot&nbsp;be&nbsp;added</span>
+			UserData[0].<b>mlFlags</b>&nbsp;+=&nbsp;(<span style="color:blue;">int</span>)<span style="color:#2b91af;">EdmUserDataFlags</span>.Edmudf_ForceAdd;
+			UserData[1].<b>mlFlags</b>&nbsp;+=&nbsp;(<span style="color:blue;">int</span>)<span style="color:#2b91af;">EdmUserDataFlags</span>.Edmudf_ForceAdd;
+ 
+			<span style="color:green;">//Set&nbsp;permissions&nbsp;</span>
+			<span style="color:#2b91af;">EdmSysPerm</span>[]&nbsp;perms&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmSysPerm</span>[2];
+			perms[0]&nbsp;=&nbsp;<span style="color:#2b91af;">EdmSysPerm</span>.EdmSysPerm_EditReportQuery;
+			perms[1]&nbsp;=&nbsp;<span style="color:#2b91af;">EdmSysPerm</span>.EdmSysPerm_MandatoryVersionComments;
+			UserData[0].<b>moSysPerms</b>&nbsp;=&nbsp;perms;
+			UserData[1].<b>moSysPerms</b>&nbsp;=&nbsp;perms;
+ 
+			<span style="color:green;">//Add&nbsp;the&nbsp;users&nbsp;to&nbsp;the&nbsp;vault</span>
+			UsrMgr.<b>AddUsers3</b>(<span style="color:blue;">ref</span>&nbsp;UserData, (<span style="color:blue;">int</span>)<span style="color:#2b91af;">EdmUserType</span>.EdmUser_PDM);
+ 
+			<span style="color:blue;">string</span>&nbsp;msg&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span>;
+			<span style="color:blue;">foreach</span>&nbsp;(<span style="color:#2b91af;">EdmUserData2</span>&nbsp;usr&nbsp;<span style="color:blue;">in</span>&nbsp;UserData)&nbsp;{
+				<span style="color:blue;">if</span>&nbsp;(usr.<b>mhStatus</b>&nbsp;==&nbsp;0)&nbsp;{
+					msg&nbsp;+=&nbsp;<span style="color:#a31515;">&quot;Added&nbsp;user&nbsp;&quot;</span>&nbsp;+&nbsp;usr.mpoUser.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;.&nbsp;ID&nbsp;=&nbsp;&quot;</span>&nbsp;+&nbsp;usr.<b>mpoUser</b>.<b>ID</b>.ToString()&nbsp;+&nbsp;<span style="color:#a31515;">&quot;.&quot;</span>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>;
+				}&nbsp;<span style="color:blue;">else</span>&nbsp;{
+					<span style="color:#2b91af;">IEdmVault11</span>&nbsp;vault3&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmVault11</span>)vault;
+					msg&nbsp;+=&nbsp;<span style="color:#a31515;">&quot;Error&nbsp;adding&nbsp;user&nbsp;&quot;</span>&nbsp;+&nbsp;usr.<b>mbsUserName</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;.&nbsp;&quot;</span>&nbsp;+&nbsp;vault3.<b>GetErrorMessage</b>(usr.<b>mhStatus</b>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>;
+				}
+			}
+ 
+			<span style="color:#2b91af;">MessageBox</span>.Show(msg);
+ 
+ 
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>&nbsp;+&nbsp;ex.Message);
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);
+ 
+		}
+ 
+	}
+ 
+	<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;RemoveUsersButton_Click(System.<span style="color:#2b91af;">Object</span>&nbsp;sender,&nbsp;System.<span style="color:#2b91af;">EventArgs</span>&nbsp;e)
+	{
+		<span style="color:blue;">try</span>&nbsp;{
+			<span style="color:blue;">if</span>&nbsp;(!vault.<b>IsLoggedIn</b>)&nbsp;{
+				<span style="color:green;">//Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+				vault.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());
+			}
+ 
+			<span style="color:green;">//Remove&nbsp;the&nbsp;rrabbit&nbsp;from&nbsp;the&nbsp;vault</span>
+			UsrMgr&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUserMgr10</span>)vault1.<b>CreateUtility</b>(<span style="color:#2b91af;">EdmUtility</span>.EdmUtil_UserMgr);
+			user&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUser9</span>)UsrMgr.<b>GetUser</b>(<span style="color:#a31515;">&quot;rrabbit&quot;</span>);
+			<span style="color:blue;">if</span>&nbsp;((user&nbsp;==&nbsp;<span style="color:blue;">null</span>))&nbsp;{
+				<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;No&nbsp;user&nbsp;set&nbsp;to&nbsp;remove.&nbsp;Click&nbsp;Add&nbsp;users.&quot;</span>);
+				<span style="color:blue;">return</span>;
+			}
+ 
+			<span style="color:blue;">int</span>[]&nbsp;users&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:blue;">int</span>[1];
+			users[0]&nbsp;=&nbsp;user.<b>ID</b>;
+			UsrMgr.<b>RemoveUsers</b>(users);
+ 
+			<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;User&nbsp;&quot;</span>&nbsp;+&nbsp;user.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;removed.&quot;</span>);
+ 
+			<span style="color:green;">//Send&nbsp;message&nbsp;to&nbsp;all&nbsp;users&nbsp;with&nbsp;permission</span>
+			<span style="color:green;">//to&nbsp;update&nbsp;users&nbsp;and&nbsp;groups&nbsp;</span>
+			<span style="color:#2b91af;">IEdmPos5</span>&nbsp;UserPos&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmPos5</span>);
+			UserPos&nbsp;=&nbsp;UsrMgr.<b>GetFirstUserPosition</b>();
+			<span style="color:blue;">while</span>&nbsp;(!UserPos.<b>IsNull</b>)&nbsp;{
+				<span style="color:#2b91af;">IEdmUser9</span>&nbsp;userWithPerm&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmUser9</span>);
+				userWithPerm&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUser9</span>)UsrMgr.<b>GetNextUser</b>(UserPos);
+				<span style="color:blue;">if</span>&nbsp;(userWithPerm.<b>IsLoggedIn</b>)&nbsp;{
+					<span style="color:blue;">if</span>&nbsp;(userWithPerm.<b>HasSysRightEx</b>(<span style="color:#2b91af;">EdmSysPerm</span>.EdmSysPerm_EditUserMgr))&nbsp;{
+						userWithPerm.<b>SendMsg</b>(<span style="color:#a31515;">&quot;ALERT:&nbsp;user&nbsp;removed&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;User&nbsp;&quot;</span>&nbsp;+&nbsp;user.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;removed.&quot;</span>);
+					}
+				}
+			}
+ 
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>&nbsp;+&nbsp;ex.Message);
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);
+ 
+		}
+	}
+ 
+	<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;RemoveGroupMembersButton_Click(System.<span style="color:#2b91af;">Object</span>&nbsp;sender,&nbsp;System.<span style="color:#2b91af;">EventArgs</span>&nbsp;e)
+	{
+		<span style="color:blue;">try</span>&nbsp;{
+			<span style="color:blue;">if</span>&nbsp;(!vault.<b>IsLoggedIn</b>)&nbsp;{
+				<span style="color:green;">//Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+				vault.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());
+			}
+ 
+			<span style="color:blue;">if</span>&nbsp;((mngmtGroup&nbsp;==&nbsp;<span style="color:blue;">null</span>))&nbsp;{
+				<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;No&nbsp;group&nbsp;set&nbsp;from&nbsp;which&nbsp;to&nbsp;remove&nbsp;group&nbsp;member.&nbsp;Click&nbsp;Add&nbsp;group&nbsp;member.&quot;</span>);
+				<span style="color:blue;">return</span>;
+			}
+ 
+			<span style="color:green;">//Remove&nbsp;user&nbsp;efudd&nbsp;from&nbsp;Test&nbsp;folder,&nbsp;Management&nbsp;group,&nbsp;and&nbsp;vault</span>
+			mngmtGroup.<b>RemoveMembers</b>(folderMembers);
+			user&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUser9</span>)UsrMgr.<b>GetUser</b>(<span style="color:#a31515;">&quot;efudd&quot;</span>);
+ 
+			<span style="color:blue;">if</span>&nbsp;((user&nbsp;==&nbsp;<span style="color:blue;">null</span>))&nbsp;{
+				<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;No&nbsp;user&nbsp;set&nbsp;to&nbsp;remove&nbsp;from&nbsp;group.&nbsp;Click&nbsp;Add&nbsp;users.&quot;</span>);
+				<span style="color:blue;">return</span>;
+			}
+ 
+			<span style="color:blue;">int</span>[]&nbsp;users&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:blue;">int</span>[1];
+			users[0]&nbsp;=&nbsp;user.<b>ID</b>;
+			UsrMgr.<b>RemoveUsers</b>(users);
+ 
+			<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;User&nbsp;&quot;</span>&nbsp;+&nbsp;user.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;removed&nbsp;from&nbsp;group&nbsp;and&nbsp;vault.&quot;</span>);
+ 
+ 
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>&nbsp;+&nbsp;ex.Message);
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);
+ 
+		}
+	}
+ 
+	<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;AddGroupMembersWithFoldersButton_Click(System.<span style="color:#2b91af;">Object</span>&nbsp;sender,&nbsp;System.<span style="color:#2b91af;">EventArgs</span>&nbsp;e)
+	{
+		<span style="color:blue;">try</span>&nbsp;{
+			<span style="color:blue;">if</span>&nbsp;(!vault.<b>IsLoggedIn</b>)&nbsp;{
+				<span style="color:green;">//Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+				vault.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());
+			}
+ 
+			UsrMgr&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUserMgr10</span>)vault;
+ 
+			<span style="color:green;">//Add&nbsp;efudd&nbsp;to&nbsp;Test&nbsp;folder</span>
+			<span style="color:#2b91af;">IEdmFolder6</span>&nbsp;folder&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmFolder6</span>);
+			folder&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmFolder6</span>)vault.<b>RootFolder</b>.<b>GetSubFolder</b>(<span style="color:#a31515;">&quot;Test&quot;</span>);
+ 
+			<span style="color:green;">//Get&nbsp;user&nbsp;interface&nbsp;for&nbsp;user&nbsp;efudd</span>
+			user&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUser9</span>)UsrMgr.<b>GetUser</b>(<span style="color:#a31515;">&quot;efudd&quot;</span>);
+ 
+			<span style="color:blue;">if</span>&nbsp;((user&nbsp;==&nbsp;<span style="color:blue;">null</span>))&nbsp;{
+				<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;No&nbsp;user&nbsp;set&nbsp;to&nbsp;add&nbsp;to&nbsp;group.&nbsp;Click&nbsp;Add&nbsp;users.&quot;</span>);
+				<span style="color:blue;">return</span>;
+			}
+ 
+			<span style="color:green;">//Get&nbsp;the&nbsp;group&nbsp;interface&nbsp;for&nbsp;Management</span>
+			mngmtGroup&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUserGroup8</span>)UsrMgr.<b>GetUserGroup</b>(<span style="color:#a31515;">&quot;Management&quot;</span>);
+ 
+			<span style="color:green;">//Find&nbsp;out&nbsp;if&nbsp;the&nbsp;Management&nbsp;user&nbsp;group&nbsp;has&nbsp;</span>
+			<span style="color:green;">//permission&nbsp;to&nbsp;update&nbsp;users&nbsp;and&nbsp;groups</span>
+			<span style="color:blue;">if</span>&nbsp;(mngmtGroup.<b>HasSysRightEx</b>(<span style="color:#2b91af;">EdmSysPerm</span>.EdmSysPerm_EditUserMgr))&nbsp;{
+				mngmtGroup.<b>SendMsg</b>(<span style="color:#a31515;">&quot;PERMISSIONS&nbsp;INFO&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;Management&nbsp;group&nbsp;has&nbsp;permission&nbsp;to&nbsp;update&nbsp;groups&nbsp;and&nbsp;users.&quot;</span>,&nbsp;<span style="color:blue;">false</span>);
+			}&nbsp;<span style="color:blue;">else</span>&nbsp;{
+				mngmtGroup.<b>SendMsg</b>(<span style="color:#a31515;">&quot;PERMISSIONS&nbsp;INFO&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;Management&nbsp;group&nbsp;does&nbsp;not&nbsp;have&nbsp;permission&nbsp;to&nbsp;update&nbsp;groups&nbsp;and&nbsp;users.&quot;</span>,&nbsp;<span style="color:blue;">false</span>);
+				<span style="color:blue;">return</span>;
+			}
+ 
+			<span style="color:green;">//Add&nbsp;efudd&nbsp;as&nbsp;member&nbsp;of&nbsp;Management&nbsp;for&nbsp;Test&nbsp;folder</span>
+			<span style="color:#2b91af;">EdmMemberFolder</span>[]&nbsp;folderMembers&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">EdmMemberFolder</span>[1];
+			folderMembers[0].<b>mlFolderID</b>&nbsp;=&nbsp;folder.<b>ID</b>;
+			folderMembers[0].<b>mlUserID</b>&nbsp;=&nbsp;user.<b>ID</b>;
+			mngmtGroup.<b>AddMembersWithFolders</b>(folderMembers);
+ 
+			<span style="color:green;">//Verify&nbsp;that&nbsp;efudd&nbsp;in&nbsp;Management&nbsp;group&nbsp;was&nbsp;added&nbsp;to&nbsp;</span>
+			<span style="color:green;">//Test folder</span>
+			<span style="color:blue;">object</span>[]&nbsp;groups&nbsp;=&nbsp;<span style="color:blue;">null</span>;
+			<span style="color:#2b91af;">IEdmUserGroup8</span>&nbsp;groupName&nbsp;=&nbsp;<span style="color:blue;">null</span>;
+			groups&nbsp;=&nbsp;user.<b>GetGroupMembershipsInFolder</b>(folder.<b>ID</b>);
+			<span style="color:blue;">int</span>&nbsp;i&nbsp;=&nbsp;0;
+			i&nbsp;=&nbsp;groups.GetUpperBound(0);
+			<span style="color:blue;">int</span>&nbsp;j&nbsp;=&nbsp;0;
+ 
+			groupName&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUserGroup8</span>)groups[i];
+ 
+			<span style="color:#2b91af;">IEdmPos5</span>&nbsp;UserGroupPos&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">IEdmPos5</span>);
+			UserGroupPos&nbsp;=&nbsp;UsrMgr.<b>GetFirstUserGroupPosition</b>();
+			<span style="color:blue;">while</span>&nbsp;(!UserGroupPos.<b>IsNull</b>)&nbsp;{
+				mngmtGroup&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUserGroup8</span>)UsrMgr.<b>GetNextUserGroup</b>(UserGroupPos);
+				<span style="color:blue;">if</span>&nbsp;((mngmtGroup.<b>Name</b>&nbsp;==&nbsp;groupName.<b>Name</b>))
+				{
+					<span style="color:blue;">if</span>&nbsp;(j&nbsp;&lt;=&nbsp;i)&nbsp;
+					{
+						<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;User&nbsp;&quot;</span>&nbsp;+&nbsp;user.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;in&nbsp;the&nbsp;&quot;</span>&nbsp;+&nbsp;mngmtGroup.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;group&nbsp;was&nbsp;added&nbsp;to&nbsp;the&nbsp;&quot;</span>&nbsp;+&nbsp;folder.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;folder.&quot;</span>);
+						j&nbsp;=&nbsp;j&nbsp;+&nbsp;1;
+					}
+				}
+			}
+ 
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>&nbsp;+&nbsp;ex.Message);
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);
+ 
+		}
+	}
+ 
+	<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;AddGroupMembersButton_Click(System.<span style="color:#2b91af;">Object</span>&nbsp;sender,&nbsp;System.<span style="color:#2b91af;">EventArgs</span>&nbsp;e)
+	{
+		<span style="color:blue;">try</span>&nbsp;{
+			<span style="color:blue;">if</span>&nbsp;(!vault.<b>IsLoggedIn</b>)&nbsp;{
+				<span style="color:green;">//Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+				vault.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color:blue;">this</span>.Handle.ToInt32());
+			}
+ 
+			UsrMgr&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUserMgr10</span>)vault;
+ 
+			<span style="color:green;">//Add&nbsp;efudd&nbsp;to&nbsp;Management&nbsp;group</span>
+			mngmtGroup&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUserGroup8</span>)UsrMgr.<b>GetUserGroup</b>(<span style="color:#a31515;">&quot;Management&quot;</span>);
+ 
+			<span style="color:blue;">if</span>&nbsp;((mngmtGroup&nbsp;==&nbsp;<span style="color:blue;">null</span>))&nbsp;{
+				<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;Management&nbsp;group&nbsp;does&nbsp;not&nbsp;exist.&nbsp;Create&nbsp;a&nbsp;Management&nbsp;group.&quot;</span>);
+				<span style="color:blue;">return</span>;
+			}
+ 
+			user&nbsp;=&nbsp;(<span style="color:#2b91af;">IEdmUser9</span>)UsrMgr.<b>GetUser</b>(<span style="color:#a31515;">&quot;efudd&quot;</span>);
+ 
+			<span style="color:blue;">if</span>&nbsp;((user&nbsp;==&nbsp;<span style="color:blue;">null</span>))&nbsp;{
+				<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;No&nbsp;user&nbsp;set&nbsp;to&nbsp;add&nbsp;to&nbsp;group.&nbsp;Click&nbsp;Add&nbsp;users.&quot;</span>);
+				<span style="color:blue;">return</span>;
+			}
+ 
+			<span style="color:blue;">int</span>[]&nbsp;groupMbrIDs&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:blue;">int</span>[1];
+			groupMbrIDs[0]&nbsp;=&nbsp;user.<b>ID</b>;
+			mngmtGroup.<b>AddMembers</b>(groupMbrIDs);
+ 
+			<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;User&nbsp;&quot;</span>&nbsp;+&nbsp;user.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;added&nbsp;to&nbsp;&quot;</span>&nbsp;+&nbsp;mngmtGroup.<b>Name</b>&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;group.&quot;</span>);
+ 
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color:#2b91af;">COMException</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(<span style="color:#a31515;">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color:#a31515;">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color:#a31515;">&quot;\n&quot;</span>&nbsp;+&nbsp;ex.Message);
+		}&nbsp;<span style="color:blue;">catch</span>&nbsp;(<span style="color:#2b91af;">Exception</span>&nbsp;ex)&nbsp;{
+			<span style="color:#2b91af;">MessageBox</span>.Show(ex.Message);
+ 
+		}
+	}
+ 
+     }
+}</pre>
+<div align="center">
+	<pre style="font-family: Verndana; font-size: 8pt; color: black; background: white"><font face="Verdana"><a href="#Top">Back to top</a></font></pre>
+</div>
+<p align="left"><font face="Courier New" color="#008000" style="font-size: 9pt">
+<a name="Designer"></a>//Form1.Designer.cs</font></p>
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><span style="color:blue;">namespace</span>&nbsp;AddRemoveUsersGroupsCSharp
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">partial</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Form1</span>
+&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;Required&nbsp;designer&nbsp;variable.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;System.ComponentModel.<span style="color:#2b91af;">IContainer</span>&nbsp;components&nbsp;=&nbsp;<span style="color:blue;">null</span>;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;Clean&nbsp;up&nbsp;any&nbsp;resources&nbsp;being&nbsp;used.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;param&nbsp;name=&quot;disposing&quot;&gt;</span><span style="color:green;">true&nbsp;if&nbsp;managed&nbsp;resources&nbsp;should&nbsp;be&nbsp;disposed;&nbsp;otherwise,&nbsp;false.</span><span style="color:gray;">&lt;/param&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">void</span>&nbsp;Dispose(<span style="color:blue;">bool</span>&nbsp;disposing)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(disposing&nbsp;&amp;&amp;&nbsp;(components&nbsp;!=&nbsp;<span style="color:blue;">null</span>))
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;components.Dispose();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">base</span>.Dispose(disposing);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#region</span>&nbsp;Windows&nbsp;Form&nbsp;Designer&nbsp;generated&nbsp;code
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;Required&nbsp;method&nbsp;for&nbsp;Designer&nbsp;support&nbsp;-&nbsp;do&nbsp;not&nbsp;modify</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;the&nbsp;contents&nbsp;of&nbsp;this&nbsp;method&nbsp;with&nbsp;the&nbsp;code&nbsp;editor.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;InitializeComponent()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ComboBox</span>();
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>();
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseUsersButton&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>();
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupsButton&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>();
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupMembersButton&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>();
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddUsersButton&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>();
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.RemoveUsersButton&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>();
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddGroupMembersButton&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>();
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.RemoveGroupMembersButton&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>();
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.UserActionLabel&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>();
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.GroupActionLabel&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>();
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddGroupMembersWithFoldersButton&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>();
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.SuspendLayout();
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//VaultsComboBox</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.FormattingEnabled&nbsp;=&nbsp;<span style="color:blue;">true</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(121,&nbsp;11);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.Margin&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Padding</span>(2);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;VaultsComboBox&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(176,&nbsp;21);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsComboBox.TabIndex&nbsp;=&nbsp;10;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//VaultsLabel</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.AutoSize&nbsp;=&nbsp;<span style="color:blue;">true</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(12,&nbsp;9);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.Margin&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Padding</span>(2,&nbsp;0,&nbsp;2,&nbsp;0);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;VaultsLabel&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(91,&nbsp;13);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.TabIndex&nbsp;=&nbsp;11;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.VaultsLabel.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Select&nbsp;vault&nbsp;view:&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//TraverseUsersButton</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseUsersButton.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(124,&nbsp;59);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseUsersButton.Margin&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Padding</span>(2);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseUsersButton.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;TraverseUsersButton&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseUsersButton.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(173,&nbsp;25);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseUsersButton.TabIndex&nbsp;=&nbsp;15;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseUsersButton.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Traverse&nbsp;users&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseUsersButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">	        this</span>.TraverseUsersButton.Click&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(TraverseUsersButton_Click);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;&nbsp;</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//TraverseGroupsButton</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupsButton.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(121,&nbsp;166);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupsButton.Margin&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Padding</span>(2);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupsButton.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;TraverseGroupsButton&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupsButton.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(176,&nbsp;25);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupsButton.TabIndex&nbsp;=&nbsp;16;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupsButton.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Traverse&nbsp;groups&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupsButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">	        this</span>.TraverseGroupsButton.Click&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(TraverseGroupsButton_Click);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//TraverseGroupMembersButton</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupMembersButton.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(121,&nbsp;197);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupMembersButton.Margin&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Padding</span>(2);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupMembersButton.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;TraverseGroupMembersButton&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupMembersButton.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(176,&nbsp;27);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupMembersButton.TabIndex&nbsp;=&nbsp;17;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupMembersButton.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Traverse&nbsp;group&nbsp;members&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.TraverseGroupMembersButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">	        this</span>.TraverseGroupMembersButton.Click&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(TraverseGroupMembersButton_Click);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//AddUsersButton</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddUsersButton.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(124,&nbsp;89);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddUsersButton.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;AddUsersButton&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddUsersButton.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(173,&nbsp;23);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddUsersButton.TabIndex&nbsp;=&nbsp;18;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddUsersButton.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Add&nbsp;users&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddUsersButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">	        this</span>.AddUsersButton.Click&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(AddUsersButton_Click);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//RemoveUsersButton</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.RemoveUsersButton.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(124,&nbsp;118);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.RemoveUsersButton.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;RemoveUsersButton&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.RemoveUsersButton.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(173,&nbsp;24);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.RemoveUsersButton.TabIndex&nbsp;=&nbsp;19;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.RemoveUsersButton.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Remove&nbsp;user&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.RemoveUsersButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">	        this</span>.RemoveUsersButton.Click&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(RemoveUsersButton_Click);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//AddGroupMembersButton</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddGroupMembersButton.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(121,&nbsp;229);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddGroupMembersButton.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;AddGroupMembersButton&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddGroupMembersButton.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(176,&nbsp;23);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddGroupMembersButton.TabIndex&nbsp;=&nbsp;20;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddGroupMembersButton.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Add&nbsp;group&nbsp;member&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddGroupMembersButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">	        this</span>.AddGroupMembersButton.Click&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(AddGroupMembersButton_Click);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//RemoveGroupMembersButton</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.RemoveGroupMembersButton.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(121,&nbsp;287);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.RemoveGroupMembersButton.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;RemoveGroupMembersButton&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.RemoveGroupMembersButton.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(176,&nbsp;25);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.RemoveGroupMembersButton.TabIndex&nbsp;=&nbsp;21;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.RemoveGroupMembersButton.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Remove&nbsp;group&nbsp;member&nbsp;and&nbsp;user&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.RemoveGroupMembersButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">	        this</span>.RemoveGroupMembersButton.Click&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(RemoveGroupMembersButton_Click);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//UserActionLabel</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.UserActionLabel.AutoSize&nbsp;=&nbsp;<span style="color:blue;">true</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.UserActionLabel.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(12,&nbsp;59);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.UserActionLabel.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;UserActionLabel&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.UserActionLabel.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(69,&nbsp;13);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.UserActionLabel.TabIndex&nbsp;=&nbsp;22;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.UserActionLabel.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;User&nbsp;actions:&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//GroupActionLabel</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.GroupActionLabel.AutoSize&nbsp;=&nbsp;<span style="color:blue;">true</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.GroupActionLabel.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(12,&nbsp;166);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.GroupActionLabel.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;GroupActionLabel&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.GroupActionLabel.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(76,&nbsp;13);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.GroupActionLabel.TabIndex&nbsp;=&nbsp;23;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.GroupActionLabel.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Group&nbsp;actions:&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//AddGroupMembersWithFoldersButton</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddGroupMembersWithFoldersButton.Location&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Point</span>(121,&nbsp;258);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddGroupMembersWithFoldersButton.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;AddGroupMembersWithFoldersButton&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddGroupMembersWithFoldersButton.Size&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(176,&nbsp;23);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddGroupMembersWithFoldersButton.TabIndex&nbsp;=&nbsp;24;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddGroupMembersWithFoldersButton.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Add&nbsp;group&nbsp;member&nbsp;to&nbsp;folder&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AddGroupMembersWithFoldersButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color:blue;">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">	        this</span>.AddGroupMembersWithFoldersButton.Click&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(AddGroupMembersWithFoldersButton_Click);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Form1</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//</span>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AutoScaleDimensions&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">SizeF</span>(6f,&nbsp;13f);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.AutoScaleMode&nbsp;=&nbsp;System.Windows.Forms.<span style="color:#2b91af;">AutoScaleMode</span>.Font;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.ClientSize&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Drawing.<span style="color:#2b91af;">Size</span>(333,&nbsp;329);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.AddGroupMembersWithFoldersButton);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.GroupActionLabel);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.UserActionLabel);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.RemoveGroupMembersButton);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.AddGroupMembersButton);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.RemoveUsersButton);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.AddUsersButton);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.TraverseGroupMembersButton);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.TraverseGroupsButton);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.TraverseUsersButton);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.VaultsComboBox);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Controls.Add(<span style="color:blue;">this</span>.VaultsLabel);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Margin&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Padding</span>(2);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Name&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Form1&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">	        this</span>.Load&nbsp;+=&nbsp;<span style="color:blue;">new</span>&nbsp;System.<span style="color:#2b91af;">EventHandler</span>(AddRemoveUsersGroupsCSharp_Load);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.Text&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Add&nbsp;and&nbsp;remove&nbsp;users&nbsp;and&nbsp;groups&quot;</span>;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.ResumeLayout(<span style="color:blue;">false</span>);
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">this</span>.PerformLayout();
+ 
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#endregion</span>
+ 
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">internal</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">ComboBox</span>&nbsp;VaultsComboBox;
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">internal</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>&nbsp;VaultsLabel;
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">internal</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>&nbsp;TraverseUsersButton;
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">internal</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>&nbsp;TraverseGroupsButton;
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">internal</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>&nbsp;TraverseGroupMembersButton;
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">internal</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>&nbsp;AddUsersButton;
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">internal</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>&nbsp;RemoveUsersButton;
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">internal</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>&nbsp;AddGroupMembersButton;
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">internal</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>&nbsp;RemoveGroupMembersButton;
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">internal</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>&nbsp;UserActionLabel;
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">internal</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Label</span>&nbsp;GroupActionLabel;
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">internal</span>&nbsp;System.Windows.Forms.<span style="color:#2b91af;">Button</span>&nbsp;AddGroupMembersWithFoldersButton;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+} 
+</pre>
+<p align="center"><a href="#Top">Back to top</a></p>
+
+</font>
+
+</body>
+
+</html>

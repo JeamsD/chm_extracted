@@ -1,0 +1,179 @@
+<html>
+
+<head>
+<title>Add Rigid Connector Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,rigid connectors">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Add Rigid Connector Example (VBA)</h1>
+<p>This example shows how to add a rigid connector to a frequency study.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Ensure that the specified model document exists.<br>
+' 4. Open an Immediate window.<br>
+'<br>
+' Postconditions:<br>
+' 1. Opens the model.<br>
+' 2. Gets the <b>Ready</b> frequency study.<br>
+' 3. Adds <b>Rigid Connector-1</b> to the Connectors folder in the Simulation 
+study<br>
+'&nbsp;&nbsp;&nbsp; tree.<br>
+' 4. Prints the properties of <b>Rigid Connector-1</b> to the Immediate window.<br>
+' 5. Meshes the model.<br>
+' 6. Analyzes <b>Ready</b>.<br>
+' 7. Prints the resonant frequency of each mode to the Immediate window.<br>
+' 8. Inspect the Immediate window, the Simulation Study tree, and the<br>
+'&nbsp;&nbsp;&nbsp; graphics area.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+' ---------------------------------------------------------------------------<br>
+Dim SwApp As SldWorks.SldWorks<br>
+Dim Part As SldWorks.ModelDoc2<br>
+Dim COSMOSWORKS As CosmosWorksLib.COSMOSWORKS<br>
+Dim COSMOSObject As CosmosWorksLib.CwAddincallback<br>
+Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+Dim Study As CosmosWorksLib.CWStudy<br>
+Dim lrMngr As CosmosWorksLib.CWLoadsAndRestraintsManager<br>
+Dim rigidConnector As CosmosWorksLib.CWRigidConnector<br>
+Dim CwMesh As CosmosWorksLib.CwMesh<br>
+Dim CWResult As CosmosWorksLib.CWResults<br>
+Dim str3 As String, str4 As String<br>
+Dim varArray1 As Variant, varArray2 As Variant, Freq As Variant<br>
+Dim pDisp3 As Object, pDisp4 As Object<br>
+Dim var20 As Variant, var21 As Variant<br>
+Dim errCode As Long, i As Long<br>
+Dim el As Double, tl As Double<br>
+Dim longstatus As Long, longwarnings As Long</p>
+<p class="APICODE">Option Explicit<br>
+</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>OpenDoc6</b>(&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 
+2019\samples\Simulation Examples\shaft.sldasm&quot;, 
+swDocASSEMBLY, swOpenDocOptions_Silent, &quot;&quot;, longstatus, longwarnings)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>ActivateDoc2</b> &quot;shaft&quot;, False, longstatus<br>
+&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>ActiveDoc</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set COSMOSObject = SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; If COSMOSObject Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+get the Simulation add-in&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = COSMOSObject.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+COSMOSWORKS&quot;<br>
+</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;Failed to get the 
+active document&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+the CWStudyManager object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(0)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;Failed to get the 
+frequency study&quot;</p>
+<p class="APICODE">&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; str3 = 
+&quot;64,31,0,0,3,0,0,0,255,254,255,28,112,0,98,0,32,0,98,0,101,0,97,0,114,0,105,0,110,0,103,0,95,0,49,0,46,0,53,0,48,0,32,0,98,0,111,0,114,0,101,0,45,0,49,0,64,0,115,0,104,0,97,0,102,0,116,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,20,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,8,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,63,67,0,58,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,68,0,111,0,99,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,95,0,102,0,111,0,114,0,67,0,117,0,115,0,116,0,111,0,109,0,101,0,114,0,115,0,92,0,112,0,98,0,32,0,98,0,101,0,97,0,114,0,105,0,110,0,103,0,95,0,49,0,46,0,53,0,48,0,32,0,98,0,111,0,114,0,&quot;<br>
+&nbsp;&nbsp;&nbsp; str3 = str3 &amp; 
+&quot;101,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,9,128,255,254,255,20,112,0,98,0,32,0,98,0,101,0,97,0,114,0,105,0,110,0,103,0,95,0,49,0,46,0,53,0,48,0,32,0,98,0,111,0,114,0,101,0,2,0,0,130,66,58,52,0,144,22,28,65,1,0,0,0,0,0,0,0,34,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,52,0,0,0,0,0,0,0,144,22,28,65,11,0,0,0,217,67,58,52,1,0,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,8,0,0,0,157,67,58,52,1,0,0,0,255,255,255,255,255,255,1,0,19,0,109,111,70,105,108,108,101,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,26,0,0,0,45,77,58,52,1,0,0,0,15,128,0,0,5,128,8,0,26,0,0,0,45,77,58,52,3,0,0,0,15,128,0,0,5,128,8,0,26,0,0,0,45,77,58,52,5,0,0,0,12,128,0,0,5,128,8,0,8,0,0,0,157,67,58,52,1,0,0,0,255,255,255,255,3,128,0,0,5,128,8,0,17,0,0,0,91,68,58,52,2,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; str3 = str3 &amp; &quot;,Type=1&quot;<br>
+&nbsp;&nbsp;&nbsp; StringtoArray str3, var20<br>
+&nbsp;&nbsp;&nbsp; Set pDisp3 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var20), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; str4 = 
+&quot;64,31,0,0,3,0,0,0,255,254,255,28,112,0,98,0,32,0,98,0,101,0,97,0,114,0,105,0,110,0,103,0,95,0,49,0,46,0,53,0,48,0,32,0,98,0,111,0,114,0,101,0,45,0,50,0,64,0,115,0,104,0,97,0,102,0,116,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,21,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,8,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,63,67,0,58,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,68,0,111,0,99,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,95,0,102,0,111,0,114,0,67,0,117,0,115,0,116,0,111,0,109,0,101,0,114,0,115,0,92,0,112,0,98,0,32,0,98,0,101,0,97,0,114,0,105,0,110,0,103,0,95,0,49,0,46,0,53,0,48,0,32,0,98,0,111,0,114,0,&quot;<br>
+&nbsp;&nbsp;&nbsp; str4 = str4 &amp; 
+&quot;101,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,9,128,255,254,255,20,112,0,98,0,32,0,98,0,101,0,97,0,114,0,105,0,110,0,103,0,95,0,49,0,46,0,53,0,48,0,32,0,98,0,111,0,114,0,101,0,2,0,0,130,66,58,52,0,144,22,28,65,1,0,0,0,0,0,0,0,34,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,52,0,0,0,0,0,0,0,144,22,28,65,11,0,0,0,217,67,58,52,1,0,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,8,0,0,0,157,67,58,52,1,0,0,0,255,255,255,255,255,255,1,0,19,0,109,111,70,105,108,108,101,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,26,0,0,0,45,77,58,52,1,0,0,0,15,128,0,0,5,128,8,0,26,0,0,0,45,77,58,52,3,0,0,0,15,128,0,0,5,128,8,0,26,0,0,0,45,77,58,52,5,0,0,0,12,128,0,0,5,128,8,0,8,0,0,0,157,67,58,52,1,0,0,0,255,255,255,255,3,128,0,0,5,128,8,0,17,0,0,0,91,68,58,52,2,0,0,0,0,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; str4 = str4 &amp; &quot;,Type=1&quot;<br>
+&nbsp;&nbsp;&nbsp; StringtoArray str4, var21<br>
+&nbsp;&nbsp;&nbsp; Set pDisp4 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var21), 
+longstatus)<br>
+&nbsp;&nbsp;&nbsp; <br>
+</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; varArray1 = Array(pDisp3)<br>
+&nbsp;&nbsp;&nbsp; varArray2 = Array(pDisp4)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set lrMngr = Study.<b>LoadsAndRestraintsManager</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Add rigid connector<br>
+&nbsp;&nbsp;&nbsp; Set rigidConnector = lrMngr.<b>AddRigidConnector</b>((varArray1), 
+(varArray2), errCode)<br>
+&nbsp;&nbsp;&nbsp; rigidConnector.<b>RigidConnectorBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Number of entities in Rigid Connector-1&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; First location: &quot; &amp; rigidConnector.<b>GetFirstLocationEntityCount</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Second location: &quot; &amp; rigidConnector.<b>GetSecondLocationEntityCount</b><br>
+&nbsp;&nbsp;&nbsp; rigidConnector.<b>RigidConnectorEndEdit</b><br>
+</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Mesh model<br>
+&nbsp;&nbsp;&nbsp; Set CwMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CwMesh Is Nothing Then ErrorMsg SwApp, &quot;Failed to get the 
+CWMesh object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CwMesh.<b>Quality</b> = 1<br>
+&nbsp;&nbsp;&nbsp; Call CwMesh.<b>GetDefaultElementSizeAndTolerance</b>(swsLinearUnitMillimeters, 
+el, tl)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(swsLinearUnitMillimeters, 
+el, tl)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to create 
+mesh&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed 
+with error code as defined in swsRunAnalysisError_e: &quot; &amp; errCode</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get resonant frequency of each mode<br>
+&nbsp;&nbsp;&nbsp; Set CWResult = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWResult Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+the CWResults object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Freq = CWResult.<b>GetResonantFrequencies</b>(errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get 
+resonant frequencies&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Study &quot; &amp; Study.<b>Name</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Resonant frequencies (mode number, 
+radians/second, cycles/second, period in seconds):&quot;<br>
+&nbsp;&nbsp;&nbsp; For i = 0 To UBound(Freq)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; &quot; &amp; Freq(i)<br>
+&nbsp;&nbsp;&nbsp; Next i</p>
+<p class="APICODE">&nbsp;&nbsp; <br>
+End Sub</p>
+<p class="APICODE">Sub StringtoArray(inputSTR As String, varEntity As Variant)</p>
+<p class="APICODE">&nbsp;&nbsp; Dim PID() As Byte<br>
+&nbsp;&nbsp; Dim i As Integer</p>
+<p class="APICODE">&nbsp;&nbsp; varEntity = Split(inputSTR, &quot;,&quot;)</p>
+<p class="APICODE">&nbsp;&nbsp; ReDim PID(UBound(varEntity))</p>
+<p class="APICODE">&nbsp;&nbsp; For i = 0 To (UBound(varEntity) - 1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PID(i) = varEntity(i)<br>
+&nbsp;&nbsp; Next i</p>
+<p class="APICODE">&nbsp;&nbsp; varEntity = PID</p>
+<p class="APICODE">End Sub<br>
+</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String, 
+EndTest As Boolean)</p>
+<p class="APICODE">&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+&nbsp;&nbsp; <br>
+</p>
+<p class="APICODE">&nbsp;&nbsp; If EndTest Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SwApp.<b>ExitApp</b><br>
+&nbsp;&nbsp; End If</p>
+<p class="APICODE">End Sub</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

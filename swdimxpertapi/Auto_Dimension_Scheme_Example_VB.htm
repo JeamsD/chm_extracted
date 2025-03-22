@@ -1,0 +1,283 @@
+<html>
+
+<head>
+<title>Auto Dimension Scheme Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,auto dimension scheme">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS API 
+ Help</span></h1>
+<h1>Auto Dimension Scheme Example (VBA)</h1>
+<p>This example shows how to create a DimXpert Auto Dimension Scheme, turn 
+tolerance status on and off,
+and delete tolerances.</p>
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:</p>
+<p class="APICODE">'&nbsp; 1. Open<i> public_documents</i><b>\samples\tutorial\dimxpert\bracket_auto_plusminus.sldprt.</b><br>
+'&nbsp; 2. (Optional) Multi-select three faces to specify primary, 
+secondary, <br>
+'&nbsp;&nbsp;&nbsp;&nbsp; and tertiary datum.<br>
+'&nbsp; 3. Open an Immediate window.<br>
+'&nbsp; 4. Ensure that the latest SOLIDWORKS DimXpert type library 
+is loaded:<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; a. Click <b>Tools &gt; References</b>.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; b. Click Browse.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; c. Find and select <i>install_dir</i><b>\swdimxpert.tlb</b>.<br>
+'&nbsp; 5. Set two breakpoints on these lines:<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * swDXPart.ShowToleranceStatus = False<br>
+'&nbsp;&nbsp;&nbsp;&nbsp; * retval = swDXPart.DeleteAllTolerances<br>
+'&nbsp; 6. Press F5.<br>
+'&nbsp; 7. Observe on the DimXpertManager tab: Hole Pattern1, Hole 
+Pattern2, <br>
+'&nbsp;&nbsp;&nbsp;&nbsp; Fillet1, Fillet Pattern1. Also observe that tolerance status is 
+turned <br>
+'&nbsp;&nbsp;&nbsp;&nbsp; on in the SOLIDWORKS viewer.<br>
+'&nbsp; 8. Press F5 and observe that tolerance status is turned 
+off.<br>
+'&nbsp; 9. Compare the output in the Immediate window with the 
+features <br>
+'&nbsp;&nbsp;&nbsp;&nbsp; displayed on the DimXpertManager tab.<br>
+'&nbsp;10. Press F5 and observe that all tolerance annotations 
+have been <br>
+'&nbsp;&nbsp;&nbsp;&nbsp; removed from the model.<br>
+'<br>
+' Postconditions: None<br>
+'<br>
+'&nbsp;NOTE: Because this part is used elsewhere, do not save changes.<br>
+'---------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Dim swApp As SldWorks.SldWorks<br>
+Dim swModel As SldWorks.ModelDoc2<br>
+Dim swModelDocExt As SldWorks.ModelDocExtension<br>
+Dim swSelMgr As SldWorks.SelectionMgr<br>
+Dim swConfig As SldWorks.Configuration<br>
+Dim swFeature As SldWorks.feature<br>
+Dim swAnn As SldWorks.feature<br>
+Dim swSchema As SldWorks.DimXpertManager<br>
+Dim swDXPart As DimXpertPart<br>
+Dim schemeOption As DimXpertAutoDimSchemeOption<br>
+Dim featureType As swDimXpertFeatureType_e<br>
+Dim features As Variant<br>
+Dim appliedFeatures As Variant<br>
+Dim appliedAnnotations As Variant<br>
+Dim appliedAnnotation As DimXpertAnnotation<br>
+Dim feature As DimXpertFeature<br>
+Dim appliedFeature As DimXpertFeature<br>
+Dim msgStr As String<br>
+Dim msgStr2 As String<br>
+Dim msgStr3 As String<br>
+Dim msgStr4 As String<br>
+Dim n As Long<br>
+Dim o As Long<br>
+Dim p As Long</p>
+<p class="APICODE">Dim boolstatus As Boolean</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set swApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Set swModel = swApp.ActiveDoc<br>
+&nbsp;&nbsp;&nbsp; Set swModelDocExt = swModel.Extension<br>
+&nbsp;&nbsp;&nbsp; Set swSelMgr = swModel.SelectionManager</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get the default DimXpert schema using 
+IModelDocExtension.DimXpertManager()<br>
+&nbsp;&nbsp;&nbsp; Set swSchema = swModelDocExt.DimXpertManager(&quot;Default&quot;, True)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get IDimXpertPart from the 
+IDimXpertManager<br>
+&nbsp;&nbsp;&nbsp; Set swDXPart = swSchema.DimXpertPart</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Set Auto Dimension Scheme using default 
+options<br>
+&nbsp;&nbsp;&nbsp; Set schemeOption = swDXPart.<b>GetAutoDimSchemeOption</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Default for ScopeAllFeature is: &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (schemeOption.<b>ScopeAllFeature</b>)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Default for FeatureFilters is: &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (schemeOption.<b>FeatureFilters</b>)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Default for PartType is: &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (schemeOption.<b>PartType</b>)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Default for PatternType is: &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (schemeOption.<b>PatternType</b>)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Default for PolarPatternHoleCount is: &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (schemeOption.<b>PolarPatternHoleCount</b>)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Default for ToleranceType is: &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print (schemeOption.<b>ToleranceType</b>)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim retval As Boolean<br>
+&nbsp;&nbsp;&nbsp; retval = swDXPart.<b>AutoDimensionScheme</b>(schemeOption)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Turn tolerance status off<br>
+&nbsp;&nbsp;&nbsp; swDXPart.<b>ShowToleranceStatus</b> = False<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim featCount As Long<br>
+&nbsp;&nbsp;&nbsp; featCount = swDXPart.GetFeatureCount</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; msgStr = &quot;Total of &quot;<br>
+&nbsp;&nbsp;&nbsp; msgStr2 = featCount<br>
+&nbsp;&nbsp;&nbsp; msgStr = msgStr + msgStr2 + &quot; features in &quot; + (swSchema.SchemaName)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print msgStr</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get IDimXpert features through 
+IDimXpertPart<br>
+&nbsp;&nbsp;&nbsp; features = swDXPart.GetFeatures<br>
+&nbsp;&nbsp;&nbsp; msgStr = (swSchema.SchemaName) + &quot; has the following 
+features: &quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print msgStr</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; For n = 0 To UBound(features)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Use 
+IDimXpertFeature to get feature data<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set feature = features(n)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; 
+&quot; + &quot;Feature name: &quot; + (feature.Name)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; featureType = 
+feature.Type<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Call GetPatternType(featureType, 
+msgStr2)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr = &quot;&nbsp;&nbsp;&nbsp;&nbsp; 
+Feature type &quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr3 = &quot; is suppressed on the 
+DimXpertManager tab? &quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr4 = feature.IsSuppressed()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print msgStr 
++ msgStr2 + msgStr3 + msgStr4</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr = &quot;&nbsp;&nbsp;&nbsp;&nbsp; 
+&quot; + &quot;Swift model: &quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Use IFeature to 
+get the Swift model corresponding to this geometric dimensioning and tolerancing 
+data<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set swFeature = 
+feature.GetModelFeature()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If Not (swFeature 
+Is Nothing) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+swFeature.GetTypeName2()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print 
+msgStr + msgStr2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr = &quot;&nbsp;&nbsp;&nbsp;&nbsp; 
+&quot; + &quot;Number of SOLIDWORKS face entities in this feature: &quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = feature.GetFaceCount</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print msgStr 
++ msgStr2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr = &quot;&nbsp;&nbsp;&nbsp;&nbsp; 
+&quot; + &quot;Number of applied features: &quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+feature.GetAppliedFeatureCount()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print msgStr 
++ msgStr2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; appliedFeatures = 
+feature.GetAppliedFeatures()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If Not 
+(IsEmpty(appliedFeatures)) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; For o = 0 To 
+UBound(appliedFeatures)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Set appliedFeature = appliedFeatures(o)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot; + &quot;Applied feature 
+name: &quot; + (appliedFeature.Name)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Next<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr = &quot;&nbsp;&nbsp;&nbsp;&nbsp; 
+&quot; + &quot;Number of applied annotations: &quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+feature.GetAppliedAnnotationCount()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print msgStr + msgStr2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; appliedAnnotations 
+= feature.GetAppliedAnnotations()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If Not (IsEmpty(appliedAnnotations)) 
+Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; For p = 0 To 
+UBound(appliedAnnotations)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Set appliedAnnotation = appliedAnnotations(p)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot; + &quot;Applied annotation 
+name: &quot; + (appliedAnnotation.Name)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Next</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp; 
+&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Next</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp; ' Delete all tolerances<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; retval = swDXPart.<b>DeleteAllTolerances</b><br>
+&nbsp;</p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Public Sub GetPatternType(ByRef featureType, ByRef msgStr2)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If (featureType = swDimXpertFeature_Plane) 
+Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Plane&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Cylinder) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Cylinder&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Cone) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Cone&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Extrude) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Extrude&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Fillet) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Fillet&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Chamfer) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Chamfer&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_CompoundHole) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;CompoundHole&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_CompoundWidth) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;CompoundWidth&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_CompoundNotch) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;CompoundNotch&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_CompoundClosedSlot3D) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;CompoundClosedSlot3D&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_IntersectPoint) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;IntersectPoint&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_IntersectLine) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;IntersectLine&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_IntersectCircle) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;IntersectCircle&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_IntersectPlane) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;IntersectPlane&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Pattern) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Pattern&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Sphere) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Sphere&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_BestfitPlane) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;Bestfit 
+plane&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ElseIf (featureType = 
+swDimXpertFeature_Surface) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Surface&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">End Sub</p>
+<p>&nbsp;</p>
+
+</body>
+
+</html>

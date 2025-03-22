@@ -1,0 +1,143 @@
+<html>
+
+<head>
+<title>Get and Set Routing Component Properties Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,routing components">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS API 
+ Help</span></h1>
+<h1>Get and Set Routing Component Properties Example (VBA)</h1>
+<p>This example shows how to get and set routing component properties.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Modify the path of the specified routing component.<br>
+' 2. Open an Immediate window.<br>
+'<br>
+' Postconditions: Inspect the Immediate window for the properties<br>
+' of the specified routing component.<br>
+' ---------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit<br>
+</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim swRtCompMgr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SWRoutingLib.RoutingComponentManager<br>
+&nbsp;&nbsp;&nbsp; Dim boolstatus&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim isCompTypeSavedThrRLM As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim LongStatus&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim LongWarnings&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim cpConfig&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim compType&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim routeType&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim routeTypeCustProp&nbsp;&nbsp;&nbsp;&nbsp; As Long<br>
+&nbsp;&nbsp;&nbsp; Dim pipeSketch&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As String<br>
+&nbsp;&nbsp;&nbsp; Dim compDesc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As String<br>
+&nbsp;&nbsp;&nbsp; Dim modelDoc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Dim modelDocExt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.modelDocExtension</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Exit Sub<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; LongStatus = 
+SwApp.LoadAddIn(SwApp.GetExecutablePath &amp; &quot;\sldrtadd.dll&quot;)<br>
+&nbsp;&nbsp;&nbsp; If LongStatus &lt;&gt; 0 And LongStatus &lt;&gt; 2 Then ErrorMsg SwApp, 
+&quot;Cannot load the Routing add-in&quot;: GoTo LastLine<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set modelDoc = SwApp.OpenDoc6(&quot;<i>public_documents</i>\tutorial\api\straight 
+tee inch.sldprt&quot;, swDocPART, swOpenDocOptions_Silent, &quot;&quot;, LongStatus, 
+LongWarnings)<br>
+&nbsp;&nbsp;&nbsp; Set modelDocExt = modelDoc.Extension<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If modelDoc Is Nothing Then ErrorMsg SwApp, 
+&quot;Failed to open straight tee inch.sldprt&quot;: GoTo LastLine</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set swRtCompMgr = modelDocExt.<b>GetRoutingComponentManager</b><br>
+&nbsp;&nbsp;&nbsp; If swRtCompMgr Is Nothing Then ErrorMsg SwApp, &quot;Failed to set 
+route component manager object&quot;: GoTo LastLine<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Set the description value<br>
+&nbsp;&nbsp;&nbsp; swRtCompMgr.<b>SetRoutingComponentDescription</b> (&quot;Pipe 
+Routing&quot;)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get the description value<br>
+&nbsp;&nbsp;&nbsp; compDesc = swRtCompMgr.<b>GetRoutingComponentDescription</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Saved description: &quot; &amp; compDesc<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Set the CPoint configuration value to 
+not add CPoints<br>
+&nbsp;&nbsp;&nbsp; swRtCompMgr.<b>SetCPointConfiguration</b> (2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get the CPoint configuration value<br>
+&nbsp;&nbsp;&nbsp; cpConfig = swRtCompMgr.<b>GetCPointConfiguration</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;CPoint configuration as defined in 
+swCPointConfig_e: &quot; &amp; cpConfig<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Set the component type to tee type<br>
+&nbsp;&nbsp;&nbsp; swRtCompMgr.<b>SetComponentType</b> (5)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get the component type<br>
+&nbsp;&nbsp;&nbsp; compType = swRtCompMgr.<b>GetComponentType</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Component type as defined in 
+swRouteComponentTypeID_e: &quot; &amp; compType<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get the routing string for the pipe 
+sketch<br>
+&nbsp;&nbsp;&nbsp; pipeSketch = swRtCompMgr.<b>GetRoutingStringValue</b>(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Pipe sketch routing string: &quot; &amp; pipeSketch<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get the route type<br>
+&nbsp;&nbsp;&nbsp; routeType = swRtCompMgr.<b>GetComponentRouteType</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Route type as defined in swComponentRouteType_e: 
+&quot; &amp; routeType<br>
+<br>
+&nbsp;&nbsp;&nbsp; ' Get the route type from custom property<br>
+&nbsp;&nbsp;&nbsp; routeTypeCustProp = <b>
+swRtCompMgr.GetComponentRouteTypeFromCustomProperty</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Route type from custom property as defined in 
+swComponentRouteType_e: &quot; &amp; routeTypeCustProp<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' See whether the component type 
+was saved through the Route Library Manager<br>
+&nbsp;&nbsp;&nbsp; isCompTypeSavedThrRLM = swRtCompMgr.<b>GetRouteComponentTypeSetThrRLM</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;The component type is saved through the Route 
+Library Manager: &quot; &amp; isCompTypeSavedThrRLM<br>
+</p>
+<p class="APICODE">LastLine:</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; LongStatus = 
+SwApp.UnloadAddIn(SwApp.GetExecutablePath &amp; &quot;\sldrtadd.dll&quot;)<br>
+&nbsp;&nbsp;&nbsp; If LongStatus &lt;&gt; 0 Then MsgBox &quot;Unable to unload Add-in : 
+Routing&quot;: GoTo LastLine</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; boolstatus = SwApp.CloseAllDocuments(True)<br>
+&nbsp;&nbsp;&nbsp; If boolstatus = False Then ErrorMsg SwApp, &quot;Failed to close 
+all open documents&quot;<br>
+&nbsp;&nbsp;&nbsp; Set modelDoc = Nothing</p>
+<p class="APICODE">End Sub<br>
+</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.SendMsgToUser2 Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.RecordLine &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.RecordLine &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.RecordLine &quot;&quot;<br>
+End Sub</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

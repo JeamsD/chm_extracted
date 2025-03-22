@@ -1,0 +1,124 @@
+<html>
+
+<head>
+<title>Get BOM Tables Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples,BOM tables">
+<meta name=MS-HKWD content="VB.NET examples,sheets">
+<meta name=MS-HKWD content="VB.NET examples,views">
+<meta name=MS-HKWD content="VB.NET examples,custom properties">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS API 
+ Help</span></h1>
+<h1>Get BOM Tables Example (VB.NET)</h1>
+<p>This example shows how to get the BOM tables in a drawing document. </p>
+
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+	<span style="color:green;">
+	'---------------------------------------------------------------------------</span><br>
+	<span style="color:green;">'&nbsp;Preconditions:&nbsp;&nbsp;</span><br>
+	<span style="color:green;">
+	'&nbsp;1.&nbsp;Create&nbsp;a&nbsp;console&nbsp;application&nbsp;using&nbsp;Visual&nbsp;Basic.<br>
+	</span><span style="color:green;">' 2. Verify that all output is redirected 
+	to the Immediate window. (In<br>
+	'&nbsp;&nbsp;&nbsp; Visual Studio 2015, click <b>Tools &gt; Options &gt; Debugging 
+	&gt; General &gt; </b><br>
+	'&nbsp;&nbsp;&nbsp; <b>Redirect all Output Window text to the Immediate 
+	Window</b>).</span><br>
+	<span style="color:green;">'&nbsp;3. Click <b>Project &gt;</b> <b>Add Reference &gt;</b>
+	<i>install_dir</i><b>/api/redist/<br>
+	</b>'<b>&nbsp;&nbsp;&nbsp; </b></span><span style="color: green"><b>
+	SolidWorks.Interop.swdocumentmgr.dll</b></span><span style="color: #008000; background-position: 0 0">
+	</span><span style="color:green;"><b>&gt; OK</b>.&nbsp;</span><br>
+	<span style="color:green;">'&nbsp;4.&nbsp;Substitute&nbsp;your&nbsp;license&nbsp;key&nbsp;for&nbsp;<i>your_license_key</i>&nbsp;in&nbsp;the&nbsp;code.<br>
+	' 5. Copy the specified drawing document to another file name.&nbsp;</span><br>
+	<span style="color:green;">'&nbsp;6.&nbsp;Open&nbsp;the&nbsp;specified&nbsp;drawing&nbsp;document&nbsp;in&nbsp;SOLIDWORKS.<br>
+	' 7. Ensure that both</span> <span style="color:green;">Bills&nbsp;of&nbsp;Materials 
+	are not hidden.<br>
+	' 8. Save&nbsp;and rebuild the drawing.</span><br>
+	<span style="color:green;">'&nbsp;9.&nbsp;Close&nbsp;SOLIDWORKS.</span><br>
+	<span style="color:green;">'</span><br>
+	<span style="color:green;">'&nbsp;Postconditions:&nbsp;Prints&nbsp;to&nbsp;the&nbsp;Immediate&nbsp;window:</span><br>
+	<span style="color: #008000">'</span><span style="color:green;">&nbsp;*&nbsp;Document:<br>
+	'&nbsp;&nbsp; * Path and file name</span><br>
+	<span style="color: #008000">'</span><span style="color:green;">&nbsp;&nbsp; 
+	*&nbsp;Last&nbsp;saved date</span><br>
+	<span style="color: #008000">'</span><span style="color:green;">&nbsp;*&nbsp;For&nbsp;each&nbsp;BOM&nbsp;table&nbsp;that 
+	is not hidden in&nbsp;the&nbsp;document:</span><br>
+	<span style="color: #008000">'</span><span style="color:green;">&nbsp;&nbsp;&nbsp;*&nbsp;Name</span><br>
+	<span style="color: #008000">'</span><span style="color:green;">&nbsp;&nbsp;&nbsp;*&nbsp;Whether&nbsp;hidden</span><br>
+	<span style="color: #008000">'</span><span style="color:green;">&nbsp;&nbsp;&nbsp;*&nbsp;Whether&nbsp;to&nbsp;display&nbsp;components 
+	with multiple&nbsp;configurations&nbsp;as&nbsp;one&nbsp;item</span><br>
+	<span style="color: #008000">'</span><span style="color:green;">&nbsp;&nbsp;&nbsp;*&nbsp;Part&nbsp;configuration&nbsp;grouping&nbsp;setting</span><br>
+	<span style="color: #008000">'</span><span style="color:green;">&nbsp;&nbsp;&nbsp;*&nbsp;Sheet 
+	name</span><br>
+	<span style="color: #008000">'</span><span style="color:green;">&nbsp;&nbsp;&nbsp;*&nbsp;Number&nbsp;of&nbsp;views&nbsp;on&nbsp;the&nbsp;sheet</span><br>
+	<span style="color: #008000">'</span><span style="color:green;">&nbsp;&nbsp;&nbsp;*&nbsp;Name&nbsp;of&nbsp;the 
+	custom&nbsp;property&nbsp;view for the sheet<br>
+	'<br>
+	' NOTE: Restore the original drawing document, as it is used elsewhere.</span><br>
+	<span style="color:green;">
+	'---------------------------------------------------------------------------</span><br>
+&nbsp;<br>
+	<span style="color:blue;">Imports</span>&nbsp;SolidWorks.Interop.swdocumentmgr<br>
+	<span style="color:blue;">Imports</span>&nbsp;System<br>
+	<span style="color:blue;">Imports</span>&nbsp;System.Diagnostics<br>
+&nbsp;<br>
+	<span style="color:blue;">Module</span>&nbsp;<span style="color:#2b91af;">Module1</span><br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;dmClassFact&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">SwDMClassFactory</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;dmDocMgr&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">SwDMApplication3</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;dmDoc&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">ISwDMDocumen15</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;dmTable&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">ISwDMTable5</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;dmSheet&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">ISwDMSheet4</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;custPropView&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">ISwDMView</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;dmError&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">SwDmDocumentOpenError</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;arrviews&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:#2b91af;">Array</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;nameDrawing&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">String</span><br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Sub</span>&nbsp;Main()<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmClassFact&nbsp;=&nbsp;CreateObject(<span style="color:#a31515;">&quot;SwDocumentMgr.SwDMClassFactory&quot;</span>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDocMgr&nbsp;=&nbsp;dmClassFact.<b>GetApplication</b>(<span style="color:#a31515;">&quot;<i>your_license_key</i>&quot;</span>)&nbsp;<span style="color:green;">'Do&nbsp;not&nbsp;distribute&nbsp;</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nameDrawing&nbsp;=&nbsp;<span style="color:#a31515;">&quot;</span><span style="COLOR: #a31515">C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2017\introsw\cabinet_bath.slddrw</span><span style="color:#a31515;">&quot;</span><br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'Get&nbsp;the&nbsp;SOLIDWORKS&nbsp;drawing&nbsp;document</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDoc&nbsp;=&nbsp;dmDocMgr.<b>GetDocument</b>(nameDrawing,&nbsp;<span style="color:#2b91af;">SwDmDocumentType</span>.swDmDocumentDrawing,&nbsp;<span style="color:blue;">False</span>,&nbsp;dmError)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Document's&nbsp;full&nbsp;name:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;dmDoc.<b>FullName</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Date&nbsp;document&nbsp;last&nbsp;saved:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;dmDoc.<b>LastSavedDate</b>)<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">'&nbsp;Get&nbsp;the&nbsp;names&nbsp;of&nbsp;the&nbsp;BOM&nbsp;tables&nbsp;that 
+	are not hidden in&nbsp;the&nbsp;SOLIDWORKS&nbsp;drawing&nbsp;document</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;tableNames&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Object</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tableNames&nbsp;=&nbsp;dmDoc.<b>GetTableNames</b>(<span style="color:#2b91af;">SwDmTableType</span>.swDmTableTypeBOM)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;i&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Integer</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;<span style="color:blue;">Not</span>&nbsp;IsNothing(tableNames)&nbsp;<span style="color:blue;">Then</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">For</span>&nbsp;i&nbsp;=&nbsp;0&nbsp;<span style="color:blue;">To</span>&nbsp;UBound(tableNames)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmTable&nbsp;=&nbsp;dmDoc.<b>GetTable</b>(tableNames(i))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;BOM&nbsp;table&nbsp;name:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;dmTable.<b>Name</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;Is&nbsp;BOM&nbsp;table&nbsp;hidden?&nbsp;&quot;</span>&nbsp;&amp;&nbsp;dmTable.<b>Hidden</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;If&nbsp;BOM&nbsp;table&nbsp;contains&nbsp;components&nbsp;with&nbsp;multiple&nbsp;configurations,&nbsp;display&nbsp;as&nbsp;one&nbsp;item?&nbsp;&quot;</span>&nbsp;&amp;&nbsp;dmTable.<b>DisplayAsOneItem</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;Part&nbsp;configuration&nbsp;grouping 
+	as defined in swDMPartConfigurationGrouping: &nbsp;&quot;</span>&nbsp;&amp;&nbsp;dmTable.<b>PartConfigurationGrouping</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmSheet&nbsp;=&nbsp;dmTable.<b>Sheet</b><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">If</span>&nbsp;<span style="color:blue;">Not</span>&nbsp;IsNothing(dmSheet)&nbsp;<span style="color:blue;">Then</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;custPropView&nbsp;=&nbsp;dmSheet.<b>CustomPropertyView</b><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;arrviews&nbsp;=&nbsp;dmSheet.<b>GetViews</b><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;On&nbsp;sheet:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;dmSheet.<b>Name</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;Number&nbsp;of&nbsp;views&nbsp;on&nbsp;sheet:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;arrviews.Length)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;&nbsp;&nbsp;&nbsp;Custom&nbsp;property&nbsp;view:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;custPropView.<b>Name</b>)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Next</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">If</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Sub</span><br>
+	<span style="color:blue;">End</span>&nbsp;<span style="color:blue;">Module</span></p>
+	<p class="APICODE">&nbsp;</div>
+
+</body>
+
+</html>

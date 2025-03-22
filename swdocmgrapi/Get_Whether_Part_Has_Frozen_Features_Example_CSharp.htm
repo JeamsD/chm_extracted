@@ -1,0 +1,120 @@
+<html>
+
+<head>
+<title>Get Whether Part Has Frozen Features (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,frozen features">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS API 
+ Help</span></h1>
+<h1>Get Whether Part Has Frozen Features Example (C#)</h1>
+<p>This example shows how to get whether a part document has frozen features, 
+and, if so, whether those features need updating.</p>
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p class="APICODE"><span style="color:Green">
+	//------------------------------------------------------------------<br>
+	// Preconditions: <br>
+	// 1. Read the SOLIDWORKS Document Manager API Help <b>Getting Started</b><br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;topic and register the required DLLs. <br>
+	</span><font face="Courier New" color="#008000">//</font><span style="color:Green"><font size="2" face="Courier New">&nbsp;2. Copy and paste this module into a 
+	C# <br>
+	//&nbsp;&nbsp;&nbsp; console application in 
+	Microsoft Visual Studio.</font></span><span style="color:Green">
+	<br>
+	// 3. Load the latest <b>SolidWorks.Interop.swdocumentmgr.dll </b><br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;interop assembly by:<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;a. Right-clicking the project name in the Project Explorer.<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;b. Clicking <b>Add Reference</b>.<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;c. Clicking the interop assembly in the .NET <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tab or browsing for the DLL in <i>install_dir</i>/<b>api/redist</b>.
+	<br>
+	// 4. Substitute your license key for <i>your_license_key</i> in the code.
+	<br>
+	// 5. Make sure that the part document opened by this application<br>
+	//&nbsp;&nbsp;&nbsp; exists.<br>
+	// 6. Open the Immediate window.<br>
+	//<br>
+	// Postconditions: Whether the part document contains frozen features<br>
+	// is printed to the Immediate window, and, if so, whether<br>
+	// those features need updating.<br>
+	//<br>
+	// NOTE: This sample application was developed using <br>
+	// Microsoft Visual Studio 2008. If you use another version of <br>
+	// Microsoft Visual Studio, you might need to add more references to get <br>
+	// this application to compile.<br>
+	//------------------------------------------------------------------<br>
+	<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	SolidWorks.Interop.swdocumentmgr;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	System;<br>
+	</span><span style="color:Blue">using</span><span style="color:Black"> 
+	System.Diagnostics;<br>
+	<br>
+	</span><span style="color:Blue">namespace</span><span style="color:Black"> 
+	HasFrozenFeatures<br>
+	{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">class</span><span style="color:Black">
+	</span><span style="color:#2b91af">Module1<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">static</span><span style="color:Black">
+	</span><span style="color:Blue">void</span><span style="color:Black"> Main()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">SwDMClassFactory</span><span style="color:Black"> 
+	dmClassFact = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">SwDMClassFactory</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ISwDMApplication3</span><span style="color:Black"> 
+	dmDocMgr = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">ISwDMApplication3</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ISwDMDocument16</span><span style="color:Black"> 
+	dmDoc = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">ISwDMDocument16</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">SwDmDocumentOpenError</span><span style="color:Black"> 
+	dmError = </span><span style="color:Blue">default</span><span style="color:Black">(</span><span style="color:#2b91af">SwDmDocumentOpenError</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> 
+	namePart = </span><span style="color:#a31515">&quot;&quot;</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">bool</span><span style="color:Black"> 
+	hasFrozenFeatures = </span><span style="color:Blue">false</span><span style="color:Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">bool</span><span style="color:Black"> 
+	frozenFeaturesNeedUpdating = </span><span style="color:Blue">false</span><span style="color:Black">;<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmClassFact = </span><span style="color:Blue">new</span><span style="color:Black">
+	</span><span style="color:#2b91af">SwDMClassFactory</span><span style="color:Black">();<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//Do not distribute license key<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDocMgr = (</span><span style="color:#2b91af">ISwDMApplication3</span><span style="color:Black">)dmClassFact.<b>GetApplication</b>(</span><span style="color:#a31515">&quot;<i>your_license_key</i>&quot;</span><span style="color:Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;namePart = </span><span style="color:#a31515">&quot; 
+	C:\\Users\\Public\\Documents\\SOLIDWORKS\SOLIDWORKS 2018\\samples\\tutorial\\api\\FreezeBarNeedsRebuild2.sldprt&quot;</span><span style="color:Black">;<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//Get the SOLIDWORKS part 
+	document<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dmDoc = (</span><span style="color:#2b91af">ISwDMDocument16</span><span style="color:Black">)dmDocMgr.<b>GetDocument</b>(namePart,
+	</span><span style="color:#2b91af">SwDmDocumentType</span><span style="color:Black">.swDmDocumentPart,
+	</span><span style="color:Blue">false</span><span style="color:Black">,
+	</span><span style="color:Blue">out</span><span style="color:Black"> dmError);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;Document's 
+	full name: &quot;</span><span style="color:Black"> + dmDoc.<b>FullName</b>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;Date 
+	document last saved: &quot;</span><span style="color:Black"> + dmDoc.<b>LastSavedDate</b>);<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// Get whether the part 
+	document has frozen features and <br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// 
+	whether those features need updating<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hasFrozenFeatures = (</span><span style="color:Blue">bool</span><span style="color:Black">)dmDoc.<b>HasFrozenFeatures</b>(</span><span style="color:Blue">out</span><span style="color:Black"> 
+	frozenFeaturesNeedUpdating);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Does 
+	the part document have frozen features? &quot;</span><span style="color:Black"> + 
+	hasFrozenFeatures);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> 
+	(hasFrozenFeatures)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&nbsp;&nbsp;Do 
+	any of the frozen features need updating? &quot;</span><span style="color:Black"> 
+	+ frozenFeaturesNeedUpdating);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	}</span></div>
+
+</body>
+
+</html>

@@ -1,0 +1,107 @@
+<html>
+
+<head>
+<title>Get Minimum Radii of Wires Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,wires">
+<meta name=MS-HKWD content="VBA examples,bend radius">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Routing API 
+ Help</span></h1>
+<h1>Get Minimum Radii of Wires Example (VBA)</h1>
+<p>This example shows how to get:</p>
+<ul>
+	<li><font face="Verdana" style="font-size: 8pt">minimum bend radius for the 
+	bundle of wires in each route segment,</font></li>
+	<li><font face="Verdana" style="font-size: 8pt">minimum bend radius for each 
+	route segment, and</font></li>
+	<li><font face="Verdana" style="font-size: 8pt">types of route.</font></li>
+</ul>
+
+<pre>'----------------------------------------------------------------------------
+' Preconditions:
+' 1. Add SOLIDWORKS Routing as an add-in
+'   (in SOLIDWORKS select <b>Tools &gt; Add-Ins &gt; SOLIDWORKS Routing</b>).
+' 2. Add the <b>SOLIDWORKS</b> &lt;<i>version</i>&gt; <b>Routing Type Library </b>as a reference
+'   (in the IDE select <b>Tools &gt; References</b>).
+' 3. Open <i>public_documents</i><b>\samples\tutorial\api\RoutingAssem1.sldasm</b>.
+' 4. Open the Immediate window.
+' 5. Run the macro.
+'
+' Postconditions: Examine the Immediate window.
+'
+' <b>NOTE</b>: Because the assembly document is used elsewhere, do not save 
+' any changes when closing it.
+'---------------------------------------------------------------------------
+Option Explicit</pre>
+<pre>Dim swApp As SldWorks.SldWorks</pre>
+<pre>Sub main()</pre>
+<pre>    Dim swModel              As SldWorks.ModelDoc2
+    Dim swModelDoc           As SldWorks.ModelDocExtension
+    Dim swTopLevelAssembly   As SldWorks.AssemblyDoc
+    Dim rtRouteManager       As SWRoutingLib.RouteManager
+    Dim bRetVal              As Boolean
+    
+</pre>
+<pre>    ' Connect to SOLIDWORKS
+    Set swApp = Application.SldWorks</pre>
+<pre>    ' Get the active document
+    Set swModel = swApp.<b>ActiveDoc</b>
+    Set swModelDoc = swModel.<b>Extension</b></pre>
+<pre>    ' Downcast from model document to assembly document
+    Set swTopLevelAssembly = swModel</pre>
+<pre>    ' Get the RouteManager from the top-level assembly
+    ' Use selection tied to the current document, which is the
+    ' top-level assembly, so get the RouteManager from there 
+    ' instead of from the route subassembly
+    Set rtRouteManager = swTopLevelAssembly.<b>GetRouteManager</b></pre>
+<pre>    If rtRouteManager Is Nothing Then
+        Debug.Print &quot;No RouteManager found in top-level document&quot; 
+        Exit Sub
+    End If</pre>
+<pre>    ' Select route in subassembly
+    bRetVal = swModelDoc.<b>SelectByID2</b>(&quot;Route1@Harness1^RoutingAssem1-1@RoutingAssem1&quot;, &quot;ROUTEFABRICATED&quot;, 0, 0, 0, False, 0, Nothing, 0)</pre>
+<pre>    swModel.<b>EditRoute</b></pre>
+<pre>    ' Clear selection
+    swModel.<b>ClearSelection2</b> True</pre>
+<pre>    ' Select the 3D Sketch
+    bRetVal = swModelDoc.<b>SelectByID2</b>(&quot;3DSketch1@Harness1-RoutingAssem1-1@RoutingAssem1&quot;, &quot;SKETCH&quot;, 0, 0, 0, False, 0, Nothing, 0)</pre>
+<pre>    ' Edit the 3D Sketch
+    Debug.Print &quot;Spline1:&quot;
+    TestRoute swModelDoc, rtRouteManager, &quot;Spline1&quot;
+    Debug.Print &quot;Spline2:&quot;
+    TestRoute swModelDoc, rtRouteManager, &quot;Spline2&quot;</pre>
+<pre>    ' Stop editing
+    swModel.<b>Insert3DSketch2</b> True</pre>
+<pre>    ' Return to editing the top-level assembly
+    swTopLevelAssembly.<b>EditAssembly</b>
+    
+</pre>
+<pre>End Sub
+Private Sub TestRoute(swModelDoc As ModelDocExtension, rtRouteManager As RouteManager, strSketchSegmentName As String)
+    ' Select a sketch segment
+    Dim bRetVal As Boolean
+    bRetVal = swModelDoc.<b>SelectByID2</b>(strSketchSegmentName, &quot;SKETCHSEGMENT&quot;, 0, 0, 0, False, 0, Nothing, 0)</pre>
+<pre>    If (Not (bRetVal = False)) Then
+        ' Get the RouteProperty for the selected sketch segment
+        Dim rtRouteProperty As SWRoutingLib.ElectricalRouteProperty
+        Set rtRouteProperty = rtRouteManager.<b>GetRouteProperty</b>
+        </pre>
+<pre>        If Not rtRouteProperty Is Nothing Then
+            Debug.Print &quot;  Bundle minimum bend radius      = &quot; &amp; rtRouteProperty.<b>BundleMinimumBendRadius
+</b>            Debug.Print &quot;  Minimum bend radius             = &quot; &amp; rtRouteProperty.<b>MinimumBendRadius</b></pre>
+<pre>            Select Case rtRouteProperty.<b>RouteType</b>
+                Case SWRoutingLib.swRouteType_e.swRouteType_Electrical
+                    Debug.Print &quot;  Type                            = Electrical&quot;
+            End Select
+        End If
+    End If
+End Sub</pre>
+
+</body>
+
+</html>

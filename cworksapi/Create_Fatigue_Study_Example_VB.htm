@@ -1,0 +1,386 @@
+<html>
+
+<head>
+<title>Create Fatigue Study Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,fatigue study">
+<meta name=MS-HKWD content="VBA examples,fatigue study options">
+<meta name=MS-HKWD content="VBA examples,fatigue event">
+<meta name=MS-HKWD content="VBA examples,study results">
+<meta name=MS-HKWD content="VBA examples,fatigue study result options">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Create Fatigue Study Example (VBA)</h1>
+<p>This example shows how to create a fatigue study.</p>
+<p><span style="font-weight: bold;">NOTE:</span> To get persistent reference 
+ identifiers (PIDs) for model selections, you can use
+<a href="GettingStarted-swsimulationapi.html">pidcollector.exe</a> 
+ or IModelDocExtension::GetPersistReference3.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+'&nbsp;3. Open, rebuild, and fix as needed <i>public_documents</i><b>\samples\tutorial\api\<br>
+</b>'<b>&nbsp;&nbsp;&nbsp; landing_gear.sldasm</b>.<br>
+' 4. Activate <b>Ready_Static</b>.<br>
+'&nbsp;5. Right-click <b>BearingLoads-1</b> and click <b>Edit Definition</b>.<br>
+'&nbsp;6. Select load-bearing faces that are concentric with the Z-axis of the<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;selected coordinate system and click the green check 
+mark.<br>
+'&nbsp;7. Mesh the study.<br>
+'&nbsp;8. Run the study.<br>
+'&nbsp;9. Open an Immediate window.<br>
+'<br>
+' Postconditions:<br>
+' 1. A default fatigue study results plot is created.<br>
+' 2. Two fatigue studies are created and analyzed:<br>
+'&nbsp;&nbsp;&nbsp; * <b>Fatigue_StudyAPIConst</b> (constant amplitude fatigue study)<br>
+'&nbsp;&nbsp;&nbsp; * <b>Fatigue_StudyAPIVariable</b> (variable amplitude fatigue 
+study)<br>
+' 3. Inspect the Immediate window for fatigue study options, fatigue events,<br>
+'&nbsp;&nbsp;&nbsp; and fatigue study analysis results.<br>
+' 4. Inspect the fatigue results plots.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save changes.<br>
+' ---------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+<p class="APICODE"><br>
+Function SelectByPID(Part As SldWorks.ModelDoc2, PIDName As String, 
+PIDCollection As Collection) As Object<br>
+&nbsp;&nbsp;&nbsp; Dim PID()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Byte<br>
+&nbsp;&nbsp;&nbsp; Dim PIDVariant&nbsp; As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim PIDString&nbsp;&nbsp; As String<br>
+&nbsp;&nbsp;&nbsp; Dim EntityType&nbsp; As Long<br>
+&nbsp;&nbsp;&nbsp; Dim i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Integer<br>
+&nbsp;&nbsp;&nbsp; Dim SelObj&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Object<br>
+&nbsp;&nbsp;&nbsp; Dim errCode&nbsp;&nbsp;&nbsp;&nbsp; As Long<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get the string from the collection<br>
+&nbsp;&nbsp;&nbsp; PIDString = &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDString = PIDCollection.Item(PIDName)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Parse the string into an array<br>
+&nbsp;&nbsp;&nbsp; PIDVariant = Split(PIDString, &quot;,&quot;)<br>
+&nbsp;&nbsp;&nbsp; ReDim PID(UBound(PIDVariant))<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Change to a byte array<br>
+&nbsp;&nbsp;&nbsp; For i = 0 To (UBound(PIDVariant) - 1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PID(i) = PIDVariant(i)<br>
+&nbsp;&nbsp;&nbsp; Next i<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Select the entity<br>
+&nbsp;&nbsp;&nbsp; Set SelObj = 
+Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((PID), errCode)<br>
+&nbsp;&nbsp;&nbsp; Set SelectByPID = SelObj<br>
+&nbsp;&nbsp;&nbsp; Set SelObj = Nothing<br>
+End Function</p>
+<p class="APICODE"><br>
+Function PIDInitializer() As Collection</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim PIDCollection As New Collection<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim selection1 As String</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Constants<br>
+&nbsp;&nbsp;&nbsp; selection1 = 
+&quot;255,18,0,0,3,0,0,0,255,254,255,27,85,0,112,0,112,0,114,0,115,0,119,0,97,0,121,0,95,0,108,0,110,0,107,0,45,0,49,0,64,0,108,0,97,0,110,0,100,0,105,0,110,0,103,0,95,0,103,0,101,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,57,0,0,0,255,255,1,0,13,0,109,111,86,101,114,116,101,120,82,101,102,95,99,255,255,255,255,255,255,255,255,3,0,0,0,0,2,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,104,67,0,58,0,92,0,68,0,111,0,99,0,117,0,109,0,101,0,110,0,116,0,115,0,32,0,97,0,110,0,100,0,32,0,83,0,101,0,116,0,116,0,105,0,110,0,103,0,115,0,92,0,97,0,116,0,114,0,105,0,118,0,101,0,100,0,105,0,92,0,77,0,121,0,32,0,68,0,111,0,99,0,117,0,109,0,101,0,110,0,116,0,115,0,92,0,99,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; 
+&quot;0,111,0,115,0,109,0,111,0,115,0,95,0,115,0,117,0,112,0,112,0,111,0,114,0,116,0,92,0,50,0,48,0,48,0,54,0,98,0,101,0,116,0,97,0,92,0,76,0,97,0,110,0,100,0,105,0,110,0,103,0,32,0,71,0,101,0,97,0,114,0,92,0,85,0,112,0,112,0,114,0,115,0,119,0,97,0,121,0,95,0,108,0,110,0,107,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,9,128,255,254,255,12,85,0,112,0,112,0,114,0,115,0,119,0,97,0,121,0,95,0,108,0,110,0,107,0,2,0,0,247,212,198,52,0,138,187,76,66,1,0,0,0,0,0,0,0,18,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,32,0,0,0,0,0,0,0,138,187,76,66,8,0,0,0,166,214,198,52,14,0,0,0,3,128,0,0,5,128,8,0,8,0,0,0,166,214,198,52,13,0,0,0,255,255,1,0,20,0,109,111,69,110,100,70,97,99,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,8,0,0,0,166,214,198,52,1,0,0,0,255,255,255,255,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Store constants in a collection<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection1, &quot;selection1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set PIDInitializer = PIDCollection<br>
+End Function</p>
+<p class="APICODE">
+<br>
+Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim Part&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim CWAddinCallBack&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWAddinCallBack<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim Study2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim Study3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim Study4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim CWFeatObj&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWResults<br>
+&nbsp;&nbsp;&nbsp; Dim FatigueOptions&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWFatigueStudyOptions<br>
+&nbsp;&nbsp;&nbsp; Dim FatigueEvent&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWFatigueEvent<br>
+&nbsp;&nbsp;&nbsp; Dim FatigueOptions2&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWFatigueStudyOptions<br>
+&nbsp;&nbsp;&nbsp; Dim FatigueEvent2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWFatigueEvent<br>
+&nbsp;&nbsp;&nbsp; Dim FatigueOptions3&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWFatigueStudyOptions<br>
+&nbsp;&nbsp;&nbsp; Dim FatigueEvent3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWFatigueEvent<br>
+&nbsp;&nbsp;&nbsp; Dim FatigueOptions4&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWFatigueStudyOptions<br>
+&nbsp;&nbsp;&nbsp; Dim FatigueEvent4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWFatigueEvent<br>
+&nbsp;&nbsp;&nbsp; Dim fatEv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWFatigueEvent<br>
+&nbsp;&nbsp;&nbsp; Dim PointsX&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim PointsY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim PointsX_2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim PointsY_2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim errCode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim Disp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim VarStudyNames&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+Variant<br>
+&nbsp;&nbsp;&nbsp; Dim VarScales&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim VarSteps&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim AssocCounts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim VarNewStudyNames&nbsp;&nbsp;&nbsp; As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim VarNewScales&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+Variant<br>
+&nbsp;&nbsp;&nbsp; Dim VarNewSteps&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim VarVertices&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim bchecked&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim dcycles&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Double<br>
+&nbsp;&nbsp;&nbsp; Dim lhCurve&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim ntype&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim dsamplingrate&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+Double<br>
+&nbsp;&nbsp;&nbsp; Dim nnoofbins&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim npercentfilterloadcycles As Long<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim PIDCollection As New Collection<br>
+&nbsp;&nbsp;&nbsp; Set PIDCollection = PIDInitializer()<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>ActiveDoc</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; VarVertices = Array(SelectByPID(Part, 
+&quot;selection1&quot;, PIDCollection))<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = 
+SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, &quot;CWAddinCallBack 
+object not found&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;COSMOSWORKS 
+object not found&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+active document&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Add default fatigue study results plot<br>
+&nbsp;&nbsp;&nbsp; errCode = ActDoc.<b>AddDefaultFatigueStudyPlot</b>(swsFatigueStudy_DamagePlot)<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+CWStudyManager object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create constant amplitude fatigue study<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Creating constant amplitude fatigue study 
+Fatigue_StudyAPIConst...&quot;<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>CreateNewStudy3</b>(&quot;Fatigue_StudyAPIConst&quot;, 
+swsAnalysisStudyTypeFatigue, 0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;Failed to create 
+new study&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study.<b>SetFatigueResultOptions</b>(1, 
+Nothing)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set FatigueOptions = Study.<b>FatigueStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; If FatigueOptions Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+get CWFatigueStudyOptions object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set FatigueEvent = FatigueOptions.<b>AddFatigueEventForConstantAmplitude</b>(&quot;Ready_Static&quot;, 
+-0.002, 1, errCode)<br>
+&nbsp;&nbsp;&nbsp; FatigueEvent.<b>SuppressUnSuppress</b> 'suppress event<br>
+&nbsp;&nbsp;&nbsp; FatigueEvent.<b>SuppressUnSuppress</b> 'unsuppress event</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; AssocCounts = FatigueEvent.<b>GetStudyAssociationData</b>(VarStudyNames, 
+VarScales, VarSteps)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; FatigueEvent.<b>FatigueEventBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; FatigueEvent.<b>Cycles2</b> = 500.0<br>
+&nbsp;&nbsp;&nbsp; FatigueEvent.<b>LoadingRatio</b> = 8.9<br>
+&nbsp;&nbsp;&nbsp; FatigueEvent.<b>LoadingType</b> = 2 ' Loading ratio<br>
+&nbsp;&nbsp;&nbsp; VarNewScales = Array(5.6)<br>
+&nbsp;&nbsp;&nbsp; VarNewStudyNames = Array(&quot;Ready_Static&quot;)<br>
+&nbsp;&nbsp;&nbsp; VarNewSteps = Array(9)<br>
+&nbsp;&nbsp;&nbsp; errCode = FatigueEvent.<b>SetStudyAssociationData</b>(1, (VarNewStudyNames), 
+(VarNewScales), (VarNewSteps))<br>
+&nbsp;&nbsp;&nbsp; errCode = FatigueEvent.<b>FatigueEventEndEdit</b>()<br>
+&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; Set fatEv = FatigueOptions.<b>GetFatigueEvent</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Name of constant amplitude fatigue event 
+is: &quot; &amp; fatEv.<b>Name</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of loading events in this fatigue 
+study: &quot; &amp; FatigueOptions.<b>LoadingEventCount</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Result folder: &quot; &amp; FatigueOptions.<b>ResultFolder</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Shell face option as defined in 
+swsShellFace_e: &quot; &amp; FatigueOptions.<b>ShellFace</b><br>
+&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; FatigueOptions.<b>GetInfiniteLifeSettings</b> bchecked, dcycles<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Fatigue study infinite life settings 
+checked? (1 = yes) &quot; &amp; bchecked<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of cycles to use: &quot; &amp; dcycles<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Event interaction type as defined in 
+swsFatigueEventInteraction_e: &quot; &amp; FatigueOptions.<b>ConstantAmplitudeEventInteractionOption</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Computing alternating stress option as 
+defined in swsFatigueAlternatingStressOption_e: &quot; &amp; FatigueOptions.<b>ComputingAlternatingStressOption</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Fatigue strength reduction factor: &quot; &amp; 
+FatigueOptions.<b>FatigueStrengthReductionFactor</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Mean stress correction option as defined 
+in swsFatigueMeanStressCorrectionType_e: &quot; &amp; FatigueOptions.<b>MeanStressCorrectionOption</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed with 
+error code &quot; &amp; errCode<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create variable amplitude fatigue study<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Creating variable amplitude fatigue study 
+Fatigue_StudyAPIVariable...&quot;<br>
+&nbsp;&nbsp;&nbsp; Set Study2 = StudyMngr.<b>CreateNewStudy3</b>(&quot;Fatigue_StudyAPIVariable&quot;, 
+swsAnalysisStudyTypeFatigue, 1, errCode)<br>
+&nbsp;&nbsp;&nbsp; If Study2 Is Nothing Then ErrorMsg SwApp, &quot;Failed to create 
+new study&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study2.<b>SetFatigueResultOptions</b>(1, 
+(VarVertices))<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set FatigueOptions2 = Study2.<b>FatigueStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; If FatigueOptions2 Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+get CWFatigueStudyOptions object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; PointsX = Array(0, 1, 2, 3, 4, 5, 6.25714, 
+7, 8.3846, 9, 10)<br>
+&nbsp;&nbsp;&nbsp; PointsY = Array(0, 11, 21, 33, 44, 21, 66.25714, 77, 88.3846, 
+99, 109)<br>
+&nbsp;&nbsp;&nbsp; Set FatigueEvent2 = FatigueOptions2.<b>AddFatigueEventForVariableAmplitude</b>(&quot;Ready_Static&quot;, 
+-0.002, 1, (PointsX), (PointsY), 0, 1#, errCode)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set fatEv = FatigueOptions2.<b>GetFatigueEvent</b>(0, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Name of variable amplitude fatigue event 
+is &quot; &amp; fatEv.<b>Name</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of repeats: &quot; &amp; 
+FatigueEvent2.<b>NoOfRepeats</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Start times: &quot; &amp; FatigueEvent2.<b>StartTimes</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; FatigueEvent2.<b>FatigueEventBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; PointsX_2 = Array(0, 1, 2, 3, 4, 5, 6.25714, 7, 8.3846, 9, 
+10, 11, 20)<br>
+&nbsp;&nbsp;&nbsp; PointsY_2 = Array(0, 11, 21, 33, 44, 21, 66.25714, 77, 
+88.3846, 99, 109, 66, 12)<br>
+&nbsp;&nbsp;&nbsp; errCode = FatigueEvent2.<b>SetLoadHistoryCurve</b>((PointsX_2), 
+(PointsY_2), 2, 1.8)<br>
+&nbsp;&nbsp;&nbsp; errCode = FatigueEvent2.<b>FatigueEventEndEdit</b>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; lhCurve = FatigueEvent2.<b>GetLoadHistoryCurve</b>(ntype, 
+dsamplingrate)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Type of load history curve as defined in 
+swsFatigueLoadHistoryCurveType_e: &quot; &amp; ntype<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Sampling rate in seconds: &quot; &amp; 
+dsamplingrate<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of pairs of load history curve 
+data: &quot; &amp; lhCurve(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Load history curve [time, amplitude] 
+data:&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; lhCurve(1) &amp; &quot;, &quot; &amp; lhCurve(2)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; lhCurve(3) &amp; &quot;, &quot; &amp; lhCurve(4)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; lhCurve(5) &amp; &quot;, &quot; &amp; lhCurve(6)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; lhCurve(7) &amp; &quot;, &quot; &amp; lhCurve(8)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; lhCurve(9) &amp; &quot;, &quot; &amp; lhCurve(10)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; lhCurve(11) &amp; &quot;, &quot; &amp; lhCurve(12)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; lhCurve(13) &amp; &quot;, &quot; &amp; lhCurve(14)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; lhCurve(15) &amp; &quot;, &quot; &amp; lhCurve(16)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; lhCurve(17) &amp; &quot;, &quot; &amp; lhCurve(18)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; lhCurve(19) &amp; &quot;, &quot; &amp; lhCurve(20)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; lhCurve(21) &amp; &quot;, &quot; &amp; lhCurve(22)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; lhCurve(23) &amp; &quot;, &quot; &amp; lhCurve(24)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; &amp; lhCurve(25) &amp; &quot;, &quot; &amp; lhCurve(26)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of loading 
+events in this fatigue study: &quot; &amp; FatigueOptions2.<b>LoadingEventCount</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Result folder: &quot; &amp; FatigueOptions2.<b>ResultFolder</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Shell face option as defined in swsShellFace_e: &quot; &amp; FatigueOptions2.<b>ShellFace</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; FatigueOptions2.<b>GetInfiniteLifeSettings</b> 
+bchecked, dcycles<br>
+&nbsp;&nbsp;&nbsp; FatigueOptions2.<b>GetVariableAmplitudeEventOptions</b> 
+nnoofbins, npercentfilterloadcycles<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Fatigue study infinite life settings 
+checked? (1 = yes) &quot; &amp; bchecked<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of cycles to use: &quot; &amp; dcycles<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Number of equally spaced buckets in which 
+to distribute the load: &quot; &amp; nnoofbins<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Filter load cycles below this percentage 
+of maximum load: &quot; &amp; npercentfilterloadcycles<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Computing alternating stress option as 
+defined in swsFatigueAlternatingStressOption_e: &quot; &amp; FatigueOptions2.<b>ComputingAlternatingStressOption</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Fatigue strength reduction factor: &quot; &amp; 
+FatigueOptions2.<b>FatigueStrengthReductionFactor</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Mean stress correction option as defined 
+in swsFatigueMeanStressCorrectionType_e: &quot; &amp; FatigueOptions2.<b>MeanStressCorrectionOption</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study2.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed with 
+error code &quot; &amp; errCode </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWFeatObj = Study2.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWFeatObj Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+CWResults object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get minimum/maximum fatigue<br>
+&nbsp;&nbsp;&nbsp; Disp = CWFeatObj.<b>GetMinMaxFatigue</b>(0, errCode)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Minimum fatigue is &quot; &amp; Disp(1) &amp; &quot; at 
+node &quot; &amp; Disp(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Maximum fatigue is &quot; &amp; Disp(3) &amp; &quot; at 
+node &quot; &amp; Disp(2)<br>
+<br>
+End Sub</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

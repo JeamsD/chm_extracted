@@ -1,0 +1,331 @@
+<html>
+
+<head>
+<title>Add a Remote Load with Distributed Coupling Example (VBA</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,remote loads">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Add a Remote Load with Distributed Coupling Example (VBA)</h1>
+<p>This example shows how to create a linear static study and add a remote load 
+with distributed coupling.</p>
+
+<p class=APICODE>'---------------------------------------------------------------------------- 
+<br>
+' Preconditions: <br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Open <i>public_documents</i><b>\samples\Simulation Examples\link1.sldprt.</b>&nbsp; <br>
+' <br>
+' Postconditions:&nbsp; <br>
+' 1. Creates <b>Static 1</b>.<br>
+' 2. Applies material and a fixture.<br>
+' 3. Adds a remote load of 10mm translation in the X-direction <br>
+'&nbsp;&nbsp;&nbsp; and -100N force in the Y-direction <br>
+'&nbsp;&nbsp;&nbsp; with distributed coupling at the origin.<br>
+' 4. Meshes, analyses, and reports on <b>Static 1</b>.<br>
+'<br>
+' NOTE: Because 
+ the model is used elsewhere, do not save changes. <br>
+' 
+---------------------------------------------------------------------------</p>
+
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim Part&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim StaticOptions&nbsp;&nbsp; As 
+CosmosWorksLib.CWStaticStudyOptions<br>
+&nbsp;&nbsp;&nbsp; Dim SolidMgr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWSolidManager<br>
+&nbsp;&nbsp;&nbsp; Dim SolidComp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWSolidComponent<br>
+&nbsp;&nbsp;&nbsp; Dim SolidBody&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWSolidBody<br>
+&nbsp;&nbsp;&nbsp; Dim LBCMgr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWLoadsAndRestraintsManager<br>
+&nbsp;&nbsp;&nbsp; Dim CWLoad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWLoadsAndRestraints<br>
+&nbsp;&nbsp;&nbsp; Dim CWMesh&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; Dim CWResult&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWResults<br>
+&nbsp;&nbsp;&nbsp; Dim lStatus&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim boolStatus&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim longstatus&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Long<br>
+&nbsp;&nbsp;&nbsp; Dim longwarnings&nbsp;&nbsp;&nbsp; As Long<br>
+&nbsp;&nbsp;&nbsp; Dim errCode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim pValue&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim el&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Double<br>
+&nbsp;&nbsp;&nbsp; Dim tl&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Double<br>
+&nbsp;&nbsp;&nbsp; Dim bApp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim bXVal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim bYYVal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim bZVal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim bAllowDC&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+Boolean<br>
+&nbsp;&nbsp;&nbsp; Dim lXCode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim lYCode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim lZCode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim xVal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Double<br>
+&nbsp;&nbsp;&nbsp; Dim yVal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Double<br>
+&nbsp;&nbsp;&nbsp; Dim zVal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Double<br>
+&nbsp;&nbsp;&nbsp; Dim var1 As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim pDisp1 As Object<br>
+&nbsp;&nbsp;&nbsp; Dim DispArray1 As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim Disp As Variant, Stress As Variant</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Const URESMax&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Double = 3.931252 'mm '0.00452 'mm<br>
+&nbsp;&nbsp;&nbsp; Const VONMax&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+Double = 42872.33 'Pa '22.1&nbsp; 'MPa<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim PIDCollection As New Collection<br>
+&nbsp;&nbsp;&nbsp; Set PIDCollection = PIDInitializer()<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Exit Sub</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Part = SwApp.ActiveDoc<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = 
+SwApp.GetAddInObject(&quot;CosmosWorks.CosmosWorks&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, &quot;CWAddinCallBack 
+object not found&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;COSMOSWORKS 
+object not found&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get the active document<br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.ActiveDoc()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create the static study<br>
+&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.StudyManager()<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StudyMngr.ActiveStudy = 0<br>
+&nbsp;&nbsp;&nbsp; Dim NewStudyName As String<br>
+&nbsp;&nbsp;&nbsp; NewStudyName = &quot;Static 1&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Study = 
+StudyMngr.CreateNewStudy3(NewStudyName, 0, 0, errCode)<br>
+&nbsp;&nbsp;&nbsp; boolStatus = Part.Extension.SelectByID2(&quot;Boss-Extrude1&quot;, &quot;SOLIDBODY&quot;, 
+0, 0, 0, True, 0, Nothing, 0)<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SolidManagerObj As Object<br>
+&nbsp;&nbsp;&nbsp; Set SolidManagerObj = Study.SolidManager()<br>
+&nbsp;&nbsp;&nbsp; errCode = 
+SolidManagerObj.SetLibraryMaterialToSelectedEntities(&quot;solidworks materials&quot;, 
+&quot;Plain Carbon Steel&quot;)<br>
+&nbsp;&nbsp;&nbsp; Part.ClearSelection2 True<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Part.GraphicsRedraw2<br>
+&nbsp;&nbsp;&nbsp; boolStatus = Part.Extension.SelectByRay(-3.7348334934677E-03, 
+-1.40549072772123E-03, 3.08049871188132E-03, 0.651406664432463, 
+-4.91062309924361E-03, -0.758712885954726, 8.13813747228381E-04, 1, True, 0, 0)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Part.GraphicsRedraw2<br>
+&nbsp;&nbsp;&nbsp; Set LBCMgr = Study.LoadsAndRestraintsManager()<br>
+&nbsp;&nbsp;&nbsp; Dim DispatchObj1 As Object<br>
+&nbsp;&nbsp;&nbsp; Set DispatchObj1 = 
+Part.SelectionManager.GetSelectedObject6(1, -1)<br>
+&nbsp;&nbsp;&nbsp; Dim DispArray As Variant<br>
+&nbsp;&nbsp;&nbsp; DispArray = Array(DispatchObj1)<br>
+&nbsp;&nbsp;&nbsp; Dim CWRestraintObj As Object<br>
+&nbsp;&nbsp;&nbsp; Set CWRestraintObj = LBCMgr.AddRestraint(0, (DispArray), 
+Nothing, errCode)<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StudyMngr.ActiveStudy = 0<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get persist ID for the origin<br>
+&nbsp;&nbsp;&nbsp; SelectByPID &quot;selection1&quot;, PIDCollection, var1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set pDisp1 = 
+Part.Extension.GetObjectByPersistReference((var1))<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create variant array<br>
+&nbsp;&nbsp;&nbsp; DispArray1 = Array(pDisp1)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Add a remote load of 10mm in X-direction 
+and -100N in Y-direction with distributed coupling at the origin<br>
+&nbsp;&nbsp;&nbsp; Set CWLoad = LBCMgr.AddRemoteLoad(0, (DispArray1), 0, 0, 0, 
+0, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Remote load not 
+created&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CWLoad.RemoteLoadBeginEdit<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; bAllowDC = CWLoad.<b>AllowDistributedCoupling</b><br>
+&nbsp;&nbsp;&nbsp; xVal = 0 'Force in X-direction<br>
+&nbsp;&nbsp;&nbsp; yVal = -100 'Force in Y-direction<br>
+&nbsp;&nbsp;&nbsp; zVal = 0<br>
+&nbsp;&nbsp;&nbsp; bXVal = False<br>
+&nbsp;&nbsp;&nbsp; bYYVal = True<br>
+&nbsp;&nbsp;&nbsp; bZVal = False<br>
+&nbsp;&nbsp;&nbsp; lXCode = 0<br>
+&nbsp;&nbsp;&nbsp; lYCode = 1<br>
+&nbsp;&nbsp;&nbsp; lZCode = 0</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If bAllowDC = True Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CWLoad.<b>ConnectionType</b> = 
+swsRemoteLoadConnectionType_Distributed<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CWLoad.<b>WeightingFactor</b> = 
+swsRemoteLoadWeightingFactor_Default_Constant<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CWLoad.<b>ForceUnit</b> = 
+swsForceUnitNOrNm<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CWLoad.<b>TranslationUnit</b> = 
+swsLinearUnitMillimeters<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; xVal = 10 'Translation in X-direction<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lXCode = 2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CWLoad.<b>SetForceOrTranslationValuesEx</b> 
+1, lXCode, xVal, lYCode, yVal, lZCode, zVal<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; If bAllowDC = False Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CWLoad.<b>SetForceOrTranslationValues</b> 
+1, bXVal, xVal, bYYVal, yVal, bZVal, zVal<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CWLoad.RemoteLoadEndEdit<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Mesh<br>
+&nbsp;&nbsp;&nbsp; Set CWMesh = Study.Mesh<br>
+&nbsp;&nbsp;&nbsp; If CWMesh Is Nothing Then ErrorMsg SwApp, &quot;No mesh object&quot;<br>
+&nbsp;&nbsp;&nbsp; CWMesh.Quality = 1<br>
+&nbsp;&nbsp;&nbsp; Call CWMesh.GetDefaultElementSizeAndTolerance(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.CreateMesh(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Mesh failed&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Set solver type to FFEPlus solver<br>
+&nbsp;&nbsp;&nbsp; Set StaticOptions = Study.StaticStudyOptions<br>
+&nbsp;&nbsp;&nbsp; If StaticOptions Is Nothing Then ErrorMsg SwApp, &quot;No 
+StaticStudyOptions object&quot;<br>
+&nbsp;&nbsp;&nbsp; StaticOptions.SolverType = 2<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.RunAnalysis<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed with 
+error: &quot; &amp; errCode<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get results<br>
+&nbsp;&nbsp;&nbsp; Set CWResult = Study.Results<br>
+&nbsp;&nbsp;&nbsp; If CWResult Is Nothing Then ErrorMsg SwApp, &quot;No results 
+object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get displacement<br>
+&nbsp;&nbsp;&nbsp; Disp = CWResult.GetMinMaxDisplacement(3, 1, Nothing, 0, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No displacement 
+results&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Compare displacement<br>
+&nbsp;&nbsp;&nbsp; If (Disp(3) &lt; 0.95 * URESMax) Or (Disp(3) &gt; 1.05 * URESMax) 
+Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;URES % error = &quot; &amp; 
+(((Disp(3) - URESMax) / URESMax) * 100)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get Min/Max von Mises stress<br>
+&nbsp;&nbsp;&nbsp; Stress = CWResult.GetMinMaxStress(9, 0, 0, Nothing, 3, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;No stress results&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Compare maximum von Mises stress<br>
+&nbsp;&nbsp;&nbsp; If (Stress(3) &lt; 0.95 * VONMax) Or (Stress(3) &gt; 1.05 * VONMax) 
+Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;VON % error = &quot; &amp; 
+(((Stress(3) - VONMax) / VONMax) * 100)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Function ErrorMsg(SwApp As Object, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.SendMsgToUser2 Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.RecordLine &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.RecordLine &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.RecordLine &quot;&quot;<br>
+End Function<br>
+</p>
+<p class="APICODE">Function SelectByPID(PIDName As String, PIDCollection As 
+Collection, varEntity As Variant)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SelObj As Object<br>
+&nbsp;&nbsp;&nbsp; Dim PID() As Byte<br>
+&nbsp;&nbsp;&nbsp; Dim PIDVariant As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim PIDString As String<br>
+&nbsp;&nbsp;&nbsp; Dim EntityType As Long<br>
+&nbsp;&nbsp;&nbsp; Dim i As Integer<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get the string from the collection.<br>
+&nbsp;&nbsp;&nbsp; PIDString = &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; PIDString = PIDCollection.Item(PIDName)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Parse the string into an array<br>
+&nbsp;&nbsp;&nbsp; PIDVariant = Split(PIDString, &quot;,&quot;)<br>
+&nbsp;&nbsp;&nbsp; ReDim PID(UBound(PIDVariant))<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Change to a byte array<br>
+&nbsp;&nbsp;&nbsp; For i = 0 To (UBound(PIDVariant) - 1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PID(i) = PIDVariant(i)<br>
+&nbsp;&nbsp;&nbsp; Next i<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; varEntity = PID<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set SelObj = Nothing<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Function</p>
+<p class="APICODE">Function PIDInitializer() As Collection<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim PIDCollection As New Collection<br>
+&nbsp;&nbsp;&nbsp; Dim selection1 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection2 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection3 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection4 As String<br>
+&nbsp;&nbsp;&nbsp; Dim selection5 As String</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Constants<br>
+&nbsp;&nbsp;&nbsp; selection1 = 
+&quot;35,29,213,113,218,129,72,162,168,88,152,178,27,137,239,153,30,2,0,0,63,1,0,0,120,218,109,146,75,75,195,64,16,199,255,105,105,90,40,22,4,81,15,30,188,120,212,131,151,128,34,84,250,192,130,143,146,244,88,8,49,217,104,108,154,212,184,133,94,132,222,69,188,228,67,120,241,226,87,240,123,53,206,116,83,137,144,129,157,199,111,118,102,97,102,135,45,160,10,32,91,101,96,201,50,13,77,76,227,190,227,10,83,248,182,171,65,73,131,85,85,249,175,63,233,209,215,224,123,180,177,170,108,143,203,146,120,106,77,100,47,146,214,60,241,7,158,41,102,182,171,210,58,167,77,219,101,127,139,252,222,66,222,221,63,9,87,42,212,34,68,113,63,8,69,151,223,101,182,77,172,99,201,36,136,30,174,156,200,11,5,225,85,166,135,8,16,97,2,27,167,184,125,75,141,230,146,232,69,15,103,24,99,4,129,23,72,116,224,144,21,184,33,235,34,65,76,209,33,233,136,244,51,177,227,117,254,145,58,177,30,195,204,235,18,226,220,93,82,52,198,144,162,36,247,139,175,158,192,194,53,186,152,173,179,237,221,131,75,30,75,5,155,97,85,212,68,235,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; 
+&quot;93,234,234,83,143,57,85,75,20,101,159,78,251,61,53,116,158,234,18,168,45,27,127,172,86,96,231,228,127,126,164,134,86,194,42,37,172,90,210,175,158,239,117,135,167,30,121,188,218,127,219,41,222,213,214,119,51,245,25,240,11,144,100,129,59,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; &quot;,Type=1&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Store constants in a collection<br>
+&nbsp;&nbsp;&nbsp; PIDCollection.Add selection1, &quot;selection1&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Pass the collection back<br>
+&nbsp;&nbsp;&nbsp; Set PIDInitializer = PIDCollection<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Function</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

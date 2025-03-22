@@ -1,0 +1,493 @@
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<html>
+
+<!--(==============================================================)-->
+<!--(Document created with RoboEditor. )============================-->
+<!--(==============================================================)-->
+
+<head>
+
+<title>Get Thermal Values Example (VBA)</title>
+
+<!--(Meta)==========================================================-->
+
+<meta http-equiv=content-type content="text/html; charset=windows-1252">
+<meta name=MS-HKWD content="VBA examples,thermal study">
+<meta name=generator content="RoboHELP by eHelp Corporation - www.ehelp.com">
+<meta name=generator-major-version content=0.1>
+<meta name=generator-minor-version content=1>
+<meta name=filetype content=kadov>
+<meta name=filetype-version content=1>
+<meta name=page-count content=1>
+<meta name=layout-height content=8520>
+<meta name=layout-width content=6926>
+
+
+<!--(Links)=========================================================-->
+
+<link rel="StyleSheet" href="./ApiHelp.css">
+
+
+
+</head>
+
+<!--(Body)==========================================================-->
+
+
+<body>
+
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation 
+ API Help</span></h1>
+
+<h1>Get Thermal Values Example (VBA)</h1>
+
+<p>This example shows how to get thermal values in a thermal study.</p>
+
+<p class="APICODE">
+'---------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Ensure that the specified model exists.<br>
+' 4. Modify the path to <b>solidworks materials.sldmat</b> if needed.<br>
+' 5. Uncomment the thermal method whose return values you want to see.<br>
+' 6. Open the Immediate window.<br>
+'<br>
+' Postconditions:<br>
+' 1.&nbsp; Opens document.<br>
+' 2.&nbsp; Creates <b>Thermal_One</b> study.<br>
+' 3.&nbsp; Applies user-defined and SOLIDWORKS materials to components.<br>
+' 4.&nbsp; Gets objects by persistent reference and populates input arrays.<br>
+' 5.&nbsp; Sets thermal study options.<br>
+' 6.&nbsp; Assigns initial temperatures to assembly components.<br>
+' 7.&nbsp; Adds heat power and convection to assembly components.<br>
+' 8.&nbsp; Assigns thermostat location and the temperature range.<br>
+' 9.&nbsp; Meshes the assembly.<br>
+' 10. Analyzes the study.<br>
+' 11. Prints thermal values at solution step 60 to the Immediate window.<br>
+'<br>
+' NOTES:<br>
+'&nbsp; * To get persistent reference identifiers (PIDs) for model selections,<br>
+'&nbsp;&nbsp;&nbsp; use 
+<b> 
+<a href="GettingStarted-swsimulationapi.html"><font color="#000000">pidcollector.exe</font></a></b> 
+ or IModelDocExtension::GetPersistReference3.<br>
+'&nbsp; * Solving this study can take some time. Examine the Immediate window<br>
+'&nbsp;&nbsp;&nbsp; to monitor the macro's progress. <b>Done!</b> indicates that the 
+macro<br>
+'&nbsp;&nbsp;&nbsp; has finished.<br>
+'&nbsp; * Because this assembly document is used by a SOLIDWORKS Simulation<br>
+'&nbsp;&nbsp;&nbsp; online tutorial, do not save any changes.<br>
+'--------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp; Dim swApp As SldWorks.SldWorks<br>
+&nbsp;&nbsp; Dim COSMOSWORKS As CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp; Dim CWObject As CosmosWorksLib.CwAddincallback<br>
+&nbsp;&nbsp; Dim ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp; Dim Study As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp; Dim SolidMgr As CosmosWorksLib.CWSolidManager<br>
+&nbsp;&nbsp; Dim SolidComp As CosmosWorksLib.CWSolidComponent<br>
+&nbsp;&nbsp; Dim SolidBody As CosmosWorksLib.CWSolidBody<br>
+&nbsp;&nbsp; Dim ThermalOptions As CosmosWorksLib.CWThermalStudyOptions<br>
+&nbsp;&nbsp; Dim CWConv As CosmosWorksLib.CWConvection<br>
+&nbsp;&nbsp; Dim CWHeatPower As CosmosWorksLib.CWHeatPower<br>
+&nbsp;&nbsp; Dim CwMesh As CosmosWorksLib.CwMesh<br>
+&nbsp;&nbsp; Dim CWResult As CosmosWorksLib.CWResults<br>
+&nbsp;&nbsp; Dim CWMat As CosmosWorksLib.CWMaterial<br>
+&nbsp;&nbsp; Dim CWTemp As CosmosWorksLib.CWTemperature<br>
+&nbsp;&nbsp; Dim Part As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp; Dim LBCMgr As CosmosWorksLib.CWLoadsAndRestraintsManager<br>
+&nbsp;&nbsp; Dim oselect1 As Object, oselect2 As Object, oselect3 As Object<br>
+&nbsp;&nbsp; Dim oselect4 As Object, oselect5 As Object, oselect6 As Object<br>
+&nbsp;&nbsp; Dim oselect7 As Object, oselect8 As Object, oselect9 As Object, 
+oselect10 As Object<br>
+&nbsp;&nbsp; Dim therm1 As Object<br>
+&nbsp;&nbsp; Dim var1 As Variant, var2 As Variant, var3 As Variant, var4 As 
+Variant<br>
+&nbsp;&nbsp; Dim var5 As Variant, var6 As Variant, var7 As Variant, var8 As 
+Variant<br>
+&nbsp;&nbsp; Dim var9 As Variant, var10 As Variant, var11 As Variant<br>
+&nbsp;&nbsp; Dim Temp As Variant<br>
+&nbsp;&nbsp; Dim varArray1 As Variant<br>
+&nbsp;&nbsp; Dim varArray2 As Variant<br>
+&nbsp;&nbsp; Dim varArray3 As Variant<br>
+&nbsp;&nbsp; Dim varArray4 As Variant<br>
+&nbsp;&nbsp; Dim varArray5 As Variant<br>
+&nbsp;&nbsp; Dim varArray6 As Variant<br>
+&nbsp;&nbsp; Dim varArray7 As Variant<br>
+&nbsp;&nbsp; Dim bApp As Boolean<br>
+&nbsp;&nbsp; Dim selection1 As String, selection2 As String, selection3 As 
+String<br>
+&nbsp;&nbsp; Dim selection4 As String, selection5 As String, selection6 As 
+String<br>
+&nbsp;&nbsp; Dim selection7 As String, selection8 As String, selection9 As 
+String<br>
+&nbsp;&nbsp; Dim selection10 As String, selection11 As String<br>
+&nbsp;&nbsp; Dim longstatus As Long, longwarnings As Long<br>
+&nbsp;&nbsp; Dim errCode As Long<br>
+&nbsp;&nbsp; Dim el As Double, tl As Double<br>
+&nbsp;&nbsp; Dim nStep As Long<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Connect to SOLIDWORKS<br>
+&nbsp;&nbsp;&nbsp; If swApp Is Nothing Then Set swApp = Application.SldWorks</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Open document<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Opening document...&quot;<br>
+&nbsp;&nbsp;&nbsp; Set Part = swApp.<b>OpenDoc6</b>(&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2019\samples\Simulation Examples\Thermal\CoffeeJar.SLDASM&quot;, swDocASSEMBLY, 
+swOpenDocOptions_Silent, &quot;&quot;, longstatus, longwarnings)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If Part Is Nothing Then ErrorMsg swApp, 
+&quot;Failed to open document&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get the SOLIDWORKS Simulation add-in 
+object<br>
+&nbsp;&nbsp;&nbsp; Set CWObject = swApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWObject Is Nothing Then ErrorMsg swApp, &quot;No 
+CwAddincallback object&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWObject.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg swApp, &quot;No 
+CosmosWorks object&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get active document<br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg swApp, &quot;No active 
+document&quot;, True<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Create new thermal study<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Creating thermal study...&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg swApp, &quot;No study 
+manager object&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>CreateNewStudy3</b>(&quot;Thermal_One&quot;, 
+swsAnalysisStudyTypeThermal, swsMeshTypeSolid, errCode)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg swApp, &quot;No study&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get first solid component<br>
+&nbsp;&nbsp;&nbsp; Set SolidMgr = Study.<b>SolidManager</b><br>
+&nbsp;&nbsp;&nbsp; If SolidMgr Is Nothing Then ErrorMsg swApp, &quot;No solid manager 
+object&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidComp = SolidMgr.<b>GetComponentAt</b>(0, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No solid component&quot;, 
+True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidBody = SolidComp.<b>GetSolidBodyAt</b>(0, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No solid body&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Add material<br>
+&nbsp;&nbsp;&nbsp; Set CWMat = SolidBody.<b>GetDefaultMaterial</b><br>
+&nbsp;&nbsp;&nbsp; If CWMat Is Nothing Then ErrorMsg swApp, &quot;No default 
+material&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CWMat.<b>MaterialName</b> = &quot;Coffee&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Call CWMat.<b>SetPropertyByName</b>(&quot;DENS&quot;, 
+1000, 0)<br>
+&nbsp;&nbsp;&nbsp; Call CWMat.<b>SetPropertyByName</b>(&quot;KX&quot;, 40, 0)<br>
+&nbsp;&nbsp;&nbsp; Call CWMat.<b>SetPropertyByName</b>(&quot;C&quot;, 4200#, 0)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = SolidBody.<b>SetSolidBodyMaterial</b>(CWMat)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;Solid body material not 
+set&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get second solid component<br>
+&nbsp;&nbsp;&nbsp; Set SolidComp = SolidMgr.<b>GetComponentAt</b>(1, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No solid component&quot;, 
+True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidBody = SolidComp.<b>GetSolidBodyAt</b>(0, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No solid body&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Add material<br>
+&nbsp;&nbsp;&nbsp; bApp = SolidBody.<b>SetLibraryMaterial</b>(&quot;C:\Program Files\SOLIDWORKS Corp\SOLIDWORKS\lang\english\sldmaterials\solidworks materials.sldmat&quot;, &quot;Glass&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bApp = False Then ErrorMsg swApp, &quot;No glass material 
+applied&quot;, True<br>
+&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get third solid component<br>
+&nbsp;&nbsp;&nbsp; Set SolidComp = SolidMgr.<b>GetComponentAt</b>(2, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No solid component&quot;, 
+True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SolidBody = SolidComp.<b>GetSolidBodyAt</b>(0, 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No solid body&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Add material<br>
+&nbsp;&nbsp;&nbsp; bApp = SolidBody.<b>SetLibraryMaterial</b>(&quot;C:\Program Files\SOLIDWORKS Corp\SOLIDWORKS\lang\english\sldmaterials\solidworks materials.sldmat&quot;, &quot;Nylon 
+6/10&quot;)<br>
+&nbsp;&nbsp;&nbsp; If bApp = False Then ErrorMsg swApp, &quot; No Nylon 6/10 material 
+applied&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' CoffeePot<br>
+&nbsp;&nbsp;&nbsp; selection1 = 
+&quot;216,14,0,0,5,0,0,0,255,254,255,21,67,0,111,0,102,0,102,0,101,0,101,0,80,0,111,0,116,0,45,0,49,0,64,0,67,0,111,0,102,0,102,0,101,0,101,0,74,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,11,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray selection1, var1<br>
+&nbsp;&nbsp;&nbsp; Set oselect1 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var1), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Coffee<br>
+&nbsp;&nbsp;&nbsp; selection2 = 
+&quot;216,14,0,0,5,0,0,0,255,254,255,18,67,0,111,0,102,0,102,0,101,0,101,0,45,0,49,0,64,0,67,0,111,0,102,0,102,0,101,0,101,0,74,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,12,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection2 = selection2 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray selection2, var2<br>
+&nbsp;&nbsp;&nbsp; Set oselect2 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var2), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp; ' Top<br>
+&nbsp;&nbsp;&nbsp; selection3 = 
+&quot;216,14,0,0,5,0,0,0,255,254,255,15,84,0,111,0,112,0,45,0,49,0,64,0,67,0,111,0,102,0,102,0,101,0,101,0,74,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,13,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection3 = selection3 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray selection3, var3<br>
+&nbsp;&nbsp;&nbsp; Set oselect3 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var3), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp; ' Get the four coffee faces that make up the 
+surface of coffee in the coffee pot<br>
+&nbsp;&nbsp; ' Face 1<br>
+&nbsp;&nbsp;&nbsp; selection4 = 
+&quot;216,14,0,0,3,0,0,0,255,254,255,18,67,0,111,0,102,0,102,0,101,0,101,0,45,0,49,0,64,0,67,0,111,0,102,0,102,0,101,0,101,0,74,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,12,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,18,0,109,111,80,76,105,110,101,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,14,0,109,111,79,98,106,70,105,108,101,68,101,102,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,6,99,0,111,0,102,0,102,0,101,0,101,0,126,253,47,63,11,128,255,254,255,57,67,0,58,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,68,0,111,0,99,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,95,0,102,0,111,0,114,0,67,0,117,0,115,0,116,0,111,0,109,0,101,0,114,0,115,0,92,0,84,0,104,0,101,0,114,0,109,0,97,0,10&quot;<br>
+&nbsp;&nbsp;&nbsp; selection4 = selection4 &amp; 
+&quot;8,0,92,0,99,0,111,0,102,0,102,0,101,0,101,0,46,0,115,0,108,0,100,0,112,0,114,0,116,0,90,14,28,65,0,0,0,0,2,0,1,0,0,0,0,0,0,0,4,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,0,0,0,0,92,0,0,0,241,69,48,63,3,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,1,0,0,0,5,0,0,0,255,255,1,0,18,0,109,111,80,76,105,110,101,80,114,111,106,73,100,82,101,112,95,99,0,0,5,128,8,0,90,0,0,0,219,69,48,63,16,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,1,0,0,0,19,128,0,0,5,128,8,0,92,0,0,0,241,69,48,63,3,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,16,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,1,0,0,0,1,0,0,0,16,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,11,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection4 = selection4 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray selection4, var4<br>
+&nbsp;&nbsp;&nbsp; Set oselect4 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var4), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Face 2<br>
+&nbsp;&nbsp;&nbsp; selection5 = 
+&quot;216,14,0,0,3,0,0,0,255,254,255,18,67,0,111,0,102,0,102,0,101,0,101,0,45,0,49,0,64,0,67,0,111,0,102,0,102,0,101,0,101,0,74,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,12,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,18,0,109,111,80,76,105,110,101,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,14,0,109,111,79,98,106,70,105,108,101,68,101,102,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,6,99,0,111,0,102,0,102,0,101,0,101,0,126,253,47,63,11,128,255,254,255,57,67,0,58,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,68,0,111,0,99,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,95,0,102,0,111,0,114,0,67,0,117,0,115,0,116,0,111,0,109,0,101,0,114,0,115,0,92,0,84,0,104,0,101,0,114,0,109,0,97,0,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection5 = selection5 &amp; 
+&quot;108,0,92,0,99,0,111,0,102,0,102,0,101,0,101,0,46,0,115,0,108,0,100,0,112,0,114,0,116,0,90,14,28,65,0,0,0,0,2,0,1,0,0,0,0,0,0,0,4,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,0,0,0,0,92,0,0,0,241,69,48,63,3,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,1,0,0,0,6,0,0,0,255,255,1,0,18,0,109,111,80,76,105,110,101,80,114,111,106,73,100,82,101,112,95,99,0,0,5,128,8,0,92,0,0,0,241,69,48,63,3,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,16,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,1,0,0,0,1,0,0,0,19,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,16,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,1,0,0,0,16,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,11,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection5 = selection5 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray selection5, var5<br>
+&nbsp;&nbsp;&nbsp; Set oselect5 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var5), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Face 3<br>
+&nbsp;&nbsp;&nbsp; selection6 = 
+&quot;216,14,0,0,3,0,0,0,255,254,255,18,67,0,111,0,102,0,102,0,101,0,101,0,45,0,49,0,64,0,67,0,111,0,102,0,102,0,101,0,101,0,74,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,12,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,18,0,109,111,80,76,105,110,101,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,14,0,109,111,79,98,106,70,105,108,101,68,101,102,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,6,99,0,111,0,102,0,102,0,101,0,101,0,126,253,47,63,11,128,255,254,255,57,67,0,58,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,68,0,111,0,99,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,95,0,102,0,111,0,114,0,67,0,117,0,115,0,116,0,111,0,109,0,101,0,114,0,115,0,92,0,84,0,104,0,101,0,114,0,109,0,97,0,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection6 = selection6 &amp; 
+&quot;108,0,92,0,99,0,111,0,102,0,102,0,101,0,101,0,46,0,115,0,108,0,100,0,112,0,114,0,116,0,90,14,28,65,0,0,0,0,2,0,1,0,0,0,0,0,0,0,4,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,0,0,0,0,92,0,0,0,241,69,48,63,3,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,2,0,0,0,2,0,0,0,255,255,1,0,18,0,109,111,80,76,105,110,101,80,114,111,106,73,100,82,101,112,95,99,0,0,5,128,8,0,92,0,0,0,241,69,48,63,3,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,16,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,2,0,0,0,1,0,0,0,16,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,11,0,0,0,19,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,16,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,1,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection6 = selection6 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray selection6, var6<br>
+&nbsp;&nbsp;&nbsp; Set oselect6 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var6), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Face 4<br>
+&nbsp;&nbsp;&nbsp; selection7 = 
+&quot;216,14,0,0,3,0,0,0,255,254,255,18,67,0,111,0,102,0,102,0,101,0,101,0,45,0,49,0,64,0,67,0,111,0,102,0,102,0,101,0,101,0,74,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,12,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,18,0,109,111,80,76,105,110,101,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,14,0,109,111,79,98,106,70,105,108,101,68,101,102,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,6,99,0,111,0,102,0,102,0,101,0,101,0,126,253,47,63,11,128,255,254,255,57,67,0,58,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,68,0,111,0,99,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,95,0,102,0,111,0,114,0,67,0,117,0,115,0,116,0,111,0,109,0,101,0,114,0,115,0,92,0,84,0,104,0,101,0,114,0,109,0,97,0,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection7 = selection7 &amp; 
+&quot;108,0,92,0,99,0,111,0,102,0,102,0,101,0,101,0,46,0,115,0,108,0,100,0,112,0,114,0,116,0,90,14,28,65,0,0,0,0,2,0,1,0,0,0,0,0,0,0,4,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,0,0,0,0,92,0,0,0,241,69,48,63,3,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,2,0,0,0,1,0,0,0,16,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,11,0,0,0,255,255,1,0,18,0,109,111,80,76,105,110,101,80,114,111,106,73,100,82,101,112,95,99,0,0,5,128,8,0,92,0,0,0,241,69,48,63,3,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,16,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,2,0,0,0,1,0,0,0,21,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,16,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,1,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection7 = selection7 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray selection7, var7<br>
+&nbsp;&nbsp;&nbsp; Set oselect7 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var7), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get the selections for convection<br>
+&nbsp;&nbsp;&nbsp; ' Top-outer face of coffee pot<br>
+&nbsp;&nbsp;&nbsp; selection8 = 
+&quot;216,14,0,0,3,0,0,0,255,254,255,21,67,0,111,0,102,0,102,0,101,0,101,0,80,0,111,0,116,0,45,0,49,0,64,0,67,0,111,0,102,0,102,0,101,0,101,0,74,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,11,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,14,0,109,111,79,98,106,70,105,108,101,68,101,102,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,9,67,0,111,0,102,0,102,0,101,0,101,0,80,0,111,0,116,0,174,232,47,63,11,128,255,254,255,60,67,0,58,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,68,0,111,0,99,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,95,0,102,0,111,0,114,0,67,0,117,0,115,0,116,0,111,0,109,0,101,0,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection8 = selection8 &amp; 
+&quot;114,0,115,0,92,0,84,0,104,0,101,0,114,0,109,0,97,0,108,0,92,0,67,0,111,0,102,0,102,0,101,0,101,0,80,0,111,0,116,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,153,14,28,65,0,0,0,0,2,0,1,0,0,0,0,0,0,0,5,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,0,0,0,0,39,0,0,0,234,237,47,63,3,0,0,0,3,128,0,0,5,128,8,0,39,0,0,0,234,237,47,63,2,0,0,0,0,0,3,128,0,0,5,128,8,0,39,0,0,0,234,237,47,63,4,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection8 = selection8 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray selection8, var8<br>
+&nbsp;&nbsp;&nbsp; Set oselect8 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var8), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Lower-outer face of coffee pot<br>
+&nbsp;&nbsp;&nbsp; selection9 = 
+&quot;216,14,0,0,3,0,0,0,255,254,255,21,67,0,111,0,102,0,102,0,101,0,101,0,80,0,111,0,116,0,45,0,49,0,64,0,67,0,111,0,102,0,102,0,101,0,101,0,74,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,11,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,5,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,14,0,109,111,79,98,106,70,105,108,101,68,101,102,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,9,67,0,111,0,102,0,102,0,101,0,101,0,80,0,111,0,116,0,174,232,47,63,11,128,255,254,255,60,67,0,58,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,68,0,111,0,99,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,95,0,102,0,111,0,114,0,67,0,117,0,115,0,116,0,111,0,109,0,101,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection9 = selection9 &amp; 
+&quot;0,114,0,115,0,92,0,84,0,104,0,101,0,114,0,109,0,97,0,108,0,92,0,67,0,111,0,102,0,102,0,101,0,101,0,80,0,111,0,116,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,153,14,28,65,0,0,0,0,2,0,1,0,0,0,0,0,0,0,5,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,0,0,0,0,39,0,0,0,234,237,47,63,2,0,0,0,3,128,0,0,5,128,8,0,39,0,0,0,234,237,47,63,3,0,0,0,0,0,3,128,0,0,5,128,8,0,39,0,0,0,234,237,47,63,1,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection9 = selection9 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray selection9, var9<br>
+&nbsp;&nbsp;&nbsp; Set oselect9 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var9), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp; ' Get the selections for heat power<br>
+&nbsp;&nbsp; ' Vertex located on the top of the bottom face of the coffee pot<br>
+&nbsp;&nbsp;&nbsp; selection10 = 
+&quot;216,14,0,0,3,0,0,0,255,254,255,18,67,0,111,0,102,0,102,0,101,0,101,0,45,0,49,0,64,0,99,0,111,0,102,0,102,0,101,0,101,0,106,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,12,0,0,0,255,255,1,0,13,0,109,111,86,101,114,116,101,120,82,101,102,95,99,255,255,255,255,255,255,255,255,8,0,0,0,0,2,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,18,0,109,111,80,76,105,110,101,80,114,111,106,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection10 = selection10 &amp; 
+&quot;1,0,14,0,109,111,79,98,106,70,105,108,101,68,101,102,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,6,99,0,111,0,102,0,102,0,101,0,101,0,126,253,47,63,11,128,255,254,255,57,67,0,58,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,68,0,111,0,99,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,95,0,102,0,111,0,114,0,67,0,117,0,115,0,116,0,111,0,109,0,101,0,114,0,115,0,92,0,84,0,104,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection10 = selection10 &amp; 
+&quot;0,101,0,114,0,109,0,97,0,108,0,92,0,99,0,111,0,102,0,102,0,101,0,101,0,46,0,115,0,108,0,100,0,112,0,114,0,116,0,90,14,28,65,0,0,0,0,2,0,1,0,0,0,0,0,0,0,4,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,0,0,0,0,92,0,0,0,241,69,48,63,255,255,1,0,18,0,109,111,80,76,105,110,101,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,90,0,0,0,219,69,48,63,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection10 = selection10 &amp; 
+&quot;110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,1,0,0,0,1,0,0,0,3,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,17,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,1,0,0,0,3,128,0,0,5,128,8,0,92,0,0,0,241,69,48,63,14,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,17,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,2,0,0,0,1,0,0,0,3,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,17,128,0,0,5,128,8,0,88,0,0,0,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection10 = selection10 &amp; 
+&quot;135,69,48,63,5,0,0,0,1,0,0,0,14,128,0,0,5,128,8,0,92,0,0,0,241,69,48,63,14,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,17,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,1,0,0,0,5,0,0,0,14,128,0,0,5,128,8,0,92,0,0,0,241,69,48,63,14,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,17,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,2,0,0,0,1,0,0,0,14,128,0,0,5,128,8,0,92,0,0,0,241,69,48,63,14,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,17,128,0,0,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection10 = selection10 &amp; 
+&quot;5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,2,0,0,0,2,0,0,0,14,128,0,0,5,128,8,0,92,0,0,0,241,69,48,63,14,128,0,0,5,128,8,0,90,0,0,0,219,69,48,63,17,128,0,0,5,128,8,0,88,0,0,0,135,69,48,63,5,0,0,0,1,0,0,0,6,0,0,0,4,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection10 = selection10 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray selection10, var10<br>
+&nbsp;&nbsp;&nbsp; Set therm1 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var10), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Vertex where sensor (thermostat) is 
+located<br>
+&nbsp;&nbsp;&nbsp; selection11 = 
+&quot;216,14,0,0,3,0,0,0,255,254,255,21,67,0,111,0,102,0,102,0,101,0,101,0,80,0,111,0,116,0,45,0,49,0,64,0,67,0,111,0,102,0,102,0,101,0,101,0,74,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,11,0,0,0,255,255,1,0,11,0,109,111,70,97,99,101,82,101,102,95,99,1,0,0,0,0,0,0,0,3,0,0,0,0,3,0,0,0,0,0,0,125,195,148,37,173,73,178,84,125,195,148,37,173,73,178,84,0,0,255,255,1,0,23,0,109,111,70,114,111,109,83,107,116,69,110,116,83,117,114,102,73,100,82,101,112,95,99,0,0,255,255,1,0,6,0,109,111,70,82,95,99,255,255,1,0,13,0,109,111,69,120,116,79,98,106,101,99,116,95,99,255,255,1,0,14,0,109,111,79,98,106,70,105,108,101,68,101,102,95,99,255,255,1,0,17,0,109,111,67,83,116,114,105,110,103,72,97,110,100,108,101,95,99,255,254,255,9,67,0,111,0,102,0,102,0,101,0,101,0,80,0,111,0,116,0,174,232,47,63,11,128,255,254,255,60,67,0,58,0,92,0,67,0,79,0,83,0,77,0,79,0,83,0,68,0,111,0,99,0,115,0,92,0,69,0,120,0,97,0,109,0,112,0,108,0,101,0,115,0,95,0,102,0,111,0,114,0,67,0,117,0,115,0,116,0,111,0,109,0,101,0,&quot;<br>
+&nbsp;&nbsp;&nbsp; selection11 = selection11 &amp; 
+&quot;114,0,115,0,92,0,84,0,104,0,101,0,114,0,109,0,97,0,108,0,92,0,67,0,111,0,102,0,102,0,101,0,101,0,80,0,111,0,116,0,46,0,83,0,76,0,68,0,80,0,82,0,84,0,153,14,28,65,0,0,0,0,2,0,1,0,0,0,0,0,0,0,5,0,0,0,255,254,255,7,68,0,101,0,102,0,97,0,117,0,108,0,116,0,0,0,0,0,0,0,0,0,0,0,0,0,39,0,0,0,234,237,47,63,1,0,0,0,3,128,0,0,5,128,8,0,39,0,0,0,234,237,47,63,2,0,0,0,0,0,0,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection11 = selection11 &amp; &quot;,Type=1&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; StringtoArray selection11, var11<br>
+&nbsp;&nbsp;&nbsp; Set oselect10 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var11), 
+longstatus)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Create arrays<br>
+&nbsp;&nbsp;&nbsp; varArray1 = Array(oselect1, oselect3)<br>
+&nbsp;&nbsp;&nbsp; varArray2 = Array(oselect2)<br>
+&nbsp;&nbsp;&nbsp; varArray3 = Array(oselect4, oselect5, oselect6, oselect7)<br>
+&nbsp;&nbsp;&nbsp; varArray4 = Array(oselect8, oselect9)<br>
+&nbsp;&nbsp;&nbsp; varArray5 = Array(therm1)<br>
+&nbsp;&nbsp;&nbsp; varArray6 = Array(oselect10)<br>
+&nbsp;&nbsp;&nbsp; varArray7 = Array(-19.63, 31.23, 173.15)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Set transient thermal study with solver 
+type FFEPlus<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Setting transient thermal study with solver type 
+FFEPlus...&quot;<br>
+&nbsp;&nbsp;&nbsp; Set ThermalOptions = Study.<b>ThermalStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; Study.<b>ThermalStudyOptions</b>.<b>SolutionType</b> = 0<br>
+&nbsp;&nbsp;&nbsp; If ThermalOptions Is Nothing Then ErrorMsg swApp, &quot;No thermal 
+options&quot;, False</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ThermalOptions.<b>SolverType</b> = 2<br>
+&nbsp;&nbsp;&nbsp; ThermalOptions.<b>TotalTime</b> = 3600<br>
+&nbsp;&nbsp;&nbsp; ThermalOptions.<b>TimeIncrement</b> = 60</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Apply initial temperature to coffee pot 
+and top<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Applying initial temperature to coffee pot and 
+top...&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set LBCMgr = Study.<b>LoadsAndRestraintsManager</b><br>
+&nbsp;&nbsp;&nbsp; If LBCMgr Is Nothing Then ErrorMsg swApp, &quot;No loads and 
+restraints manager&quot;, False</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWTemp = LBCMgr.<b>AddTemperature</b>((varArray1), 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No temperature 
+applied&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CWTemp.<b>TemperatureBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; CWTemp.<b>TemperatureType</b> = 0<br>
+&nbsp;&nbsp;&nbsp; CWTemp.<b>Unit</b> = 1<br>
+&nbsp;&nbsp;&nbsp; CWTemp.<b>TemperatureValue</b> = 72</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = CWTemp.<b>TemperatureEndEdit</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No temperature 
+applied&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Apply initial temperature to coffee<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Applying initial temperature to coffee...&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWTemp = LBCMgr.<b>AddTemperature</b>((varArray2), 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No temperature 
+applied&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CCWTemp.<b>TemperatureBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; CWTemp.<b>TemperatureType</b> = 0<br>
+&nbsp;&nbsp;&nbsp; CWTemp.<b>Unit</b> = 1<br>
+&nbsp;&nbsp;&nbsp; CWTemp.<b>TemperatureValue</b> = 195</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = CWTemp.<b>TemperatureEndEdit</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No temperature 
+applied&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Create convection for coffee component<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Creating convection for coffee component...&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWConv = LBCMgr.<b>AddConvection</b>((varArray3), 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No convection added&quot;, 
+True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CWConv.<b>ConvectionBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; CWConv.<b>Unit</b> = 1<br>
+&nbsp;&nbsp;&nbsp; CWConv.<b>ConvectionCoefficient</b> = 0.0000085<br>
+&nbsp;&nbsp;&nbsp; CWConv.<b>BulkAmbientTemperature</b> = 72</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = CWConv.<b>ConvectionEndEdit</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;Convection end-edit 
+failed for coffee&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Create convection for coffee pot 
+component<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Creating convection for coffee pot component...&quot;<br>
+&nbsp;&nbsp;&nbsp; Set CWConv = LBCMgr.<b>AddConvection</b>((varArray4), errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No convection added&quot;, 
+True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CWConv.<b>ConvectionBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; CWConv.<b>Unit</b> = 1<br>
+&nbsp;&nbsp;&nbsp; CWConv.<b>ConvectionCoefficient</b> = 0.000061<br>
+&nbsp;&nbsp;&nbsp; CWConv.<b>BulkAmbientTemperature</b> = 72</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = CWConv.<b>ConvectionEndEdit</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;Convection end-edit 
+failed for coffee pot&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Create heat power for face<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Creating heat power for face...&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWHeatPower = LBCMgr.<b>AddHeatPower</b>((varArray6), 
+errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No heat power created&quot;, 
+True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; CWHeatPower.<b>HeatPowerBeginEdit</b><br>
+&nbsp;&nbsp;&nbsp; CWHeatPower.<b>Unit</b> = 0<br>
+&nbsp;&nbsp;&nbsp; CWHeatPower.<b>HPValue</b> = 2000</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Set thermostat to a vertex<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Setting thermostat to a vertex...&quot;<br>
+&nbsp;&nbsp;&nbsp; CWHeatPower.<b>IncludeThermostat</b> = True<br>
+&nbsp;&nbsp;&nbsp; CWHeatPower.<b>SetThermostat</b> therm1<br>
+&nbsp;&nbsp;&nbsp; CWHeatPower.<b>ThermostatUnits</b> = 1<br>
+&nbsp;&nbsp;&nbsp; CWHeatPower.<b>SetCutOffTemperatures</b> 190, 200<br>
+&nbsp;&nbsp;&nbsp; errCode = CWHeatPower.<b>HeatPowerEndEdit</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;Heat power not 
+updated&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Create mesh<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Creating mesh...&quot;<br>
+&nbsp;&nbsp;&nbsp; Set CwMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CwMesh Is Nothing Then ErrorMsg swApp, &quot;No mesh object&quot;, 
+False<br>
+&nbsp;&nbsp;&nbsp; CwMesh.<b>Quality</b> = 1<br>
+&nbsp;&nbsp;&nbsp; CwMesh.<b>GetDefaultElementSizeAndTolerance</b> 0, el, tl<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, el, tl)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;Mesh failed&quot;, True</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Run analysis<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Running analysis...&quot;<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;Analysis failed&quot;, True<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get thermal results<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Getting thermal results...&quot;<br>
+&nbsp;&nbsp;&nbsp; Set CWResult = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWResult Is Nothing Then ErrorMsg swApp, &quot;No results 
+object&quot;, False</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; nStep = CWResult.<b>GetMaximumAvailableSteps</b> 
+' solution step 60<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get temperature value at point {-19.63, 
+31.23, 173.15} at solution step 60<br>
+&nbsp;&nbsp;&nbsp; Temp = CWResult.<b>GetThermalValuesAtPoints</b>(swsThermalComponentTEMP, 
+nStep, Nothing, (varArray7), swsTemperatureUnitKelvin, errCode)<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get temperature values at all nodes at 
+solution step 60<br>
+&nbsp;&nbsp;&nbsp; 'Temp = CWResult.<b>GetThermalValues</b>(nStep, Nothing, 
+swsTemperatureUnitKelvin, errCode)<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get heat energy values for the specified 
+vertex at solution step 60<br>
+&nbsp;&nbsp;&nbsp; 'Temp = CWResult.<b>GetHeatPowerOrEnergy</b>(1, (varArray6), 
+swsUnitSI, 1, nStep, errCode) ' Heat energy<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get temperature values for all steps at 
+node 9236<br>
+&nbsp;&nbsp;&nbsp; 'Temp = CWResult.<b>GetThermalComponentForAllStepsAtNode</b>(swsThermalComponentTEMP, 
+9236, Nothing, swsTemperatureUnitKelvin, errCode)<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get temperature values for the specified 
+entities at solution step 60<br>
+&nbsp;&nbsp;&nbsp; 'Temp = CWResult.<b>GetThermalForEntities</b>(swsThermalComponentTEMP, 
+nStep, Nothing, (varArray4), swsTemperatureUnitKelvin, errCode)</p>
+<p class="APICODE">&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg swApp, &quot;No temperature result&quot;, 
+True<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Print out the contents of Temp<br>
+&nbsp;&nbsp;&nbsp; ' See the Simulation API Help for information about the 
+contents of the returned array<br>
+&nbsp;&nbsp;&nbsp; Dim i As Long<br>
+&nbsp;&nbsp;&nbsp; For i = 0 To UBound(Temp)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print Temp(i)<br>
+&nbsp;&nbsp;&nbsp; Next</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Done!&quot;</p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Sub ErrorMsg(swApp As SldWorks.SldWorks, Message As String, 
+EndTest As Boolean)<br>
+&nbsp;&nbsp; swApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp; swApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp; swApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp; swApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+<p class="APICODE">Function StringtoArray(inputSTR As String, varEntity As 
+Variant)<br>
+&nbsp;&nbsp; Dim PID() As Byte<br>
+&nbsp;&nbsp; Dim i As Integer</p>
+<p class="APICODE">&nbsp;&nbsp; varEntity = Split(inputSTR, &quot;,&quot;)<br>
+&nbsp;&nbsp; ReDim PID(UBound(varEntity))<br>
+&nbsp;&nbsp; For i = 0 To (UBound(varEntity) - 1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PID(i) = varEntity(i)<br>
+&nbsp;&nbsp; Next i<br>
+&nbsp;&nbsp; varEntity = PID<br>
+End Function</p>
+
+</body>
+
+</html>

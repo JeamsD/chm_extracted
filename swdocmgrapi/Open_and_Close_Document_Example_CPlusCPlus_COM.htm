@@ -1,0 +1,142 @@
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<html>
+
+<!--(==============================================================)-->
+<!--(Document created with RoboEditor. )============================-->
+<!--(==============================================================)-->
+
+<head>
+
+<title>Open and Close Document Example (C++)</title>
+
+<!--(Meta)==========================================================-->
+
+<meta http-equiv=content-type content="text/html; charset=windows-1252">
+<meta NAME=MS-HAID CONTENT=EXInstantiateSession>
+<meta NAME=MS-HKWD CONTENT="C++ examples,document">
+<meta NAME=MS-HKWD CONTENT="C++ examples,instantiate session">
+<meta NAME=MS-HKWD CONTENT="C++ examples">
+<meta name=generator content="RoboHELP by eHelp Corporation - www.ehelp.com">
+<meta name=generator-major-version content=0.1>
+<meta name=generator-minor-version content=1>
+<meta name=filetype content=kadov>
+<meta name=filetype-version content=1>
+<meta name=page-count content=1>
+<meta name=layout-height content=1279>
+<meta name=layout-width content=916>
+
+
+<!--(Links)=========================================================-->
+
+<link rel="StyleSheet" href="./ApiHelp.css">
+
+
+
+</head>
+
+<!--(Body)==========================================================-->
+
+
+<body>
+
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Document Manager API Help</span></h1>
+<h1>Open and Close Document Example (C++)</h1>
+
+<p>This examples shows how to instantiate a SOLIDWORKS Document Manager 
+ session, open an assembly, get its latest supported SOLIDWORKS version number, list 
+its external references, and 
+ close it.</p>
+
+<p>&nbsp;</p>
+
+<p class=apiCode>#define WIN32_LEAN_AND_MEAN // Exclude rarely used stuff 
+ from Windows headers</p>
+
+<p class=apiCode>#include &lt;stdio.h&gt;</p>
+
+<p class=apiCode>#include &lt;tchar.h&gt;</p>
+
+<p class=apiCode>#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS //Some CString 
+ constructors will be explicit</p>
+
+<p class=apiCode>#include &lt;windows.h&gt;</p>
+
+<p class=apiCode>#include &lt;atlbase.h&gt;</p>
+
+<p class=apiCode>#include &lt;iostream&gt;</p>
+
+<p class=apiCode>#include 'safearray.h' </p>
+
+<p class=apiCode>using namespace std; <!--kadov_tag{{<spaces>}}-->&nbsp; <!--kadov_tag{{</spaces>}}-->//Use 
+ the standard C++ libraries for text output</p>
+
+<p class=apiCode>&nbsp;</p>
+
+<p class=apiCode>#import 'C:\Program Files\Common Files\SOLIDWORKS Shared\swdocumentmgr.dll' 
+ <!--kadov_tag{{<spaces>}}-->&nbsp;<!--kadov_tag{{</spaces>}}-->raw_interfaces_only, 
+ raw_native_types, no_namespace, named_guids //Change as necessary</p>
+
+<p class=apiCode>&nbsp;</p>
+
+<p class=apiCode>int _tmain(int argc, _TCHAR* argv[]) <!--kadov_tag{{<spaces>}}-->&nbsp;<!--kadov_tag{{</spaces>}}--></p>
+
+<p class=apiCode>{</p>
+
+<blockquote>
+	<p class=apiCode>//Initialize COM </p>
+	<p class=apiCode>CoInitialize(NULL);</p>
+	<p class=apiCode>&nbsp;</p>
+	<p class=apiCode>CComPtr&lt;ISwDMClassFactory&gt; swClassFact;</p>
+	<p class=apiCode>CComPtr&lt;ISwDMApplication&gt; swDocMgr;</p>
+	<p class=apiCode>HRESULT hres = swClassFact.CoCreateInstance(__uuidof(SwDMClassFactory), 
+ NULL, CLSCTX_INPROC_SERVER );</p>
+	<p class=apiCode>CComBSTR Key = _T('<span style="font-style: italic;">your_license_key</span>'); 
+ <!--kadov_tag{{<spaces>}}-->&nbsp;<!--kadov_tag{{</spaces>}}-->//Specify 
+ your license key</p>
+	<p class=apiCode>CComBSTR AsmDoc = _T('E:\\Assemblies\\Asm\\Assem1.sldasm'); 
+ <!--kadov_tag{{<spaces>}}-->&nbsp;<!--kadov_tag{{</spaces>}}-->//Replace 
+ with the name of your assembly (assuming it has one or more external references)</p>
+	<p class=apiCode>swClassFact-&gt;<span style="font-weight: bold;">GetApplication</span>(Key, 
+ &amp;swDocMgr);</p>
+	<p class=apiCode>long ver = -1;</p>
+	<p class=apiCode>&nbsp;</p>
+	<p class=apiCode>swDocMgr-&gt;<span style="font-weight: bold;">GetLatestSupportedFileVersion</span>(&amp;ver);
+	</p>
+	<p class=apiCode>cout &lt;&lt;'The latest supported file version is: ' 
+ &lt;&lt; ver &lt;&lt; endl;</p>
+	<p class=apiCode>&nbsp;</p>
+	<p class=apiCode>CComPtr&lt;ISwDMDocument&gt; swDoc;</p>
+	<p class=apiCode>SwDmDocumentOpenError res;</p>
+	<p class=apiCode>swDocMgr-&gt;<span style="font-weight: bold;">GetDocument</span>(AsmDoc, 
+ swDmDocumentAssembly,VARIANT_TRUE, <!--kadov_tag{{<spaces>}}-->&nbsp;<!--kadov_tag{{</spaces>}}-->&amp;res, 
+ &amp;swDoc);</p>
+	<p class=apiCode>&nbsp;</p>
+	<p class=apiCode>CComPtr&lt;ISwDMSearchOption&gt; pSrcOpt;</p>
+	<p class=apiCode>VARIANT Files;</p>
+	<p class=apiCode>swDocMgr-&gt;<span style="font-weight: bold;">GetSearchOptionObject</span>(&amp;pSrcOpt);</p>
+	<p class=apiCode>swDoc-&gt;<span style="font-weight: bold;">GetAllExternalReferences</span>(pSrcOpt, 
+ &amp;Files);</p>
+	<p class=apiCode>SafeBSTRArray FilesArray(&amp;Files);</p>
+	<p class=apiCode>CComBSTR Ref1 = FilesArray[0]; <!--kadov_tag{{<spaces>}}-->&nbsp;<!--kadov_tag{{</spaces>}}-->//First 
+ file reference (no particular order)</p>
+	<p class=apiCode>&nbsp;</p>
+	<p class=apiCode>swDoc-&gt;<span style="font-weight: bold;">CloseDoc</span>();</p>
+	<p class=apiCode>&nbsp;</p>
+	<p class=apiCode>//Release references</p>
+	<p class=apiCode>pSrcOpt = NULL;</p>
+	<p class=apiCode>swDoc = NULL;</p>
+	<p class=apiCode>swDocMgr = NULL;</p>
+	<p class=apiCode>swClassFact = NULL;</p>
+	<p class=apiCode>&nbsp;</p>
+	<p class=apiCode>//Uninitialize COM </p>
+	<p class=apiCode>CoUninitialize();</p>
+	<p class=apiCode>&nbsp;</p>
+	<p class=apiCode>return 0;</p>
+</blockquote>
+
+<p class=apiCode>}</p>
+
+</body>
+
+</html>

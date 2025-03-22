@@ -1,0 +1,286 @@
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<html>
+
+<!--(==============================================================)-->
+<!--(Document created with RoboEditor. )============================-->
+<!--(==============================================================)-->
+
+<head>
+
+<title>Run SOLIDWORKS Design Checker Example (VB.NET)</title>
+
+<!--(Meta)==========================================================-->
+
+<meta http-equiv=content-type content="text/html; charset=windows-1252">
+<meta name=MS-HKWD content="VB.NET examples,Design Checker">
+<meta name=MS-HKWD content="VB.NET examples">
+<meta name=generator content="RoboHELP by eHelp Corporation - www.ehelp.com">
+<meta name=generator-major-version content=0.1>
+<meta name=generator-minor-version content=1>
+<meta name=filetype content=kadov>
+<meta name=filetype-version content=1>
+<meta name=page-count content=1>
+<meta name=layout-height content=2600>
+<meta name=layout-width content=910>
+
+
+<!--(Links)=========================================================-->
+
+<link rel="StyleSheet" href="ApiHelp.css">
+
+
+
+</head>
+
+<!--(Body)==========================================================-->
+
+
+<body>
+
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS API 
+ Help</span></h1>
+
+<h1>Run SOLIDWORKS Design Checker Example (VB.NET)</h1>
+
+<p>This example shows how to check the active document using the SOLIDWORKS 
+ Design Checker API.</p>
+
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+		<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+			<p class="APICODE"><span style="color:Green">
+			'---------------------------------------------------------------------------<br>
+			' Preconditions:<br>
+			'&nbsp;1. Load the SOLIDWORKS Design Checker add-in<br>
+			'&nbsp;&nbsp;&nbsp;&nbsp;(in SOLIDWORKS click <b>Tools &gt; Add-ins &gt; SOLIDWORKS Design 
+			Checker</b>).<br>
+			'&nbsp;2. Create <b>c:\test</b> if needed.<br>
+			'&nbsp;3. Ensure that the specified standards file and drawing document 
+			exist.<br>
+			'&nbsp;4. Reference the SOLIDWORKS Design Checker primary interop 
+			assembly <br>
+			' &nbsp;&nbsp;(in Project Explorer, right-click the project name, select <br>
+			' &nbsp;&nbsp;&nbsp;<b>Add Reference</b>, click the Browse tab, navigate to the <br>
+			' &nbsp;&nbsp;&nbsp;<i>install_dir</i><b>\api\redist</b> folder and
+			<br>
+			' &nbsp;&nbsp;&nbsp;select <b>SolidWorks.Interop.dsgnchk.dll</b>).<br>
+			'&nbsp;5. In the IDE menu bar select <b>Debug &gt; Windows &gt; Immediate</b>.<br>
+			'&nbsp;6. Run this macro.<br>
+			'<br>
+			' Postconditions:<br>
+			'&nbsp;1. Design Binder displays in the FeatureManager design tree.<br>
+			'&nbsp;2. SOLIDWORKS Design Checker checks the active model document</span><span style="color: #008000"><br>
+			'&nbsp;&nbsp;&nbsp;
+			</span><span style="color:Green">
+			against the specified standards file and creates a report as follows:<br>
+			'&nbsp;&nbsp;&nbsp;&nbsp;a. If lReportFormat is 1 and Microsoft Word is installed, 
+			</span><span style="color: #008000"><br>
+			'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			</span><span style="color:Green">
+			then <b>c:\test\Food Processor\SWDCReport.doc</b> is created,</span><span style="color: #008000"><br>
+			'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and lReportformat = 1 is returned.</span><span style="color:Green"><br>
+			'&nbsp;&nbsp;&nbsp;&nbsp;b. If lReportFormat is 1 or 0 and Microsoft Word is not 
+			installed, </span><span style="color: #008000"><br>
+			'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			</span><span style="color:Green">then <b>c:\test\Food processor\SWDCReport.xml</b> is 
+			created.<br>
+			'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and lReportFormat = 0 is returned.<br>
+			'&nbsp;3. Inspect the Immediate Window.</span><span style="color: #008000"><br>
+			'</span><span style="color:Green"><br>
+			'&nbsp;Because AutoCorrect is false, ResultSummary contains failure 
+			counts delimited by '@':</span><span style="color: #008000"><br>
+			'</span><span style="color:Green"><br>
+			'&nbsp;Critical@High@Medium@Low<br>
+			'<br>
+			'&nbsp;If AutoCorrect is true, then ResultSummary contains both pre- 
+			and post-</span><span style="color: #008000"><br>
+			'
+			</span><span style="color:Green">correction failure counts delimited by '@':</span><span style="color: #008000"><br>
+			'</span><span style="color:Green"><br>
+			' Critical(pre)@High(pre)@Medium(pre)@Low(pre)@Critical(post)@High(post)@Medium(post)@Low(post)<br>
+			'<br>
+			' NOTE: Because the drawing document is used elsewhere, do not save changes.<br>
+			'-----------------------------------------------------------------------------<br>
+			</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+			SolidWorks.Interop.sldworks<br>
+			</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+			SolidWorks.Interop.swconst<br>
+			</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+			SolidWorks.Interop.dsgnchk<br>
+			</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+			System<br>
+			</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+			System.Diagnostics<br>
+			<br>
+			</span><span style="color:Blue">Partial</span><span style="color:Black">
+			</span><span style="color:Blue">Class</span><span style="color:Black"> 
+			SolidWorksMacro<br>
+			<br>
+			<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+			Main()<br>
+			<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			swDCAddIn </span><span style="color:Blue">As</span><span style="color:Black"> 
+			SWDesignCheck<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			StandardFileName </span><span style="color:Blue">As</span><span style="color:Black">
+			</span><span style="color:Blue">String<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			ReportFolderName </span><span style="color:Blue">As</span><span style="color:Black">
+			</span><span style="color:Blue">String<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			retValue </span><span style="color:Blue">As</span><span style="color:Black">
+			</span><span style="color:Blue">Long<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			AddtoDesignBinder </span><span style="color:Blue">As</span><span style="color:Black">
+			</span><span style="color:Blue">Boolean<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			OverWriteReport </span><span style="color:Blue">As</span><span style="color:Black">
+			</span><span style="color:Blue">Boolean<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			warnings </span><span style="color:Blue">As</span><span style="color:Black">
+			</span><span style="color:Blue">Long<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			errors </span><span style="color:Blue">As</span><span style="color:Black">
+			</span><span style="color:Blue">Long<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			AutoCorrect </span><span style="color:Blue">As</span><span style="color:Black">
+			</span><span style="color:Blue">Boolean<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			resultSummary </span><span style="color:Blue">As</span><span style="color:Black">
+			</span><span style="color:Blue">String<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+			lReportFormat </span><span style="color:Blue">As</span><span style="color:Black">
+			</span><span style="color:Blue">Long<br>
+			<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+			Get the SOLIDWORKS Design Checker add-in<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			</span><span style="color: #008000">'</span><span style="color:Green"> 
+			Recommended to use the version-specific ProgID for your version of 
+			Design Checker<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' e.g., &quot;SWDesignChecker.SWDesignCheck.<i>yyyy</i>&quot;; 
+			See the Remarks section in ISWDesignCheck help
+			</span><span style="color:Green"><br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDCAddIn = 
+			swApp.<b>GetAddInObject</b>(</span><span style="color:#a31515">&quot;SWDesignChecker.SWDesignCheck&quot;</span><span style="color:Black">)<br>
+			<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+			swDCAddIn </span><span style="color:Blue">Is</span><span style="color:Black">
+			</span><span style="color:Blue">Nothing</span><span style="color:Black">
+			</span><span style="color:Blue">Then<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;No 
+			SOLIDWORKS Design Checker add-in.&quot;</span><span style="color:Black">)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Exit</span><span style="color:Black">
+			</span><span style="color:Blue">Sub<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+			</span><span style="color:Blue">If<br>
+			<br>
+			<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+			Show the Design Binder in the FeatureManager design tree<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>SetUserPreferenceIntegerValue</b>(swUserPreferenceIntegerValue_e.swFeatureManagerDesignBinderVisibility, 
+			swAutoHideShowResponse_e.swAutoHideShowResponse_Show)<br>
+			<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Open the drawing document 
+			to check<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>OpenDoc6</b>(</span><span style="color:#a31515">&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\advdrawings\FoodProcessor.slddrw&quot;</span><span style="color:Black">, 
+			swDocumentTypes_e.swDocDRAWING, 
+			swOpenDocOptions_e.swOpenDocOptions_Silent, </span>
+			<span style="color:#a31515">&quot;&quot;</span><span style="color:Black">, 
+			errors, warnings)<br>
+			<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' Requirements file<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StandardFileName = </span>
+			<span style="color:#a31515">&quot;C:\Program Files\SOLIDWORKS Corp\SOLIDWORKS\dsgnchk\data\ansi.swstd&quot;<br>
+			<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+			Filename for report<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ReportFolderName = </span>
+			<span style="color:#a31515">&quot;c:\test\Food Processor&quot;<br>
+			<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+			Add report to Design Binder<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AddtoDesignBinder = </span>
+			<span style="color:Blue">True<br>
+			<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+			Overwrite any existing report<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OverWriteReport = </span>
+			<span style="color:Blue">True<br>
+			<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+			Do not autocorrect all failures<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AutoCorrect = </span>
+			<span style="color:Blue">False<br>
+			<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+			Create report in MS Word format<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lReportFormat = 1<br>
+			<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resultSummary = </span><span style="color:#a31515">&quot;&quot;<br>
+			<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+			Run SOLIDWORKS Design Checker on the active drawing document<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;retValue = swDCAddIn.<b>RunDesignCheck5</b>(StandardFileName, 
+			ReportFolderName, AddtoDesignBinder, OverWriteReport, AutoCorrect, 
+			lReportFormat, resultSummary)<br>
+			<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Select</span><span style="color:Black">
+			</span><span style="color:Blue">Case</span><span style="color:Black"> 
+			retValue<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+			0<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;No 
+			errors running this report.&quot;</span><span style="color:Black">)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+			1<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Report 
+			already exists.&quot;</span><span style="color:Black">)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+			2<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Could 
+			not create report directory.&quot;</span><span style="color:Black">)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+			3<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;No 
+			active document.&quot;</span><span style="color:Black">)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Case</span><span style="color:Black"> 
+			4<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;Standards 
+			file does not exist.&quot;</span><span style="color:Black">)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+			</span><span style="color:Blue">Select<br>
+			<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&quot;</span><span style="color:Black">)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;SOLIDWORKS 
+			Design Checker result summary:&quot;</span><span style="color:Black">)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&quot;</span><span style="color:Black">)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(resultSummary)<br>
+			<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&quot;</span><span style="color:Black">)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;SOLIDWORKS 
+			Design Checker created report in this format (0=XML, 1=MSWord): &quot;</span><span style="color:Black"> 
+			&amp; lReportFormat)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+			<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+			</span><span style="color:Blue">Sub<br>
+			<br>
+			<br>
+			<br>
+			</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Public</span><span style="color:Black"> 
+			swApp </span><span style="color:Blue">As</span><span style="color:Black"> 
+			SldWorks<br>
+			<br>
+			<br>
+			</span><span style="color:Blue">End</span><span style="color:Black">
+			</span><span style="color:Blue">Class</span> </p> </div>
+		<p class="APICODE">&nbsp;</div>
+	<p class="APICODE">&nbsp;</div>
+
+</body>
+
+</html>

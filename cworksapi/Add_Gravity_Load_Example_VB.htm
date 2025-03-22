@@ -1,0 +1,160 @@
+<html>
+
+<head>
+<title>Add Gravity Load Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,gravity loads">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Add Gravity Load Example (VBA)</h1>
+<p>This example shows how to add a gravity load to a static study.</p>
+
+<p class="APICODE">
+'------------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Verify that the specified model document exists.<br>
+' 4. Open the Immediate window.<br>
+'<br>
+' Postconditions:<br>
+' 1. Opens the document.<br>
+' 2. Activates <b>Ready - 8 plies</b>.<br>
+' 3. Deletes two pressure loads from <b>Ready - 8 plies</b>.<br>
+' 4. Adds the <b>Gravity-1</b> load to <b>Ready - 8 plies</b>.<br>
+' 5. Prints the <b>Gravity-1</b> properties to the Immediate window.<br>
+' 6. Meshes the part.<br>
+' 7. Sets the solver type.<br>
+' 8. Analyzes <b>Ready - 8 plies</b>.<br>
+' 9. Inspect the Immediate window, the Simulation study tree,<br>
+'&nbsp;&nbsp;&nbsp; and the graphics area.<br>
+'<br>
+' NOTE: Because this part document is used elsewhere, do not save any changes.<br>
+'-----------------------------------------------------------------------------<br>
+Option Explicit</p>
+<p class="APICODE">Sub main()<br>
+&nbsp;&nbsp;&nbsp; Dim SwApp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim Part&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Dim fileName&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+String<br>
+&nbsp;&nbsp;&nbsp; Dim errors&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim warnings&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+Long<br>
+&nbsp;&nbsp;&nbsp; Dim errCode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim longstatus&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Long<br>
+&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim CWAddinCallBack As CosmosWorksLib.CWAddinCallBack<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim mesh&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; Dim StaticOptions&nbsp;&nbsp; As 
+CosmosWorksLib.CWStaticStudyOptions<br>
+&nbsp;&nbsp;&nbsp; Dim lrMgr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWLoadsAndRestraintsManager<br>
+&nbsp;&nbsp;&nbsp; Dim Gravity&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWGravity<br>
+&nbsp;&nbsp;&nbsp; Dim dispEntity&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Object<br>
+&nbsp;&nbsp;&nbsp; Dim str1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As String<br>
+&nbsp;&nbsp;&nbsp; Dim var1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim xval As Double, yval As Double, zval As Double<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Const MeshEleSize&nbsp;&nbsp; As Double = 
+1.4769<br>
+&nbsp;&nbsp;&nbsp; Const MeshTol&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As Double = 
+0.073847</p>
+<p class="APICODE">&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.SldWorks</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; fileName = &quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\api\tjoint.sldprt&quot;<br>
+&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>OpenDoc6</b>(fileName, swDocPART, 1, &quot;&quot;, 
+errors, warnings)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = 1<br>
+&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(StudyMngr.<b>ActiveStudy</b>)</p>
+<p class="APICODE">&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Select top plane for gravity's direction 
+reference<br>
+&nbsp;&nbsp;&nbsp; str1 = &quot;64,31,0,0,1,0,0,0,255,254,255,0,0,0,0,0,3,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; StringtoArray str1, var1<br>
+&nbsp;&nbsp;&nbsp; Set dispEntity = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var1), 
+longstatus)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set lrMgr = Study.<b>LoadsAndRestraintsManager</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Delete pressure loads<br>
+&nbsp;&nbsp;&nbsp; lrMgr.<b>DeleteLoadsAndRestraints</b> (&quot;Pressure-1&quot;)<br>
+&nbsp;&nbsp;&nbsp; lrMgr.<b>DeleteLoadsAndRestraints</b> (&quot;Pressure-2&quot;)</p>
+<p class="APICODE">&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Add gravity load<br>
+&nbsp;&nbsp;&nbsp; Set Gravity = lrMgr.<b>AddGravity</b>(dispEntity, errCode)<br>
+&nbsp; <br>
+&nbsp;&nbsp;&nbsp; Gravity.<b>GetGravitationalAcclerationValues</b> xval, yval, 
+zval<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Gravity acceleration:&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Direction 1: &quot; &amp; xval<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp; Reverse? (1=yes, 0=no) 
+&quot; &amp; Gravity.<b>ReverseDirectionAlongPlaneDir1</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Direction 2: &quot; &amp; yval<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp; Reverse? (1=yes, 0=no) 
+&quot; &amp; Gravity.<b>ReverseDirectionAlongPlaneDir2</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Normal direction: &quot; &amp; zval<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp; Reverse? (1=yes, 0=no) 
+&quot; &amp; Gravity.<b>ReverseDirectionNormalToPlane</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Units as defined in swsUnitSystem_e: &quot; &amp; 
+Gravity.<b>Unit</b><br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Mesh<br>
+&nbsp;&nbsp;&nbsp; Set mesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; mesh.<b>MesherType</b> = 0<br>
+&nbsp;&nbsp;&nbsp; mesh.<b>Quality</b> = 0<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, MeshEleSize, MeshTol)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StaticOptions = Study.<b>StaticStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; StaticOptions.<b>SolverType</b> = 2<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Run analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp; <br>
+End Sub</p>
+<p class="APICODE">Sub StringtoArray(inputSTR As String, varEntity As Variant)</p>
+<p class="APICODE">&nbsp;&nbsp; Dim PID() As Byte<br>
+&nbsp;&nbsp; Dim i As Integer</p>
+<p class="APICODE">&nbsp;&nbsp; varEntity = Split(inputSTR, &quot;,&quot;)</p>
+<p class="APICODE">&nbsp;&nbsp; ReDim PID(UBound(varEntity))</p>
+<p class="APICODE">&nbsp;&nbsp; For i = 0 To (UBound(varEntity) - 1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PID(i) = varEntity(i)<br>
+&nbsp;&nbsp; Next i</p>
+<p class="APICODE">&nbsp;&nbsp; varEntity = PID</p>
+<p class="APICODE">End Sub</p>
+
+<p class=APICODE>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

@@ -1,0 +1,160 @@
+<html>
+
+<head>
+<title>Create Fatigue Study for Dynamic Harmonic Study Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,dynamic study">
+<meta name=MS-HKWD content="VBA examples,harmonic study">
+<meta name=MS-HKWD content="VBA examples,fatigue study">
+<meta name=MS-HKWD content="VBA examples,fatigue study options">
+<meta name=MS-HKWD content="VBA examples,fatigue event">
+<meta name=MS-HKWD content="VBA examples,fatigue study result options">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Create Fatigue Study for Dynamic Harmonic Study Example (VBA)</h1>
+<p>This example shows how to create a fatigue study for a linear dynamic harmonic study.</p>
+<p><span style="font-weight: bold;">NOTE:</span> To get persistent reference 
+ identifiers (PIDs) for model selections, you can use
+<a href="GettingStarted-swsimulationapi.html">pidcollector.exe</a> 
+ or IModelDocExtension::GetPersistReference3.</p>
+
+<p class="APICODE">
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Open <i>public_documents</i><b>\samples\Simulation Examples\Dynamics\ac_unit.sldasm</b>.<br>
+' 4. Activate <b>Sample_Harmonic</b>.<br>
+' 5. Expand <b>Parts</b> in the Simulation design tree and apply <b>Ductile Iron 
+(SN)</b><br>
+'&nbsp;&nbsp;&nbsp; to all parts (right-click a part, click <b>Apply/Edit 
+Material</b>,<br>
+'&nbsp;&nbsp;&nbsp; select <b>SOLIDWORKS Materials &gt; Iron &gt; Ductile Iron (SN)</b>, 
+and click <b>Apply</b>).<br>
+' 6. Open an Immediate window.<br>
+'<br>
+' Postconditions:<br>
+' 1. Creates study, <b>HarmonicFatigue</b>.<br>
+' 2. Adds a fatigue event for step 15 of <b>Sample_Harmonic</b>.<br>
+' 3. Analyzes <b>HarmonicFatigue</b>.<br>
+' 4. Displays a message box with the damage percent error.<br>
+' 5. Click <b>OK</b> in the message box.<br>
+' 6. Prints the minimum and maximum fatigue to the Immediate window.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save any changes.<br>
+'----------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit<br>
+</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.COSMOSWORKS<br>
+&nbsp;&nbsp;&nbsp; Dim CWAddinCallBack&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWAddinCallBack<br>
+&nbsp;&nbsp;&nbsp; Dim ActDoc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWStudyManager<br>
+&nbsp;&nbsp;&nbsp; Dim Study&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWStudy<br>
+&nbsp;&nbsp;&nbsp; Dim CWFeatObj&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As CosmosWorksLib.CWResults<br>
+&nbsp;&nbsp;&nbsp; Dim FatigueOptions&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWFatigueStudyOptions<br>
+&nbsp;&nbsp;&nbsp; Dim FatigueEvent&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; As 
+CosmosWorksLib.CWFatigueEvent<br>
+&nbsp;&nbsp;&nbsp; Dim errCode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim Damage&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Variant</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Const Tol&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+As Double = 0.05&nbsp;&nbsp; '5% damage tolerance<br>
+&nbsp;&nbsp;&nbsp; Const DamageMax&nbsp;&nbsp;&nbsp;&nbsp; As Double = 63.68&nbsp; 
+'63.68% maximum damage<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Set SwApp = 
+Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, &quot;CWAddinCallBack 
+object not found&quot;<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;COSMOSWORKS 
+object not found&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b>()<br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+active document&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Add default fatigue study results plot<br>
+&nbsp;&nbsp;&nbsp; errCode = ActDoc.<b>AddDefaultFatigueStudyPlot</b>(swsFatigueStudy_DamagePlot)<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b>()<br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+CWStudyManager object&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Create harmonic fatigue study<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Creating HarmonicFatigue study...&quot;<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>CreateNewStudy3</b>(&quot;HarmonicFatigue&quot;, 
+swsAnalysisStudyTypeFatigue, 2, errCode)<br>
+&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg SwApp, &quot;Failed to create 
+new study&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study.<b>SetFatigueResultOptions</b>(1, 
+Nothing)<br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set FatigueOptions = Study.<b>FatigueStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; If FatigueOptions Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+get CWFatigueStudyOptions object&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set FatigueEvent = FatigueOptions.<b>AddFatigueEventForHarmonic</b>(&quot;Sample_Harmonic&quot;, 
+0, 15, 100000, 150000, errCode)<br>
+&nbsp;&nbsp;&nbsp; FatigueEvent.<b>SuppressUnSuppress</b> 'suppress event<br>
+&nbsp;&nbsp;&nbsp; FatigueEvent.<b>SuppressUnSuppress</b> 'unsuppress event<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed with 
+error code as defined in swsRunAnalysisError_e: &quot; &amp; errCode <br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWFeatObj = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWFeatObj Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+CWResults object&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get minimum and maximum fatigue values<br>
+&nbsp;&nbsp;&nbsp; Damage = CWFeatObj.<b>GetMinMaxFatigue</b>(1, errCode)<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Failed to get minimum 
+and maximum fatigue. Error code as defined in swsResultsError_e: &quot; &amp; errCode<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Report damage percent error if result 
+maximum fatigue value is not within tolerance<br>
+&nbsp;&nbsp;&nbsp; If (Damage(3) &lt; (1 - Tol) * DamageMax) Or (Damage(3) &gt; (1 + 
+Tol) * DamageMax) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;Damage % error = &quot; &amp; 
+(((Damage(3) - DamageMax) / DamageMax) * 100)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Minimum fatigue is &quot; &amp; 
+Damage(1) &amp; &quot; at node &quot; &amp; Damage(0) &amp; &quot;.&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Maximum fatigue is &quot; &amp; Damage(3) &amp; &quot; at 
+node &quot; &amp; Damage(2) &amp; &quot;.&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Sub ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Sub</p>
+
+</body>
+
+</html>

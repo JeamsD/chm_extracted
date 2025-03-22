@@ -1,0 +1,315 @@
+<html>
+
+<head>
+<title>Get Connector Forces, Moments, and Torques Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,connector forces">
+<meta name=MS-HKWD content="VBA examples,forces">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation API 
+ Help</span></h1>
+<h1>Get Connector Forces, Moments, and Torques Example (VBA)</h1>
+<p>This example shows how to get the shear forces, axial forces, bending 
+moments, and torques for 
+a selected 
+connector.</p>
+<p class="APICODE">
+'---------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE, <br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS 
+Simulation </b><i>version</i><b> type library</b>).<br>
+' 3. Add the SOLIDWORKS Constant type library as a reference<br>
+'&nbsp;&nbsp;&nbsp; (in the IDE, click <b>Tools &gt; References &gt;<br>
+'&nbsp;&nbsp;&nbsp; SOLIDWORKS version Constant type library</b>).<br>
+' 4. Modify the path to the specified model.<br>
+' 5. Open the Immediate window.<br>
+'<br>
+' Postconditions: Inspect the Immediate window for the connector forces,<br>
+' moments, and torques.<br>
+'<br>
+' NOTE: Because this assembly document is used by<br>
+' SOLIDWORKS Simulation tutorial, do not save any<br>
+' changes when closing the document.<br>
+'-------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit</p>
+<p class="APICODE">Function VerifyLong(SwApp As SldWorks.SldWorks, lExpected As 
+Long, lActual As Long, sMessage As String) As Boolean<br>
+&nbsp;&nbsp;&nbsp; 'This function will compare two long values for equivalence.<br>
+&nbsp;&nbsp;&nbsp; 'If they are different, an error message is reported with {sMessage} 
+<br>
+&nbsp;&nbsp;&nbsp; 'as title, and the function returns false.<br>
+&nbsp;&nbsp;&nbsp; 'If equivalent, the function returns true.<br>
+&nbsp;&nbsp;&nbsp; VerifyLong = True<br>
+&nbsp;&nbsp;&nbsp; If lActual &lt;&gt; lExpected Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, sMessage &amp; &quot;: 
+Expected = &quot; &amp; CStr(lExpected) &amp; &quot; , Actual = &quot; &amp; CStr(lActual)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; VerifyLong = False<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+End Function</p>
+<p class="APICODE">Function VerifyTolerance(SwApp As SldWorks.SldWorks, 
+dExpected As Double, dActual As Double, dTol As Double, sMessage As String) As 
+Boolean<br>
+&nbsp;&nbsp;&nbsp; 'This function will compare two double values to ensure that 
+the actual <br>
+&nbsp;&nbsp;&nbsp; 'value is within the specified tolerance range<br>
+&nbsp;&nbsp;&nbsp; 'of the expected value.&nbsp;If the actual is not within the 
+tolerance range,<br>
+&nbsp;&nbsp;&nbsp; 'an error message is reported with {sMessage}<br>
+&nbsp;&nbsp;&nbsp; 'as title, and the function returns false.&nbsp; <br>
+&nbsp;&nbsp;&nbsp; 'Otherwise, 
+the function returns true to indicate equivalence/success.</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; VerifyTolerance = True<br>
+&nbsp;&nbsp;&nbsp; If (dActual &lt; ((1 - dTol) * dExpected)) Or (dActual &gt; ((1 + 
+dTol) * dExpected)) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, sMessage &amp; &quot;: 
+Expected = &quot; &amp; CStr(dExpected) &amp; &quot; , Actual = &quot; &amp; CStr(dActual) &amp; &quot; , Tolerance 
+= &quot; &amp; CStr(dTol) &amp; &quot; percent&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; VerifyTolerance = False<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+End Function</p>
+<p class="APICODE">Function ErrorMsg(SwApp As SldWorks.SldWorks, Message As String)<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>SendMsgToUser2</b> Message, 0, 0<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** WARNING - General&quot;<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;'*** &quot; &amp; Message<br>
+&nbsp;&nbsp;&nbsp; SwApp.<b>RecordLine</b> &quot;&quot;<br>
+End Function</p>
+<p class="APICODE">Sub main()<br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim SwApp As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim Part As ModelDoc2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim COSMOSWORKS As 
+CosmosWorksLib.COSMOSWORKS, CWAddinCallBack As CosmosWorksLib.CWAddinCallBack, 
+ActDoc As CosmosWorksLib.CWModelDoc<br>
+&nbsp;&nbsp;&nbsp; Dim StudyMngr As CosmosWorksLib.CWStudyManager, Study As 
+CosmosWorksLib.CWStudy, CWMesh As CosmosWorksLib.CWMesh<br>
+&nbsp;&nbsp;&nbsp; Dim StudyOptions As Object, CWFeatObj As 
+CosmosWorksLib.CWResults, ActDocExt As SldWorks.ModelDocExtension<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim sModelName As String, sStudyName As 
+String<br>
+&nbsp;&nbsp;&nbsp; Dim sStudyConfig As String<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim longstatus As Long, 
+longwarnings As Long, errCode As Long<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim el As Double, el_hold As Double<br>
+&nbsp;&nbsp;&nbsp; Dim tl As Double, tl_hold As Double<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim UResMax As Double, Tol1 As Double<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim bStudyFound As 
+Boolean<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim Force As Variant</p>
+<p class="APICODE">&nbsp;<br>
+&nbsp;&nbsp;&nbsp; Dim iMeshUnit As Long, iSolverType As Long, iNumberOfStudies 
+As Long<br>
+&nbsp;&nbsp;&nbsp; Dim ix As Long, iStudyType As Long<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Model names<br>
+&nbsp;&nbsp;&nbsp; sModelName = &quot;<b>C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\api\beam_boltconnection.sldasm</b>&quot;<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'SOLIDWORKS configuration for which study is active (Blank &quot;&quot; = use default)<br>
+&nbsp;&nbsp;&nbsp; sStudyConfig = &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; 'Study name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; sStudyName = &quot;Study 1&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; iSolverType = swsSolverTypeDirectSparse 'Solver 
+type</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set SwApp = Application.<b>SldWorks</b><br>
+&nbsp;&nbsp;&nbsp; If SwApp Is Nothing Then Exit Sub</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Part = SwApp.<b>OpenDoc6</b>(sModelName, 
+swDocASSEMBLY, 1, &quot;&quot;, longstatus, longwarnings)<br>
+&nbsp;&nbsp;&nbsp; If Part Is Nothing Then ErrorMsg SwApp, &quot;Failed to open: &quot; &amp; 
+sModelName: GoTo Lastline<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set CWAddinCallBack = SwApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; If CWAddinCallBack Is Nothing Then ErrorMsg SwApp, &quot;CWAddinCallBack 
+object not found&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; Set COSMOSWORKS = CWAddinCallBack.<b>COSMOSWORKS</b><br>
+&nbsp;&nbsp;&nbsp; If COSMOSWORKS Is Nothing Then ErrorMsg SwApp, &quot;COSMOSWORKS 
+object not found&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get Active document<br>
+&nbsp;&nbsp;&nbsp; Set ActDoc = COSMOSWORKS.<b>ActiveDoc</b><br>
+&nbsp;&nbsp;&nbsp; If ActDoc Is Nothing Then ErrorMsg SwApp, &quot;No active 
+document&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'If needed, rebuild the model<br>
+&nbsp;&nbsp;&nbsp; Set ActDocExt = Part.<b>Extension</b><br>
+&nbsp;&nbsp;&nbsp; If (ActDocExt.<b>NeedsRebuild</b> = True) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Part.<b>ForceRebuild3</b> (False)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'If needed, change the SOLIDWORKS configuration to 
+activate the study<br>
+&nbsp;&nbsp;&nbsp; If sStudyConfig &lt;&gt; &quot;&quot; Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Part.<b>ShowConfiguration2</b> (sStudyConfig)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set StudyMngr = ActDoc.<b>StudyManager</b><br>
+&nbsp;&nbsp;&nbsp; If StudyMngr Is Nothing Then ErrorMsg SwApp, &quot;StudyMngr 
+object not there&quot;: GoTo Lastline<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Find the study<br>
+&nbsp;&nbsp;&nbsp; bStudyFound = False<br>
+&nbsp;&nbsp;&nbsp; iNumberOfStudies = StudyMngr.<b>StudyCount</b><br>
+&nbsp;&nbsp;&nbsp; For ix = 0 To iNumberOfStudies<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; StudyMngr.<b>ActiveStudy</b> = ix<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set Study = StudyMngr.<b>GetStudy</b>(ix)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If Study Is Nothing Then ErrorMsg 
+SwApp, &quot;Failed to get study number: &quot; &amp; ix: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If UCase(Study.<b>Name</b>) = 
+UCase(sStudyName) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bStudyFound = 
+True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Exit For<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; Next<br>
+&nbsp;&nbsp;&nbsp; If bStudyFound = False Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;Failed to find study 
+named: &quot; &amp; sStudyName: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create mesh<br>
+&nbsp;&nbsp;&nbsp; Set CWMesh = Study.<b>Mesh</b><br>
+&nbsp;&nbsp;&nbsp; If CWMesh Is Nothing Then ErrorMsg SwApp, &quot;No mesh object&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Check to use the default 
+element size or tolerance<br>
+&nbsp;&nbsp;&nbsp; If ((el = 0) Or (tl = 0)) Then<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Get the default 
+element size and tolerance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Call CWMesh.<b>GetDefaultElementSizeAndTolerance</b>(iMeshUnit, 
+el_hold, tl_hold)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'If element size was not 
+entered, use the default<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If el = 0 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; el = el_hold<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'If tolerance size 
+was not entered, use the default<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tl = 0.025<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If tl = 0 Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tl = tl_hold<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Create Mesh<br>
+&nbsp;&nbsp;&nbsp; If CWMesh.<b>MesherType</b> = swsMesherTypeAlternate Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Using the curvature-based mesher; set the min element 
+size equal to the max element size<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, 
+el, el)<br>
+&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'Using the standard mesher<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; errCode = Study.<b>CreateMesh</b>(0, 
+el, tl)<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;CreateMesh failed: 
+Error code = &quot; &amp; CStr(errCode): GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Check the mesh state<br>
+&nbsp;&nbsp;&nbsp; If VerifyLong(SwApp, swsMeshStateExistsAndCurrent, CWMesh.<b>MeshState</b>, 
+&quot;MeshState indicates that mesh is not current and/or doesn't exist&quot;) = False 
+Then GoTo Lastline</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Check the number of components that 
+failed to mesh<br>
+&nbsp;&nbsp;&nbsp; If VerifyLong(SwApp, 0, CWMesh.<b>GetNoOfFailedComponents</b>, 
+&quot;GetNoOfFailedComponents indicates mesh failure&quot;) = False Then GoTo Lastline</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Get analysis type<br>
+&nbsp;&nbsp;&nbsp; iStudyType = Study.<b>AnalysisType</b><br>
+&nbsp;&nbsp;&nbsp; If iStudyType = swsAnalysisStudyTypeStatic Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = Study.<b>StaticStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf iStudyType = swsAnalysisStudyTypeThermal Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = Study.<b>ThermalStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf iStudyType = swsAnalysisStudyTypeFrequency Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = Study.<b>FrequencyStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf iStudyType = swsAnalysisStudyTypeBuckling Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = Study.<b>BucklingStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; ElseIf iStudyType = swsAnalysisStudyTypeNonlinear Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set StudyOptions = Study.<b>NonlinearStudyOptions</b><br>
+&nbsp;&nbsp;&nbsp; Else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ErrorMsg SwApp, &quot;StudyOptions for 
+this analysis type is not yet supported&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp; If StudyOptions Is Nothing Then ErrorMsg SwApp, &quot;Failed to 
+get StudyOptions object&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Set solver type<br>
+&nbsp;&nbsp;&nbsp; StudyOptions.<b>SolverType</b> = iSolverType<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Running Analysis<br>
+&nbsp;&nbsp;&nbsp; errCode = Study.<b>RunAnalysis</b><br>
+&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, &quot;Analysis failed with 
+error code &quot; &amp; errCode: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Getting Results<br>
+&nbsp;&nbsp;&nbsp; Set CWFeatObj = Study.<b>Results</b><br>
+&nbsp;&nbsp;&nbsp; If CWFeatObj Is Nothing Then ErrorMsg SwApp, &quot;Failed to get 
+result object&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Force = CWFeatObj.<b>GetConnectorForces2</b>(1, 
+&quot;Counterbore with Nut-1&quot;, 0, errCode)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If errCode &lt;&gt; 0 Then ErrorMsg SwApp, 
+&quot;Failed to get connector force result&quot;: GoTo Lastline<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Connector forces, 
+moments, and torques for Counterbore with Nut-1:&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Shear force x-component: &quot; &amp; 
+Force(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Shear force y-component: &quot; &amp; 
+Force(1)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Shear force z-component: &quot; &amp; 
+Force(2)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Resultant shear force: &quot; &amp; Force(3)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Axial force x-component: &quot; &amp; 
+Force(4)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Axial force y-component: &quot; &amp; 
+Force(5)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Axial force z-component: &quot; &amp; 
+Force(6)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Resultant axial force: &quot; &amp; Force(7)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Bending moment x-component: &quot; &amp; 
+Force(8)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Bending moment y-component: &quot; &amp; 
+Force(9)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Bending moment z-component: &quot; &amp; 
+Force(10)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Resultant bending moment: &quot; 
+&amp; Force(11)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Torque x-component: &quot; &amp; 
+Force(12)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Torque y-component: &quot; &amp; 
+Force(13)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Torque z-component: &quot; &amp; 
+Force(14)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp; Resultant torque: &quot; 
+&amp; Force(15)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; 'Check max resultant bending moment<br>
+&nbsp;&nbsp;&nbsp; UResMax = 0.467<br>
+&nbsp;&nbsp;&nbsp; Tol1 = 0.1<br>
+&nbsp;&nbsp;&nbsp; If VerifyTolerance(SwApp, UResMax, CDbl(Force(11)), Tol1, 
+&quot;Resultant bending moment is beyond tolerance&quot;) = False Then GoTo Lastline</p>
+<p class="APICODE">Lastline:<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">End Sub</p>
+
+<p>&nbsp;</p>
+
+</body>
+
+</html>

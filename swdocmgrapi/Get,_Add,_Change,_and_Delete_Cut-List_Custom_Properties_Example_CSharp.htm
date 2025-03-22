@@ -1,0 +1,281 @@
+<html>
+
+<head>
+<title>Get, Add, Change, And Delete Cut-List Custom Properties (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,cut lists">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Document 
+ Manager API Help</span></h1>
+<h1>Get, Add, Change, And Delete Cut-List Custom Properties Example (C#)</h1>
+<div style="font-family: Monospace; font-size: 10pt; background-color: white">
+	<p>This example shows how to 
+	get cut-list items and their custom properties and how to add, modify, and delete a cut-list custom property.<span style="color: Green"><br>
+	<br>
+	<font face="monospace" size="2">//--------------------------------------------------------------------------<br>
+	// Preconditions:<br>
+	//&nbsp;1. Read the SOLIDWORKS Document Manager API 
+	<b>Getting Started</b> topic
+	<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;and ensure that the required DLLs have been registered.<br>
+	//&nbsp;2. Copy and paste this class into a C# console application in 
+	</font>
+	</span><font face="monospace" size="2" color="#008000"><br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;</font><span style="color: Green"><font face="monospace" size="2">Microsoft Visual Studio.<br>
+	//&nbsp;3. Ensure that the specified part exists or point to another 
+	<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;document that contains a cut list with 
+	custom properties).<br>
+	//&nbsp;4. Add the <b>SolidWorks.Interop.swdocumentmgr.dll</b> reference to 
+	<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;the project:<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;a. Right-click the solution in Solution Explorer.<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;b. Click <b>Add Reference</b>. <br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;c. Click <b>Browse</b>.<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;d. Click <i>install_dir</i><b>\api\redist\SolidWorks.Interop.swdocumentmgr.dl</b>l.<br>
+	//&nbsp;&nbsp;&nbsp; e. Click <b>Add</b>.<br>
+	//&nbsp;&nbsp;&nbsp; f. Click <b>Close</b>.<br>
+	//&nbsp;5. Substitute <i>your_license_code</i> with your SOLIDWORKS 
+	<br>
+	//&nbsp;&nbsp;&nbsp;&nbsp;Document Manager license code.<br>
+	//&nbsp;6. Compile and run this program in 
+	Debug mode.<br>
+	//<br>
+	// Postconditions: Inspect the Output Window and the code to see how
+	<br>
+	//&nbsp;the API is used.</font></span><font face="monospace" size="2"><span style="color: #008000"><br>
+	//----------------------------------------</span><span style="color: Green">----------------------------------<br>
+	<br>
+	<br>
+	</span><span style="color: Blue">using</span><span style="color: Black"> 
+	System;<br>
+	</span><span style="color: Blue">using</span><span style="color: Black"> 
+	System.Diagnostics;<br>
+	</span><span style="color: Blue">using</span><span style="color: Black"> 
+	System.Collections.Generic;<br>
+	</span><span style="color: Blue">using</span><span style="color: Black"> 
+	System.Text;<br>
+	</span><span style="color: Blue">using</span><span style="color: Black"> 
+	SolidWorks.Interop.swdocumentmgr;<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Blue">class</span><span style="color: Black">
+	</span><span style="color: #2b91af">Program<br>
+	</span><span style="color: Black">&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Blue">static</span><span style="color: Black">
+	</span><span style="color: Blue">void</span><span style="color: Black"> 
+	Main(</span><span style="color: Blue">string</span><span style="color: Black">[] 
+	args)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">SwDMClassFactory</span><span style="color: Black"> 
+	swClassFact = </span><span style="color: Blue">default</span><span style="color: Black">(</span><span style="color: #2b91af">SwDMClassFactory</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">SwDMApplication</span><span style="color: Black"> 
+	swDocMgr = </span><span style="color: Blue">default</span><span style="color: Black">(</span><span style="color: #2b91af">SwDMApplication</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">SwDMDocument10</span><span style="color: Black"> 
+	swDocument10 = </span><span style="color: Blue">default</span><span style="color: Black">(</span><span style="color: #2b91af">SwDMDocument10</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">SwDMDocument13</span><span style="color: Black"> 
+	swDocument13 = </span><span style="color: Blue">default</span><span style="color: Black">(</span><span style="color: #2b91af">SwDMDocument13</span><span style="color: Black">);</span></font><p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+	<span style="color:#2b91af;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+	SwDMConfiguration16</span>&nbsp;config&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">SwDMConfiguration16</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">SwDMConfigurationMgr</span>&nbsp;SwDMConfigurationMgr&nbsp;=&nbsp;<span style="color:blue;">default</span>(<span style="color:#2b91af;">SwDMConfigurationMgr</span>);</p>
+	<p><font face="monospace" size="2"><span style="color: Black"><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Blue">string</span><span style="color: Black"> 
+	sDocFileName = </span><span style="color: Blue">null</span><span style="color: Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">SwDmDocumentType</span><span style="color: Black"> 
+	nDocType = </span><span style="color: Blue">default</span><span style="color: Black">(</span><span style="color: #2b91af">SwDmDocumentType</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">SwDmDocumentOpenError</span><span style="color: Black"> 
+	nRetVal = </span><span style="color: Blue">default</span><span style="color: Black">(</span><span style="color: #2b91af">SwDmDocumentOpenError</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Blue">string</span><span style="color: Black"> 
+	sLicenseKey = </span><span style="color: Blue">null</span><span style="color: Black">;<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sLicenseKey = </span><span style="color: #a31515">
+	&quot;<i>your_license_code</i>&quot;</span><span style="color: Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Green">// Specify your SOLIDWORKS 
+	Document Manager license key <br>
+	</span><span style="color: Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sDocFileName = (</span><span style="color: #a31515">&quot;C:\\Users\\Public\\Documents\\SOLIDWORKS\\SOLIDWORKS 
+	2019\\samples\\tutorial\\weldments\\weldment_box2.sldprt&quot;</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Green">// Specify your model document
+	<br>
+	</span><span style="color: Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType = </span>
+	<span style="color: #2b91af">SwDmDocumentType</span><span style="color: Black">.swDmDocumentPart;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swClassFact = </span><span style="color: Blue">new</span><span style="color: Black">
+	</span><span style="color: #2b91af">SwDMClassFactory</span><span style="color: Black">();<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDocMgr = </span></font>
+	<font size="2" face="Courier New">(<span style="color:#2b91af;">SwDMApplication</span>)</font><font face="monospace" size="2"><span style="color: Black">swClassFact.<b>GetApplication</b>(sLicenseKey);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDocument10 = (</span><span style="color: #2b91af">SwDMDocument10</span><span style="color: Black">)swDocMgr.GetDocument(sDocFileName, 
+	nDocType, </span><span style="color: Blue">false</span><span style="color: Black">,
+	</span><span style="color: Blue">out</span><span style="color: Black"> 
+	nRetVal);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDocument13 = (</span><span style="color: #2b91af">SwDMDocument13</span><span style="color: Black">)swDocument10;<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot;Last 
+	Update Stamp: &quot;</span><span style="color: Black"> + swDocument13.<b>GetLastUpdateTimeStamp</b>());<br>
+&nbsp;</span></font><p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+	SwDMConfigurationMgr&nbsp;=&nbsp;swDocument13.<b>ConfigurationManager</b>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;config&nbsp;=&nbsp;(<span style="color:#2b91af;">SwDMConfiguration16</span>)SwDMConfigurationMgr.<b>GetConfigurationByName</b>(<span style="color:#a31515;">&quot;Default&quot;</span>);<font face="monospace" size="2"><span style="color: Black"><br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Blue">object</span><span style="color: Black">[] 
+	vCutListItems = </span><span style="color: Blue">null</span><span style="color: Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vCutListItems = (</span><span style="color: Blue">object</span><span style="color: Black">[])config.<b>GetCutListItems</b>();<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">SwDMCutListItem3</span><span style="color: Black"> 
+	Cutlist = </span><span style="color: Blue">default</span><span style="color: Black">(</span><span style="color: #2b91af">SwDMCutListItem3</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000FF">int</span><span style="color: Black"> 
+	I = 0;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">SwDmCustomInfoType</span><span style="color: Black"> 
+	nType = 0;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Blue">string</span><span style="color: Black"> 
+	nLink = </span><span style="color: Blue">null</span><span style="color: Black">;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #0000FF">int</span><span style="color: Black"> 
+	J = 0;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Blue">object</span><span style="color: Black">[] 
+	vPropNames = </span><span style="color: Blue">null</span><span style="color: Black">;<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot;GET 
+	CUT-LIST ITEM&quot;</span><span style="color: Black">);<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Blue">for</span><span style="color: Black"> 
+	(I = 0; I &lt;= vCutListItems.GetUpperBound(0); I++)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cutlist = (</span><span style="color: #2b91af">SwDMCutListItem3</span><span style="color: Black">)vCutListItems[I];<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot;Name 
+	: &quot;</span><span style="color: Black"> + Cutlist.<b>Name</b>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Quantity : &quot;</span><span style="color: Black"> + Cutlist.<b>Quantity</b>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vPropNames = (</span><span style="color: Blue">object</span><span style="color: Black">[])Cutlist.<b>GetCustomPropertyNames</b>();<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Blue">if</span><span style="color: Black"> 
+	(!((vPropNames == </span><span style="color: Blue">null</span><span style="color: Black">)))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	GET CUSTOM PROPERTIES&quot;</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Blue">for</span><span style="color: Black"> 
+	(J = 0; J &lt;= vPropNames.GetUpperBound(0); J++)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Property Name : &quot;</span><span style="color: Black"> + vPropNames[J]);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Property Value : &quot;</span><span style="color: Black"> + Cutlist.<b>GetCustomPropertyValue2</b>((</span><span style="color: Blue">string</span><span style="color: Black">)vPropNames[J],
+	</span><span style="color: Blue">out</span><span style="color: Black"> nType,
+	</span><span style="color: Blue">out</span><span style="color: Black"> nLink));<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Type : &quot;</span><span style="color: Black"> + nType);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Link : &quot;</span><span style="color: Black"> + nLink);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot;_________________________&quot;</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cutlist = (</span><span style="color: #2b91af">SwDMCutListItem3</span><span style="color: Black">)vCutListItems[0];<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot;ADD 
+	CUSTOM PROPERTY CALLED Testing1&quot;</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Custom Property added? &quot;</span><span style="color: Black"> + Cutlist.<b>AddCustomProperty</b>(</span><span style="color: #a31515">&quot;Testing1&quot;</span><span style="color: Black">,
+	</span><span style="color: #2b91af">SwDmCustomInfoType</span><span style="color: Black">.swDmCustomInfoText,
+	</span><span style="color: #a31515">&quot;Verify1&quot;</span><span style="color: Black">));<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	GET CUSTOM PROPERTIES&quot;</span><span style="color: Black">);<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vPropNames = (</span><span style="color: Blue">object</span><span style="color: Black">[])Cutlist.<b>GetCustomPropertyNames</b>();<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Blue">for</span><span style="color: Black"> 
+	(J = 0; J &lt;= vPropNames.GetUpperBound(0); J++)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Property Name : &quot;</span><span style="color: Black"> + vPropNames[J]);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Property Value : &quot;</span><span style="color: Black"> + 
+	Cutlist.<b>GetCustomPropertyValue2</b>((</span><span style="color: Blue">string</span><span style="color: Black">)vPropNames[J],
+	</span><span style="color: Blue">out</span><span style="color: Black"> nType,
+	</span><span style="color: Blue">out</span><span style="color: Black"> nLink));<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Type : &quot;</span><span style="color: Black"> + nType);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Link : &quot;</span><span style="color: Black"> + nLink);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot;_________________________&quot;</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot;SET 
+	NEW CUSTOM PROPERTY VALUE FOR Testing1&quot;</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Property Value Before Setting: &quot;</span><span style="color: Black"> + 
+	Cutlist.<b>GetCustomPropertyValue2</b>(</span><span style="color: #a31515">&quot;Testing1&quot;</span><span style="color: Black">,
+	</span><span style="color: Blue">out</span><span style="color: Black"> nType,
+	</span><span style="color: Blue">out</span><span style="color: Black"> nLink));<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	New Value Set? &quot;</span><span style="color: Black"> + Cutlist.<b>SetCustomProperty</b>(</span><span style="color: #a31515">&quot;Testing1&quot;</span><span style="color: Black">,
+	</span><span style="color: #a31515">&quot;Verify3&quot;</span><span style="color: Black">));<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Property Value After Setting : &quot;</span><span style="color: Black"> + 
+	Cutlist.<b>GetCustomPropertyValue2</b>(</span><span style="color: #a31515">&quot;Testing1&quot;</span><span style="color: Black">,
+	</span><span style="color: Blue">out</span><span style="color: Black"> nType,
+	</span><span style="color: Blue">out</span><span style="color: Black"> nLink));<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	GET CUSTOM PROPERTIES&quot;</span><span style="color: Black">);<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vPropNames = (</span><span style="color: Blue">object</span><span style="color: Black">[])Cutlist.<b>GetCustomPropertyNames</b>();<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Blue">for</span><span style="color: Black"> 
+	(J = 0; J &lt;= vPropNames.GetUpperBound(0); J++)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Property Name : &quot;</span><span style="color: Black"> + vPropNames[J]);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Property Value : &quot;</span><span style="color: Black"> + 
+	Cutlist.<b>GetCustomPropertyValue2</b>((</span><span style="color: Blue">string</span><span style="color: Black">)vPropNames[J],
+	</span><span style="color: Blue">out</span><span style="color: Black"> nType,
+	</span><span style="color: Blue">out</span><span style="color: Black"> nLink));<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Type : &quot;</span><span style="color: Black"> + nType);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Link : &quot;</span><span style="color: Black"> + nLink);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot;_________________________&quot;</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot;DELETE 
+	CUSTOM PROPERTY Testing1&quot;</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Delete Property Value? &quot;</span><span style="color: Black"> + Cutlist.<b>DeleteCustomProperty</b>(</span><span style="color: #a31515">&quot;Testing1&quot;</span><span style="color: Black">));<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vPropNames = (</span><span style="color: Blue">object</span><span style="color: Black">[])Cutlist.<b>GetCustomPropertyNames</b>();<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Blue">if</span><span style="color: Black"> 
+	(!((vPropNames == </span><span style="color: Blue">null</span><span style="color: Black">)))<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	GET CUSTOM PROPERTIES&quot;</span><span style="color: Black">);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Blue">for</span><span style="color: Black"> 
+	(J = 0; J &lt;= vPropNames.GetUpperBound(0); J++)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Property Name : &quot;</span><span style="color: Black"> + vPropNames[J]);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Property Value : &quot;</span><span style="color: Black"> + 
+	Cutlist.<b>GetCustomPropertyValue2</b>((</span><span style="color: Blue">string</span><span style="color: Black">)vPropNames[J],
+	</span><span style="color: Blue">out</span><span style="color: Black"> nType,
+	</span><span style="color: Blue">out</span><span style="color: Black"> nLink));<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Type : &quot;</span><span style="color: Black"> + nType);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot; 
+	Link : &quot;</span><span style="color: Black"> + nLink);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: #2b91af">Debug</span><span style="color: Black">.Print(</span><span style="color: #a31515">&quot;_________________________&quot;</span><span style="color: Black">);<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: Green">//swDocument10.Save() <br>
+	<br>
+	</span></font><span style="color: Black"><font face="monospace" size="2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDocument10.CloseDoc();<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;}</font><br>
+&nbsp;</span></div>
+<p>&nbsp;</p>
+
+</body>
+
+</html>

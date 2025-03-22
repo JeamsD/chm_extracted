@@ -1,0 +1,201 @@
+<html>
+
+<head>
+<title>Get Mass Properties Example (VBA) </title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,nonlinear study">
+<meta name=MS-HKWD content="VBA examples,mass properties">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Simulation 
+ API Help</span></h1>
+<h1>Get Mass Properties Example (VBA)</h1>
+<p>This example shows how to get the mass properties of a study.</p>
+<p class="APICODE">
+'---------------------------------------------------------------------------<br>
+' Preconditions:<br>
+' 1. Add the SOLIDWORKS Simulation as an add-in (in SOLIDWORKS, click<br>
+'&nbsp;&nbsp;&nbsp; <b>Tools &gt; Add-ins &gt; SOLIDWORKS Simulation &gt; OK</b>).<br>
+' 2. Add the SOLIDWORKS Simulation type library as a reference (in the IDE,<br>
+'&nbsp;&nbsp;&nbsp; click <b>Tools &gt; References &gt; SOLIDWORKS Simulation </b><i>
+version</i><b> type library</b>).<br>
+' 3. Ensure that the specified file exists.<br>
+' 4. Open the Immediate window.<br>
+'<br>
+' Postconditions: Prints some mass properties of the <b>Ready</b> study to the<br>
+' Immediate window.<br>
+'<br>
+' NOTE: Because the model is used elsewhere, do not save any changes.<br>
+'----------------------------------------------------------------------------<br>
+Option Explicit</p>
+<p class="APICODE">Dim swApp As SldWorks.SldWorks<br>
+Dim Part As SldWorks.ModelDoc2<br>
+Dim swAddin As CosmosWorksLib.CwAddincallback<br>
+Dim ssApp As CosmosWorksLib.CosmosWorks<br>
+Dim ssModelDoc As CosmosWorksLib.CWModelDoc<br>
+Dim ssStudyMgr As CosmosWorksLib.CWStudyManager<br>
+Dim ssStudy As CosmosWorksLib.CWStudy<br>
+Dim massPropMgr As CosmosWorksLib.CWMassPropertiesManager<br>
+Dim docName As String<br>
+Dim errors As Long<br>
+Dim warnings As Long<br>
+Dim studyName As String<br>
+Dim studyType As Long<br>
+Dim comObj As Variant<br>
+Dim moiObj As Variant<br>
+Dim moiocsObj As Variant<br>
+Dim paiObj As Variant<br>
+Dim pmiObj As Variant<br>
+Dim varArray As Variant<br>
+Dim var1 As Variant, var2 As Variant<br>
+Dim pDisp1 As Object, pDisp2 As Object<br>
+Dim selection1 As String<br>
+Dim selection2 As String<br>
+</p>
+<p class="APICODE">Sub main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set swApp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; docName = &quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 
+2019\samples\Simulation Examples\Contact\quartereyebar.sldasm&quot;<br>
+&nbsp;&nbsp;&nbsp; swApp.<b>OpenDoc6</b> docName, swDocASSEMBLY, 
+swOpenDocOptions_Silent, &quot;&quot;, errors, warnings<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set Part = swApp.<b>ActiveDoc</b><br>
+&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set swAddin = swApp.<b>GetAddInObject</b>(&quot;SldWorks.Simulation&quot;)<br>
+&nbsp;&nbsp;&nbsp; Set ssApp = swAddin.<b>CosmosWorks</b><br>
+&nbsp;&nbsp;&nbsp; Set ssModelDoc = ssApp.<b>ActiveDoc</b><br>
+&nbsp;&nbsp;&nbsp; Set ssStudyMgr = ssModelDoc.<b>StudyManager</b><br>
+&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set ssStudy = ssStudyMgr.<b>GetStudy</b>(0)<br>
+&nbsp;&nbsp;&nbsp; studyName = ssStudy.<b>Name</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Study name: &quot; &amp; studyName<br>
+&nbsp;&nbsp;&nbsp; studyType = ssStudy.<b>AnalysisType</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Type as defined in swsAnalysisStudyType_e: 
+&quot; &amp; studyType<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Set massPropMgr = ssStudy.<b>GetMassPropertiesManager</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection1 = 
+&quot;245,35,0,0,4,0,0,0,255,254,255,27,113,0,117,0,97,0,114,0,116,0,101,0,114,0,98,0,111,0,108,0,116,0,45,0,49,0,64,0,113,0,117,0,97,0,114,0,116,0,101,0,114,0,101,0,121,0,101,0,98,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,11,0,0,0,1,0,0,0,101,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection1 = selection1 &amp; &quot;,Type=3&quot;<br>
+&nbsp;&nbsp;&nbsp; StringtoArray selection1, var1<br>
+&nbsp;&nbsp;&nbsp; Set pDisp1 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var1), 
+errors)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; selection2 = 
+&quot;245,35,0,0,4,0,0,0,255,254,255,29,113,0,117,0,97,0,114,0,116,0,101,0,114,0,101,0,121,0,101,0,98,0,97,0,114,0,45,0,49,0,64,0,113,0,117,0,97,0,114,0,116,0,101,0,114,0,101,0,121,0,101,0,98,0,97,0,114,0,4,0,0,0,16,0,0,0,1,0,0,0,1,0,0,0,9,0,0,0,3,0,0,0,103,0,0,0,102,0,0,0,101,0,0,0&quot;<br>
+&nbsp;&nbsp;&nbsp; selection2 = selection2 &amp; &quot;,Type=3&quot;<br>
+&nbsp;&nbsp;&nbsp; StringtoArray selection2, var2<br>
+&nbsp;&nbsp;&nbsp; Set pDisp2 = Part.<b>Extension</b>.<b>GetObjectByPersistReference3</b>((var2), 
+errors)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; varArray = Array(pDisp1, pDisp2)<br>
+&nbsp;&nbsp; <br>
+&nbsp;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; massPropMgr.<b>SetCoordinateSystemToDefault</b></p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; errors = massPropMgr.<b>AddBodies</b>(varArray)<br>
+&nbsp;&nbsp;&nbsp; comObj = massPropMgr.<b>GetCenterOfMass</b><br>
+&nbsp;&nbsp;&nbsp; moiObj = massPropMgr.<b>GetMomentOfInertia<br>
+</b>&nbsp;&nbsp;&nbsp; moiocsObj = massPropMgr.<b>GetMomentOfInertiaAtOutputCoordinateSystem</b><br>
+&nbsp;&nbsp;&nbsp; paiObj = massPropMgr.<b>GetPrincipalAxesOfInertia</b><br>
+&nbsp;&nbsp;&nbsp; pmiObj = massPropMgr.<b>GetPrincipalMomentOfInertia</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; Mass properties:&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Surface area (square meters): 
+&quot; &amp; massPropMgr.<b>Area</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Mass (kilograms): &quot; &amp; 
+massPropMgr.<b>Mass</b><br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Volume (cubic meters): &quot; &amp; 
+massPropMgr.<b>Volume<br>
+&nbsp;&nbsp;&nbsp; </b>Debug.Print &quot;&nbsp;&nbsp;&nbsp; Center of mass: &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; x: &quot; 
+&amp; comObj(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; y: &quot; 
+&amp; comObj(1)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; z: &quot; 
+&amp; comObj(2)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Moment of inertia (kilograms 
+* meters squared): &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lxx: 
+&quot; &amp; moiObj(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lxy: 
+&quot; &amp; moiObj(1)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lxz: 
+&quot; &amp; moiObj(2)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lyx: 
+&quot; &amp; moiObj(3)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lyy: 
+&quot; &amp; moiObj(4)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lyz: 
+&quot; &amp; moiObj(5)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lzx: 
+&quot; &amp; moiObj(6)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lzy: 
+&quot; &amp; moiObj(7)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lzz: 
+&quot; &amp; moiObj(8)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Moment of inertia with 
+respect to output coordinate system (kilograms * square meters): &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lxx: 
+&quot; &amp; moiocsObj(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lxy: 
+&quot; &amp; moiocsObj(1)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lxz: 
+&quot; &amp; moiocsObj(2)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lyx: 
+&quot; &amp; moiocsObj(3)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lyy: 
+&quot; &amp; moiocsObj(4)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lyz: 
+&quot; &amp; moiocsObj(5)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lzx: 
+&quot; &amp; moiocsObj(6)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lzy: 
+&quot; &amp; moiocsObj(7)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lzz: 
+&quot; &amp; moiocsObj(8)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Coefficients of the principal 
+axes of inertia with respect to center of mass: &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Axis1_x: &quot; &amp; paiObj(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Axis1_y: &quot; &amp; paiObj(1)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Axis1_z: &quot; &amp; paiObj(2)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Axis2_x: &quot; &amp; paiObj(3)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Axis2_y: &quot; &amp; paiObj(4)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Axis2_z: &quot; &amp; paiObj(5)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Axis3_x: &quot; &amp; paiObj(6)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Axis3_y: &quot; &amp; paiObj(7)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Axis3_z: &quot; &amp; paiObj(8)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp; Principal moments of inertia 
+with respect to center of mass: &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Px: &quot; 
+&amp; pmiObj(0)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Py: &quot; 
+&amp; pmiObj(1)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Pz: &quot; 
+&amp; pmiObj(2)<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+End Sub</p>
+<p class="APICODE">Function StringtoArray(inputSTR As String, varEntity As 
+Variant)<br>
+&nbsp;&nbsp; Dim PID() As Byte<br>
+&nbsp;&nbsp; Dim i As Integer<br>
+&nbsp;&nbsp; varEntity = Split(inputSTR, &quot;,&quot;)<br>
+&nbsp;&nbsp; ReDim PID(UBound(varEntity))<br>
+&nbsp;&nbsp; For i = 0 To (UBound(varEntity) - 1)<br>
+&nbsp;&nbsp;&nbsp; PID(i) = varEntity(i)<br>
+&nbsp;&nbsp; Next i<br>
+&nbsp;&nbsp; varEntity = PID<br>
+End Function</p>
+
+</body>
+
+</html>

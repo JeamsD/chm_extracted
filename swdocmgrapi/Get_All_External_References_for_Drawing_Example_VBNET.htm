@@ -1,0 +1,228 @@
+<html>
+
+<head>
+<title>Get All External References for Drawing Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples,external references">
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Document 
+Manager API 
+ Help</span></h1>
+<h1>Get All External References for Drawing Example (VB.NET)</h1>
+<p>This example shows how to get the external references for a drawing document.</p>
+
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p class="APICODE"><span style="color:Green">
+	'--------------------------------------------------------------------------- <br>
+	' Preconditions:<br>
+	' 1. Read the SOLIDWORKS Document Manager API <br>
+	'&nbsp;&nbsp;&nbsp;&nbsp;<b>Getting Started</b> topic and ensure that the <br>
+	'&nbsp;&nbsp;&nbsp;&nbsp;required DLLs are registered.<br>
+	' 2. Copy and paste this module into a VB.NET <br>
+	'&nbsp;&nbsp;&nbsp;&nbsp;console application in Microsoft Visual Studio.<br>
+	' 3. Substitute the name of your drawing document that has at least one<br>
+	'&nbsp;&nbsp;&nbsp; custom property for <i>drawing_document_with_external_references</i>.<br>
+	' 4. Add the <b>SolidWorks.Interop.swdocumentmgr.dll </b><br>
+	'&nbsp;&nbsp;&nbsp;&nbsp;reference to the project.<br>
+	' 5. Substitute <i>your_license_code</i> with your <br>
+	'&nbsp;&nbsp;&nbsp;&nbsp;SOLIDWORKS Document Manager license key. <br>
+	' 6. Compile and run this program in Debug mode.<br>
+	'<br>
+	' Postconditions: Inspect the Immediate window.<br>
+	'--------------------------------------------------------------------------- <br>
+	<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.swdocumentmgr<br>
+	</span><span style="color:Blue">Module</span><span style="color:Black"> 
+	Module1<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	main()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Const</span><span style="color:Black"> 
+	sLicenseKey </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black"> =
+	</span><span style="color:#a31515">&quot;<i>your_license_code</i>&quot;</span><span style="color:Black">
+	</span><span style="color:Green">'Specify your license key<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Const</span><span style="color:Black"> 
+	sDocFileName </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black"> =
+	</span><span style="color:#a31515">&quot;<i>drawing_document_with_external_references</i>&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swClassFact </span><span style="color:Blue">As</span><span style="color:Black"> 
+	SwDMClassFactory<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swDocMgr </span><span style="color:Blue">As</span><span style="color:Black"> 
+	SwDMApplication<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swDoc </span><span style="color:Blue">As</span><span style="color:Black"> 
+	SwDMDocument23<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swSearchOpt </span><span style="color:Blue">As</span><span style="color:Black"> 
+	SwDMSearchOption<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	nDocType </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color: #0000FF">Integer</span><span style="color:Blue"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	nRetVal </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color: #0000FF">Integer</span><span style="color:Blue"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	vDependArr </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	vDepend </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	vBrokenRefs </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	vIsVirtuals </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	vTimeStamps </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim</span><span style="color:Black"> 
+	vIsImported </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Object<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim</span><span style="color:Black"> 
+	licenseType </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color: #0000FF">Integer</span><span style="color:Blue"><br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+	Determine if document is a drawing<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	InStr(LCase(sDocFileName), </span><span style="color:#a31515">&quot;slddrw&quot;</span><span style="color:Black">) 
+	&gt; 0 </span><span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType = 
+	SwDmDocumentType.swDmDocumentDrawing<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Else<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+	Not a drawings file,<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType = 
+	SwDmDocumentType.swDmDocumentUnknown<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' so do not open<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Exit</span><span style="color:Black">
+	</span><span style="color:Blue">Sub<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">If<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swClassFact = CreateObject(</span><span style="color:#a31515">&quot;SwDocumentMgr.SwDMClassFactory&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDocMgr = swClassFact.<b>GetApplication</b>(sLicenseKey)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swSearchOpt = swDocMgr.<b>GetSearchOptionObject</b><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDoc = swDocMgr.<b>GetDocument</b>(sDocFileName, nDocType, </span>
+	<span style="color:Blue">False</span><span style="color:Black">, nRetVal) : 
+	Debug.Assert(SwDmDocumentOpenError.swDmDocumentOpenErrorNone = nRetVal)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af;">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;File = &quot;</span><span style="color:Black"> 
+	&amp; swDoc.<b>FullName</b>)<br>
+	<br>
+&nbsp;</span><p style="font-family: Consolas; font-size: 13; color: black; background: white" class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+	licenseType&nbsp;=&nbsp;swDoc.<b>GetLicenseType</b><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;"> Debug</span>.Print(<span style="color:#a31515;">&quot;License&nbsp;type 
+	as defined in swDMDocumentLicenseType_e:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;licenseType)</p>
+	<p class="APICODE"><span style="color:Black"> 
+	<br>
+&nbsp;</span><p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+	<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim</span>&nbsp;bsFileTime&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">String</span>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;bsLWFileTime&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">String</span>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;&quot;</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDoc.<b>GetFileAvgTime</b>(bsFileTime,&nbsp;bsLWFileTime)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;File&nbsp;open&nbsp;time:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;bsFileTime)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Lightweight&nbsp;open&nbsp;time:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;bsLWFileTime)<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;custprops&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Object</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;custprops&nbsp;=&nbsp;swDoc.<b>GetCustomPropertyNames</b>()<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">Dim</span>&nbsp;isEditable&nbsp;<span style="color:blue;">As</span>&nbsp;<span style="color:blue;">Boolean</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDoc.<b>IsCustomPropertyEditable</b>(custprops(0),&nbsp;isEditable)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Debug</span>.Print(<span style="color:#a31515;">&quot;Custom&nbsp;property&nbsp;&quot;</span>&nbsp;&amp;&nbsp;custprops(0)&nbsp;&amp;&nbsp;<span style="color:#a31515;">&quot;&nbsp;is&nbsp;editable:&nbsp;&quot;</span>&nbsp;&amp;&nbsp;isEditable)</p>
+	<p class="APICODE"><span style="color:Black"> 
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vBrokenRefs = </span><span style="color:Blue">Nothing<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	brokenRef </span><span style="color:Blue">As</span><span style="color:Black"> 
+	SwDmReferenceStatus<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vIsVirtuals = </span><span style="color:Blue">Nothing<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	isVirtual </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Boolean<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vTimeStamps = </span>
+	<span style="color:Blue">Nothing<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	timeStamp </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">Double<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	</span>vIsImported<span style="color:Blue">
+	</span>=<span style="color:Blue"> Nothing<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dim</span><span style="color:Black"> 
+	isImported </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color: #0000FF">String</span><span style="color:Blue"><br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vDependArr = swDoc.<b>GetAllExternalReferences5</b>(swSearchOpt, 
+	vBrokenRefs, vIsVirtuals, vTimeStamps, vIsImported) : </span><span style="color:Blue">If</span><span style="color:Black"> 
+	IsNothing(vDependArr) </span><span style="color:Blue">Then</span><span style="color:Black">
+	</span><span style="color:Blue">Exit</span><span style="color:Black"> </span>
+	<span style="color:Blue">Sub<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af;">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;External 
+	references&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">For</span><span style="color:Black">
+	</span><span style="color:Blue">Each</span><span style="color:Black"> 
+	vDepend </span><span style="color:Blue">In</span><span style="color:Black"> 
+	vDependArr<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; vDepend)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Next</span><span style="color:Black"> 
+	vDepend<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af;">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;Reference 
+	statuses 
+	as defined in swDmReferenceStatus&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">For</span><span style="color:Black">
+	</span><span style="color:Blue">Each</span><span style="color:Black"> 
+	brokenRef </span><span style="color:Blue">In</span><span style="color:Black"> 
+	vBrokenRefs<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; brokenRef)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Next</span><span style="color:Black"> 
+	brokenRef<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af;">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;Virtual components?&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">For</span><span style="color:Black">
+	</span><span style="color:Blue">Each</span><span style="color:Black"> 
+	isVirtual </span><span style="color:Blue">In</span><span style="color:Black"> 
+	vIsVirtuals<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; isVirtual)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Next</span><span style="color:Black"> 
+	isVirtual<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af;">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;Timestamps&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">For</span><span style="color:Black">
+	</span><span style="color:Blue">Each</span><span style="color:Black"> 
+	timeStamp </span><span style="color:Blue">In</span><span style="color:Black"> 
+	vTimeStamps<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; timeStamp)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Next</span><span style="color:Black"> 
+	timeStamp<br>
+	</span><span style="color:Black"> 
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>
+	<span style="color:#2b91af;">Debug</span><span style="color:Black">.Print(</span><span style="color:#a31515">&quot;Imported 
+	components (empty if component is not imported)&quot;</span><span style="color:Black">)<br>
+	</span><span style="color:Blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; For</span><span style="color:Black">
+	</span><span style="color:Blue">Each</span><span style="color:Black"> 
+	isImported </span><span style="color:Blue">In</span><span style="color:Black"> 
+	vIsImported<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Debug.Print(</span><span style="color:#a31515">&quot;</span><span style="color:#a31515">&nbsp;&nbsp;</span><span style="color:#a31515">Imported 
+	component:&nbsp;&nbsp;&quot;</span><span style="color:Black"> 
+	&amp; isImported)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Next</span><span style="color:Black"> 
+	isImported<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub<br>
+	End</span><span style="color:Black"> </span><span style="color:Blue">Module</span></div>
+
+</body>
+
+</html>

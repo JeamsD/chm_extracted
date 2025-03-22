@@ -1,0 +1,288 @@
+<html>
+
+<head>
+<title>Get and Set Size Dimension Example (VBA)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VBA examples,compound width feature">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS API 
+ Help</span></h1>
+<h1>Get and Set Size Dimension Example (VBA)</h1>
+<p>This example shows how to get and set DimXpert compound width features.</p>
+<p class="APICODE">
+<br>
+'----------------------------------------------------------------------------<br>
+' Preconditions:<br>
+'&nbsp;1. Open<i> public_documents</i><b>\samples\tutorial\dimxpert\bracket_ads_plusminus.sldprt.</b><br>
+'&nbsp;2. Select an edge.<br>
+'&nbsp;3. Open the Immediate window.<br>
+'&nbsp;4. Ensure that the latest SOLIDWORKS DimXpert type library 
+is loaded:<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;a. Select <b>Tools &gt; References</b>.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;b. Click Browse.<br>
+'&nbsp;&nbsp;&nbsp;&nbsp;c. Find and select <i>install_dir</i><b>\swdimxpert.tlb</b>.<br>
+'<br>
+' Postconditions:<br>
+'&nbsp;1. Inspect the Immediate Window.<br>
+'&nbsp;2. Observe the Width1 feature and the Width2 size dimension 
+on the<br>
+'&nbsp;&nbsp;&nbsp; DimXpertManager tab.<br>
+'<br>
+'&nbsp;NOTE: Because this part is used elsewhere,&nbsp;do not save changes.<br>
+'---------------------------------------------------------------------------</p>
+<p class="APICODE">Option Explicit<br>
+Dim dimXpertPart As dimXpertPart</p>
+<p class="APICODE">Sub Main()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim swapp As SldWorks.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Set swapp = Application.SldWorks<br>
+&nbsp;&nbsp;&nbsp; Dim swModelDoc As SldWorks.ModelDoc2<br>
+&nbsp;&nbsp;&nbsp; Set swModelDoc = swapp.ActiveDoc<br>
+&nbsp;&nbsp;&nbsp; Dim annoType As Long<br>
+&nbsp;&nbsp;&nbsp; Dim swFeature As feature<br>
+&nbsp;&nbsp;&nbsp; Dim featureType As swDimXpertFeatureType_e<br>
+&nbsp;&nbsp;&nbsp; Dim features As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim appliedFeatures As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim appliedAnnotations As Variant<br>
+&nbsp;&nbsp;&nbsp; Dim appliedAnnotation As DimXpertAnnotation<br>
+&nbsp;&nbsp;&nbsp; Dim feature As DimXpertFeature<br>
+&nbsp;&nbsp;&nbsp; Dim appliedFeature As DimXpertFeature<br>
+&nbsp;&nbsp;&nbsp; Dim msgStr As String<br>
+&nbsp;&nbsp;&nbsp; Dim msgStr2 As String<br>
+&nbsp;&nbsp;&nbsp; Dim msgStr3 As String<br>
+&nbsp;&nbsp;&nbsp; Dim msgStr4 As String<br>
+&nbsp;&nbsp;&nbsp; Dim n As Long<br>
+&nbsp;&nbsp;&nbsp; Dim o As Long<br>
+&nbsp;&nbsp;&nbsp; Dim p As Long<br>
+&nbsp;&nbsp;&nbsp; Dim boolstatus As Boolean</p>
+<p class="APICODE">&nbsp;&nbsp; If swModelDoc Is Nothing Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp; Exit Sub<br>
+&nbsp;&nbsp; End If</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim dimXpertMgr As 
+SldWorks.DimXpertManager<br>
+&nbsp;&nbsp;&nbsp; Set dimXpertMgr = 
+swapp.IActiveDoc2.Extension.DimXpertManager(swapp.IActiveDoc2.IGetActiveConfiguration().Name, 
+True)<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;Model: &quot; &amp; swapp.IActiveDoc2.GetPathName</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim dimXpertPartObj As dimXpertPart<br>
+&nbsp;&nbsp;&nbsp; Set dimXpertPartObj = dimXpertMgr.dimXpertPart<br>
+&nbsp;&nbsp;&nbsp; Set dimXpertPart = dimXpertPartObj<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim dimOption As DimXpertDimensionOption<br>
+&nbsp;&nbsp;&nbsp; Set dimOption = dimXpertPart.<b>GetDimOption</b><br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Specify the position of the annotation<br>
+&nbsp;&nbsp;&nbsp; Dim textPos(2) As Double<br>
+&nbsp;&nbsp;&nbsp; textPos(0) = 0.05<br>
+&nbsp;&nbsp;&nbsp; textPos(1) = -0.03<br>
+&nbsp;&nbsp;&nbsp; textPos(2) = -0.03<br>
+&nbsp;&nbsp;&nbsp; Dim posvar As Variant<br>
+&nbsp;&nbsp;&nbsp; posvar = textPos<br>
+&nbsp;&nbsp;&nbsp; dimOption.<b>TextPosition</b> = posvar<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim dimarray(0) As Long<br>
+&nbsp;&nbsp;&nbsp; dimarray(0) = -1<br>
+&nbsp;&nbsp;&nbsp; Dim dimvar As Variant<br>
+&nbsp;&nbsp;&nbsp; dimvar = dimarray<br>
+&nbsp;&nbsp;&nbsp; dimOption.<b>FeatureSelectorOptions</b> = dimvar<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Insert the size dimension<br>
+&nbsp;&nbsp;&nbsp; dimXpertPart.<b>InsertSizeDimension</b> dimOption<br>
+&nbsp;&nbsp;&nbsp; </p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim featCount As Long<br>
+&nbsp;&nbsp;&nbsp; featCount = dimXpertPart.GetFeatureCount</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; msgStr = &quot;Total of &quot;<br>
+&nbsp;&nbsp;&nbsp; msgStr2 = featCount<br>
+&nbsp;&nbsp;&nbsp; msgStr = msgStr + msgStr2 + &quot; DimXpert features&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print msgStr</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get IDimXpert features through 
+IDimXpertPart</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; features = dimXpertPart.GetFeatures</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; msgStr = &quot;&nbsp; Features: &quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print msgStr</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; For n = 0 To UBound(features)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set feature = features(n)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp; &quot; + &quot;Feature 
+name: &quot; + (feature.Name)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; featureType = feature.Type<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Call GetPatternType(featureType, 
+msgStr2)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr = &quot;&nbsp;&nbsp;&nbsp;&nbsp; 
+Feature type &quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr3 = &quot; is suppressed on the 
+DimXpertManager tab? &quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr4 = feature.IsSuppressed()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print msgStr + msgStr2 + 
+msgStr3 + msgStr4</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr = &quot;&nbsp;&nbsp;&nbsp;&nbsp; 
+&quot; + &quot;Model feature: &quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Set swFeature = 
+feature.GetModelFeature()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If Not (swFeature 
+Is Nothing) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+swFeature.GetTypeName2()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print 
+msgStr + msgStr2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr = &quot;&nbsp;&nbsp;&nbsp;&nbsp; &quot; 
++ &quot;Number of SOLIDWORKS face entities in this feature: &quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = feature.GetFaceCount<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print msgStr + msgStr2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr = &quot;&nbsp;&nbsp;&nbsp;&nbsp; 
+&quot; + &quot;Number of applied features: &quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+feature.GetAppliedFeatureCount()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print msgStr + msgStr2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; appliedFeatures = 
+feature.GetAppliedFeatures()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If Not 
+(IsEmpty(appliedFeatures)) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; For o = 0 To 
+UBound(appliedFeatures)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Set appliedFeature = appliedFeatures(o)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot; + &quot;Applied feature 
+name: &quot; + (appliedFeature.Name)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Next<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr = &quot;&nbsp;&nbsp;&nbsp;&nbsp; 
+&quot; + &quot;Number of applied annotations: &quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+feature.GetAppliedAnnotationCount()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print msgStr + msgStr2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; appliedAnnotations 
+= feature.GetAppliedAnnotations()</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If Not 
+(IsEmpty(appliedAnnotations)) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; For p = 0 To 
+UBound(appliedAnnotations)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Set appliedAnnotation = appliedAnnotations(p)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot; + &quot;Applied annotation 
+name: &quot; + (appliedAnnotation.Name)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Next<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; End If<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Debug.Print &quot;&nbsp;&nbsp;&nbsp;&nbsp; 
+&quot;<br>
+&nbsp;&nbsp;&nbsp; Next<br>
+</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get specific information about the 
+Width1 feature</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim widthFeature As 
+IDimXpertCompoundWidthFeature<br>
+&nbsp;&nbsp;&nbsp; Set widthFeature = dimXpertPart.GetFeature(&quot;Width1&quot;)<br>
+&nbsp;&nbsp;&nbsp; msgStr = widthFeature.Name + &quot; is a DimXpert compound 
+width feature.&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print msgStr<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get the nominal width coordinates</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Dim width As Double<br>
+&nbsp;&nbsp;&nbsp; Dim x As Double<br>
+&nbsp;&nbsp;&nbsp; Dim y As Double<br>
+&nbsp;&nbsp;&nbsp; Dim z As Double<br>
+&nbsp;&nbsp;&nbsp; Dim i As Double<br>
+&nbsp;&nbsp;&nbsp; Dim j As Double<br>
+&nbsp;&nbsp;&nbsp; Dim k As Double</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; Debug.Print &quot;Nominal width of Width1&quot;<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;<br>
+&nbsp;&nbsp;&nbsp; boolstatus = widthFeature.<b>GetNominalCompoundWidth</b>(width, x, 
+y, z, i, j, k)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; msgStr = &quot;Width is &quot;<br>
+&nbsp;&nbsp;&nbsp; msgStr2 = width<br>
+&nbsp;&nbsp;&nbsp; Debug.Print msgStr + msgStr2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; msgStr = &quot;X-coordinate is &quot;<br>
+&nbsp;&nbsp;&nbsp; msgStr2 = x<br>
+&nbsp;&nbsp;&nbsp; Debug.Print msgStr + msgStr2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; msgStr = &quot;Y-coordinate is &quot;<br>
+&nbsp;&nbsp;&nbsp; msgStr2 = y<br>
+&nbsp;&nbsp;&nbsp; Debug.Print msgStr + msgStr2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; msgStr = &quot;Z-coordinate is &quot;<br>
+&nbsp;&nbsp;&nbsp; msgStr2 = z<br>
+&nbsp;&nbsp;&nbsp; Debug.Print msgStr + msgStr2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; msgStr = &quot;I-component of pierce vector is 
+&quot;<br>
+&nbsp;&nbsp;&nbsp; msgStr2 = i<br>
+&nbsp;&nbsp;&nbsp; Debug.Print msgStr + msgStr2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; msgStr = &quot;J-component of pierce vector is 
+&quot;<br>
+&nbsp;&nbsp;&nbsp; msgStr2 = j<br>
+&nbsp;&nbsp;&nbsp; Debug.Print msgStr + msgStr2</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; msgStr = &quot;K-component of pierce vector is 
+&quot;<br>
+&nbsp;&nbsp;&nbsp; msgStr2 = k<br>
+&nbsp;&nbsp;&nbsp; Debug.Print msgStr + msgStr2<br>
+&nbsp;&nbsp;&nbsp; Debug.Print &quot;&quot;</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; ' Get whether the width is a hole or a pin</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; boolstatus = widthFeature.<b>Inner</b><br>
+&nbsp;&nbsp;&nbsp; msgStr = &quot;The width is for a hole and not a pin: &quot;<br>
+&nbsp;&nbsp;&nbsp; msgStr2 = boolstatus<br>
+&nbsp;&nbsp;&nbsp; Debug.Print msgStr + msgStr2</p>
+<p class="APICODE">End Sub</p>
+<p class="APICODE">Public Sub GetPatternType(ByRef featureType, ByRef msgStr2)</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; If (featureType = swDimXpertFeature_Plane) 
+Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Plane&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_Cylinder) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Cylinder&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_Cone) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Cone&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_Extrude) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Extrude&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_Fillet) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Fillet&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_Chamfer) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Chamfer&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_CompoundHole) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;CompoundHole&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_CompoundWidth) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;CompoundWidth&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_CompoundNotch) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;CompoundNotch&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_CompoundClosedSlot3D) 
+Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;CompoundClosedSlot3D&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_IntersectPoint) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;IntersectPoint&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_IntersectLine) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;IntersectLine&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_IntersectCircle) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;IntersectCircle&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_IntersectPlane) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;IntersectPlane&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_Pattern) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Pattern&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_Sphere) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Sphere&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_BestfitPlane) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = &quot;Bestfit 
+Plane&quot;<br>
+&nbsp;&nbsp;&nbsp; ElseIf (featureType = swDimXpertFeature_Surface) Then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; msgStr2 = 
+&quot;Surface&quot;<br>
+&nbsp;&nbsp;&nbsp; End If</p>
+<p class="APICODE">&nbsp;&nbsp;&nbsp; <br>
+End Sub</p>
+<p>&nbsp;</p>
+
+</body>
+
+</html>

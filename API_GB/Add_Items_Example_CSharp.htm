@@ -1,0 +1,601 @@
+<html>
+
+<head>
+<title>Add Items Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,items">
+<meta name=MS-HKWD content="C# examples,XmlReader class">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS PDM Professional API Help</span></h1>
+<h1>Add Items Example (C#)</h1>
+<p><a name="Top"></a>This example shows how to add items to a vault. The data 
+for the items is imported from an XML file, which is read by the .NET XmlReader.</p>
+<p><b>NOTE</b>: If using the primary interop assembly 
+provided with SOLIDWORKS PDM Professional, see
+<a href="Using_NET_Framework_in_Applications.htm">Using .NET Framework 4.0 in 
+Stand-alone Applications</a>.</p>
+<p><img border="0" src="AddItems.gif" width="315" height="358"></p>
+
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><span style="color: green">//----------------------------------------------------------------------------</span>
+<span style="color: green">//&nbsp;Preconditions:</span>
+<span style="color: green">//&nbsp;&nbsp;1.&nbsp;Create&nbsp;an&nbsp;XML&nbsp;file&nbsp;for&nbsp;this&nbsp;example.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Open&nbsp;a&nbsp;text&nbsp;editor&nbsp;like&nbsp;Notepad&nbsp;and&nbsp;copy&nbsp;and&nbsp;paste&nbsp;<a href="#XML">this&nbsp;code</a>&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;into&nbsp;the&nbsp;editor.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Save&nbsp;the&nbsp;file&nbsp;as&nbsp;<b>Items.xml</b> and remember where you save the file.</span>
+<span style="color: green">//&nbsp;&nbsp;2.&nbsp;Open&nbsp;the&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;Administration&nbsp;tool.</span>
+<span style="color: green">//&nbsp;&nbsp;3.&nbsp;Log&nbsp;into&nbsp;the&nbsp;vault&nbsp;where&nbsp;to&nbsp;add&nbsp;a&nbsp;new&nbsp;serial&nbsp;number.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Right-click&nbsp;<b>Serial&nbsp;Numbers</b>&nbsp;and </span><font size="1"><span style="color:green;">click&nbsp;</span></font><span style="color: green"><b>New&nbsp;Serial&nbsp;Number</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.&nbsp;Type&nbsp;<b>AddItems</b>&nbsp;in&nbsp;<b>Name</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.&nbsp;For <b>Format string</b>, click the right-arrow button and select&nbsp;<b>Counter&nbsp;value</b>&nbsp;&gt; <b>00001</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.&nbsp;Click&nbsp;<b>OK</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Right-click&nbsp;<b>Items</b>&nbsp;and select&nbsp;<b>Open</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.&nbsp;Click&nbsp;<b>AddItems</b>&nbsp;in&nbsp;<b>Item&nbsp;Serial&nbsp;Number</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.&nbsp;Click&nbsp;<b>OK</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;4.&nbsp;Start&nbsp;Microsoft&nbsp;Visual&nbsp;Studio&nbsp;2010.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Click&nbsp;<b>File&nbsp;&gt;&nbsp;New&nbsp;&gt;&nbsp;Project&nbsp;&gt;&nbsp;C#&nbsp;&gt;&nbsp;Windows&nbsp;Forms&nbsp;Application</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Type&nbsp;<b>AddItems</b>&nbsp;in&nbsp;<b>Name</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;the&nbsp;<b>Browse</b>&nbsp;button&nbsp;and&nbsp;browse&nbsp;to&nbsp;the&nbsp;folder&nbsp;where&nbsp;to&nbsp;create&nbsp;the&nbsp;project.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Click&nbsp;<b>OK</b>.&nbsp;
+//     e. Click <b>Show All Files </b>in the Solution Explorer toolbar.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f.&nbsp;Create&nbsp;a&nbsp;form&nbsp;similar&nbsp;to&nbsp;the&nbsp;form&nbsp;shown&nbsp;above&nbsp;and&nbsp;change:</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.&nbsp;Top&nbsp;label&nbsp;to&nbsp;<b>VaultsLabel</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.&nbsp;Combo&nbsp;box&nbsp;to&nbsp;<b>VaultsComboBox</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.&nbsp;Second&nbsp;label&nbsp;to&nbsp;<b>XmlLabel</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.&nbsp;Text&nbsp;box&nbsp;to&nbsp;<b>XmlTextBox</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5.&nbsp;Browse&nbsp;button&nbsp;to&nbsp;<b>BrowseButton</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;6.&nbsp;Add&nbsp;items&nbsp;button&nbsp;to&nbsp;<b>AddItemsButton</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.&nbsp;List&nbsp;box&nbsp;to&nbsp;<b>ItemsListBox</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g.&nbsp;Replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>Form1.cs</b>&nbsp;with&nbsp;<a href="#Form1">this&nbsp;code</a>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;h.&nbsp;Replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>Form1.Designer.cs</b>&nbsp;with&nbsp;<a href="#Designer">this code</a>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i.&nbsp;Right-click&nbsp;the&nbsp;<b>AddItemsCSharp</b>&nbsp;project&nbsp;name&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.&nbsp;Click&nbsp;<b>Add&nbsp;&gt;&nbsp;Class &gt; Class</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.&nbsp;Type&nbsp;<b>EdmVaultSingleton.cs </b>in<b> Name.</b></span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.&nbsp;Click&nbsp;<b>Add</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.&nbsp;Replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>EdmVaultSingleton.cs</b>&nbsp;with&nbsp;<a href="#EdmVaultSingleton">this code</a>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;j.&nbsp;Right-click&nbsp;the&nbsp;<b>AddItems</b>&nbsp;project&nbsp;name&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.&nbsp;Click&nbsp;<b>Add&nbsp;&gt;&nbsp;Class &gt; Class</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.&nbsp;Type&nbsp;<b>NewItem.cs</b> in <b>Name</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.&nbsp;Click&nbsp;<b>Add</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.&nbsp;Replace&nbsp;the&nbsp;code&nbsp;in&nbsp;<b>NewItem.cs</b>&nbsp;with&nbsp;<a href="#NewItem">this&nbsp;code</a>.</span>
+<span style="color: green">//&nbsp;&nbsp;5.&nbsp;Add&nbsp;<b>EPDM.Interop.epdm.dll</b>&nbsp;as&nbsp;a&nbsp;reference&nbsp;(right-click&nbsp;the&nbsp;project</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;in&nbsp;the&nbsp;Solution&nbsp;Explorer,&nbsp;</span><font size="1"><span style="color:green;">click&nbsp;</span></font><span style="color: green"><b>Add&nbsp;Reference</b>,&nbsp;</span><font size="1"><span style="color:green;">click&nbsp;</span></font>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Assemblies &gt; Framework</b>&nbsp;in&nbsp;the&nbsp;left-side&nbsp;panel,&nbsp;browse&nbsp;to&nbsp;the&nbsp;top&nbsp;folder&nbsp;of&nbsp;your&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;installation,&nbsp;locate&nbsp;and&nbsp;</span><font size="1"><span style="color:green;">click&nbsp;</span></font>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>EPDM.Interop.epdm.dll</b>,&nbsp;click&nbsp;<b>Open</b>,&nbsp;click&nbsp;<b>Add</b>,&nbsp;and&nbsp;click&nbsp;<b>Close</b>).</span>
+<span style="color: green">//&nbsp;&nbsp;6.&nbsp;Right-click&nbsp;<b>EPDM.Interop.epdm</b>&nbsp;in&nbsp;References,&nbsp;</span><font size="1"><span style="color:green;">click&nbsp;</span></font><span style="color: green"><b>Properties</b>,&nbsp;and&nbsp;set&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Embed&nbsp;Interop&nbsp;Types</b>&nbsp;to&nbsp;<b>False</b>&nbsp;to&nbsp;handle&nbsp;methods&nbsp;that&nbsp;pass&nbsp;arrays&nbsp;of&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;structures.</span>
+<span style="color: green">//&nbsp;&nbsp;7.&nbsp;Click&nbsp;<b>Debug&nbsp;&gt;&nbsp;Start&nbsp;Debugging</b>&nbsp;or&nbsp;press&nbsp;F5.</span>
+<span style="color: green">//</span>
+<span style="color: green">//&nbsp;Postconditions:&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;1.&nbsp;Displays&nbsp;a&nbsp;dialog.</span>
+<span style="color: green">//&nbsp;&nbsp;2.&nbsp;Select&nbsp;a&nbsp;vault.</span>
+<span style="color: green">//&nbsp;&nbsp;3.&nbsp;Click&nbsp;the&nbsp;<b>Browse</b>&nbsp;button, locate and select&nbsp;<b>Items.xml</b>,<b> </b>and click <b>Open</b>.</span>
+<span style="color: green">//&nbsp;&nbsp;4.&nbsp;Click&nbsp;the&nbsp;<b>Add&nbsp;items</b>&nbsp;button.</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The new&nbsp;items are&nbsp;printed&nbsp;in&nbsp;the&nbsp;dialog's&nbsp;list.</span>
+<span style="color: green">//&nbsp;&nbsp;5.&nbsp;Close&nbsp;the&nbsp;dialog.</span>
+<span style="color: green">//&nbsp;&nbsp;6.&nbsp;Open&nbsp;the&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;Item Explorer&nbsp;tool.&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(In&nbsp;Windows&nbsp;7,&nbsp;click&nbsp;<b>Start&nbsp;&gt;&nbsp;All&nbsp;Programs&nbsp;&gt;&nbsp;SOLIDWORKS&nbsp;PDM&nbsp;Professional&nbsp;&gt;&nbsp;
+//     Item&nbsp;Explorer</b>.)</span>
+<span style="color: green">//&nbsp;&nbsp;7. Expand&nbsp;the&nbsp;vault&nbsp;where&nbsp;the&nbsp;new&nbsp;items&nbsp;were&nbsp;added.&nbsp;</span>
+<span style="color: green">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;new&nbsp;items&nbsp;are&nbsp;listed&nbsp;below&nbsp;the&nbsp;name&nbsp;of&nbsp;the&nbsp;expanded&nbsp;vault.&nbsp;</span>
+<span style="color: green">//----------------------------------------------------------------------------</span></pre>
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><font size="1"><a name="XML"></a></font>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;ArrayOfAnyType xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;&gt;
+  &lt;anyType xsi:type=&quot;Item&quot;&gt;
+    &lt;Description&gt;First Item&lt;/Description&gt;
+    &lt;ProjectName&gt;Project 1&lt;/ProjectName&gt;
+    &lt;ProjectNumber&gt;1&lt;/ProjectNumber&gt;
+    &lt;PartType&gt;Purchased&lt;/PartType&gt;
+    &lt;ItemName&gt;Item 1&lt;/ItemName&gt;
+  &lt;/anyType&gt;
+  &lt;anyType xsi:type=&quot;Item&quot;&gt;
+    &lt;Description&gt;Second Item&lt;/Description&gt;
+    &lt;ProjectName&gt;Project 2&lt;/ProjectName&gt;
+    &lt;ProjectNumber&gt;2&lt;/ProjectNumber&gt;
+    &lt;PartType&gt;Built&lt;/PartType&gt;
+    &lt;ItemName&gt;Item 2&lt;/ItemName&gt;
+  &lt;/anyType&gt;
+  &lt;anyType xsi:type=&quot;Item&quot;&gt;
+    &lt;Description&gt;Third Item&lt;/Description&gt;
+    &lt;ProjectName&gt;Project 3&lt;/ProjectName&gt;
+    &lt;ProjectNumber&gt;3&lt;/ProjectNumber&gt;
+    &lt;PartType&gt;Purchased&lt;/PartType&gt;
+    &lt;ItemName&gt;Item 3&lt;/ItemName&gt;
+  &lt;/anyType&gt;
+  &lt;anyType xsi:type=&quot;Item&quot;&gt;
+    &lt;Description&gt;Fourth Item&lt;/Description&gt;
+    &lt;ProjectName&gt;Project 4&lt;/ProjectName&gt;
+    &lt;ProjectNumber&gt;4&lt;/ProjectNumber&gt;
+    &lt;PartType&gt;Built&lt;/PartType&gt;
+    &lt;ItemName&gt;Item 4&lt;/ItemName&gt;
+  &lt;/anyType&gt;
+  &lt;anyType xsi:type=&quot;Item&quot;&gt;
+    &lt;Description&gt;Fifth Item&lt;/Description&gt;
+    &lt;ProjectName&gt;Project 5&lt;/ProjectName&gt;
+    &lt;ProjectNumber&gt;5&lt;/ProjectNumber&gt;
+    &lt;PartType&gt;Purchased&lt;/PartType&gt;
+    &lt;ItemName&gt;Item 5&lt;/ItemName&gt;
+  &lt;/anyType&gt;
+  &lt;anyType xsi:type=&quot;Item&quot;&gt;
+    &lt;Description&gt;Sixth Item&lt;/Description&gt;
+    &lt;ProjectName&gt;Project 6&lt;/ProjectName&gt;
+    &lt;ProjectNumber&gt;6&lt;/ProjectNumber&gt;
+    &lt;PartType&gt;Built&lt;/PartType&gt;
+    &lt;ItemName&gt;Item 6&lt;/ItemName&gt;
+  &lt;/anyType&gt;
+  &lt;anyType xsi:type=&quot;Item&quot;&gt;
+    &lt;Description&gt;Seventh Item&lt;/Description&gt;
+    &lt;ProjectName&gt;Project 7&lt;/ProjectName&gt;
+    &lt;ProjectNumber&gt;7&lt;/ProjectNumber&gt;
+    &lt;PartType&gt;Purchased&lt;/PartType&gt;
+    &lt;ItemName&gt;Item 7&lt;/ItemName&gt;
+  &lt;/anyType&gt;
+  &lt;anyType xsi:type=&quot;Item&quot;&gt;
+    &lt;Description&gt;Eighth Item&lt;/Description&gt;
+    &lt;ProjectName&gt;Project 8&lt;/ProjectName&gt;
+    &lt;ProjectNumber&gt;8&lt;/ProjectNumber&gt;
+    &lt;PartType&gt;Built&lt;/PartType&gt;
+    &lt;ItemName&gt;Item 8&lt;/ItemName&gt;
+  &lt;/anyType&gt;
+  &lt;anyType xsi:type=&quot;Item&quot;&gt;
+    &lt;Description&gt;Ninth Item&lt;/Description&gt;
+    &lt;ProjectName&gt;Project 9&lt;/ProjectName&gt;
+    &lt;ProjectNumber&gt;9&lt;/ProjectNumber&gt;
+    &lt;PartType&gt;Purchased&lt;/PartType&gt;
+    &lt;ItemName&gt;Item 9&lt;/ItemName&gt;
+  &lt;/anyType&gt;
+  &lt;anyType xsi:type=&quot;Item&quot;&gt;
+    &lt;Description&gt;Tenth Item&lt;/Description&gt;
+    &lt;ProjectName&gt;Project 10&lt;/ProjectName&gt;
+    &lt;ProjectNumber&gt;10&lt;/ProjectNumber&gt;
+    &lt;PartType&gt;Built&lt;/PartType&gt;
+    &lt;ItemName&gt;Item 10&lt;/ItemName&gt;
+  &lt;/anyType&gt;
+&lt;/ArrayOfAnyType&gt;</pre>
+<div align="center">
+	<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><a href="#Top">Back to top</a></pre>
+</div>
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><span style="color: green"><a name="Form1"></a>//Form1.cs&nbsp;</span>
+<span style="color: blue">using</span>&nbsp;System;
+<span style="color: blue">using</span>&nbsp;System.IO;
+<span style="color: blue">using</span>&nbsp;EPDM.Interop.epdm;
+<span style="color: blue">using</span>&nbsp;System.Collections;
+<span style="color: blue">using</span>&nbsp;System.Diagnostics;
+<span style="color: blue">using</span>&nbsp;System.Runtime.InteropServices;
+<span style="color: blue">using</span>&nbsp;System.Windows.Forms;
+ 
+<span style="color: blue">namespace</span>&nbsp;AddItemsCSharp
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;<span style="color: blue">partial</span>&nbsp;<span style="color: blue">class</span>&nbsp;<span style="color: #2b91af">Form1</span>&nbsp;:&nbsp;<span style="color: #2b91af">Form</span>
+&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;Form1()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InitializeComponent();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">void</span>&nbsp;BrowseButton_Click(System.<span style="color: #2b91af">Object</span>&nbsp;sender,&nbsp;System.<span style="color: #2b91af">EventArgs</span>&nbsp;e)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">DialogResult</span>&nbsp;dlgResult&nbsp;=&nbsp;XmlOpenFileDialog.ShowDialog();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">if</span>&nbsp;(dlgResult&nbsp;==&nbsp;<span style="color: #2b91af">DialogResult</span>.Cancel)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">return</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;XmlTextBox.Text&nbsp;=&nbsp;XmlOpenFileDialog.FileName;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color: #2b91af">COMException</span>&nbsp;ex)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(<span style="color: #a31515">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color: #a31515">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">catch</span>&nbsp;(<span style="color: #2b91af">Exception</span>&nbsp;ex)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(ex.Message);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;<span style="color: blue">void</span>&nbsp;AddItemsButton_Click(System.<span style="color: #2b91af">Object</span>&nbsp;sender,&nbsp;System.<span style="color: #2b91af">EventArgs</span>&nbsp;e)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ItemsListBox.Items.Clear();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">ArrayList</span>&nbsp;NewItems&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;<span style="color: #2b91af">ArrayList</span>();
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">using</span>&nbsp;(System.Xml.<span style="color: #2b91af">XmlReader</span>&nbsp;XmlReader&nbsp;=&nbsp;System.Xml.<span style="color: #2b91af">XmlReader</span>.Create(XmlTextBox.Text))
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;XmlReader.Read();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;XmlReader.ReadToNextSibling(<span style="color: #a31515">&quot;ArrayOfAnyType&quot;</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;XmlReader.ReadToDescendant(<span style="color: #a31515">&quot;anyType&quot;</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">do</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">NewItem</span>&nbsp;CurItem&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;<span style="color: #2b91af">NewItem</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;XmlReader.ReadToDescendant(<span style="color: #a31515">&quot;Description&quot;</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CurItem.Description&nbsp;=&nbsp;XmlReader.ReadString();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;XmlReader.ReadToNextSibling(<span style="color: #a31515">&quot;ProjectName&quot;</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CurItem.ProjectName&nbsp;=&nbsp;XmlReader.ReadString();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;XmlReader.ReadToNextSibling(<span style="color: #a31515">&quot;ProjectNumber&quot;</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CurItem.ProjectNumber&nbsp;=&nbsp;XmlReader.ReadString();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;XmlReader.ReadToNextSibling(<span style="color: #a31515">&quot;PartType&quot;</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CurItem.PartType&nbsp;=&nbsp;XmlReader.ReadString();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;XmlReader.ReadToNextSibling(<span style="color: #a31515">&quot;ItemName&quot;</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CurItem.ItemName&nbsp;=&nbsp;XmlReader.ReadString();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NewItems.Add(CurItem);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;<span style="color: blue">while</span>&nbsp;(XmlReader.ReadToFollowing(<span style="color: #a31515">&quot;anyType&quot;</span>));
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Obtain&nbsp;the&nbsp;only&nbsp;instance&nbsp;of&nbsp;the&nbsp;IEdmVault5&nbsp;object</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">IEdmVault5</span>&nbsp;vault&nbsp;=&nbsp;<span style="color: #2b91af">EdmVaultSingleton</span>.Instance;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">if</span>&nbsp;(!vault.<b>IsLoggedIn</b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Log&nbsp;into&nbsp;selected&nbsp;vault&nbsp;as&nbsp;the&nbsp;current&nbsp;user</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault.<b>LoginAuto</b>(VaultsComboBox.Text,&nbsp;<span style="color: blue">this</span>.Handle.ToInt32());
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Create&nbsp;the&nbsp;batch&nbsp;interface</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">IEdmBatchItemGeneration2</span>&nbsp;BatchItemGen&nbsp;=&nbsp;<span style="color: blue">default</span>(<span style="color: #2b91af">IEdmBatchItemGeneration2</span>);
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">IEdmVault7</span>&nbsp;vault1&nbsp;=&nbsp;(<span style="color: #2b91af">IEdmVault7</span>)vault;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BatchItemGen&nbsp;=&nbsp;(<span style="color: #2b91af">IEdmBatchItemGeneration2</span>)vault1.<b>CreateUtility</b>(<span style="color: #2b91af">EdmUtility</span>.EdmUtil_BatchItemGeneration);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">EdmVarVal</span>[]&nbsp;VarVals&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;<span style="color: #2b91af">EdmVarVal</span>[4];
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarVals[0].<b>mlEdmVarValFlags</b>&nbsp;=&nbsp;0;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarVals[0].<b>moVarIDorName</b>&nbsp;=&nbsp;<span style="color: #a31515">&quot;Description&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarVals[1].<b>mlEdmVarValFlags</b>&nbsp;=&nbsp;0;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarVals[1].<b>moVarIDorName</b>&nbsp;=&nbsp;<span style="color: #a31515">&quot;Project&nbsp;Name&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarVals[2].<b>mlEdmVarValFlags</b>&nbsp;=&nbsp;0;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarVals[2].<b>moVarIDorName</b>&nbsp;=&nbsp;<span style="color: #a31515">&quot;Project&nbsp;number&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarVals[3].<b>mlEdmVarValFlags</b>&nbsp;=&nbsp;0;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarVals[3].<b>moVarIDorName</b>&nbsp;=&nbsp;<span style="color: #a31515">&quot;Part&nbsp;Type&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">for</span>&nbsp;(<span style="color: blue">int</span>&nbsp;i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;=&nbsp;NewItems.Count&nbsp;-&nbsp;1;&nbsp;i++)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarVals[0].<b>moValue</b>&nbsp;=&nbsp;(NewItems[i]&nbsp;<span style="color: blue">as</span>&nbsp;<span style="color: #2b91af">NewItem</span>).Description;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarVals[1].<b>moValue</b>&nbsp;=&nbsp;(NewItems[i]&nbsp;<span style="color: blue">as</span>&nbsp;<span style="color: #2b91af">NewItem</span>).ProjectName;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarVals[2].<b>moValue</b>&nbsp;=&nbsp;(NewItems[i]&nbsp;<span style="color: blue">as</span>&nbsp;<span style="color: #2b91af">NewItem</span>).ProjectNumber;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VarVals[3].<b>moValue</b>&nbsp;=&nbsp;(NewItems[i]&nbsp;<span style="color: blue">as</span>&nbsp;<span style="color: #2b91af">NewItem</span>).PartType;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BatchItemGen.<b>AddSelection2</b>((<span style="color: #2b91af">EdmVault5</span>)vault,&nbsp;VarVals,&nbsp;((NewItems[i]&nbsp;<span style="color: blue">as</span>&nbsp;<span style="color: #2b91af">NewItem</span>).ItemName),0,&nbsp;0,&nbsp;0,<span style="color: #a31515">&quot;&quot;</span>,&nbsp;(<span style="color: blue">int</span>)<span style="color: #2b91af">EdmRefFlags</span>.EdmRef_Dynamic);
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Build&nbsp;the&nbsp;item&nbsp;tree</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">bool</span>&nbsp;CreateSuccess&nbsp;=&nbsp;<span style="color: blue">false</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CreateSuccess&nbsp;=&nbsp;BatchItemGen.<b>CreateTree</b>(((<span style="color: blue">int</span>)(<span style="color: blue">this</span>.Handle.ToInt32())),&nbsp;(<span style="color: blue">int</span>)<span style="color: #2b91af">EdmItemGenerationFlags</span>.Eigcf_Nothing);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">if</span>&nbsp;((CreateSuccess&nbsp;==&nbsp;<span style="color: blue">false</span>))
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">return</span>;
+ 
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Generate&nbsp;the&nbsp;items</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">EdmGenItemInfo</span>[]&nbsp;ReturnedItems&nbsp;=&nbsp;<span style="color: blue">null</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">bool</span>&nbsp;bOpenExplorer&nbsp;=&nbsp;<span style="color: blue">false</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BatchItemGen.<b>GenerateItems</b>(<span style="color: blue">this</span>.Handle.ToInt32(),&nbsp;<span style="color: blue">out</span>&nbsp;ReturnedItems,&nbsp;<span style="color: blue">out</span>&nbsp;bOpenExplorer,&nbsp;<span style="color: blue">null</span>);
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Display&nbsp;the&nbsp;new&nbsp;item&nbsp;information&nbsp;in&nbsp;the&nbsp;list&nbsp;box</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">string</span>&nbsp;msg&nbsp;=&nbsp;<span style="color: #a31515">&quot;&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">if</span>&nbsp;(ReturnedItems.Length&nbsp;==&nbsp;0)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;msg&nbsp;=&nbsp;<span style="color: #a31515">&quot;No&nbsp;items&nbsp;were&nbsp;added.&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ItemsListBox.Items.Add(<span style="color: #a31515">&quot;No&nbsp;items&nbsp;were&nbsp;added.&quot;</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">else</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">foreach</span>&nbsp;(<span style="color: #2b91af">EdmGenItemInfo</span>&nbsp;ItemInfo&nbsp;<span style="color: blue">in</span>&nbsp;ReturnedItems)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ItemsListBox.Items.Add(<span style="color: #a31515">&quot;Item&nbsp;name:&nbsp;&quot;</span>&nbsp;+&nbsp;ItemInfo.<b>mbsItemName</b>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ItemsListBox.Items.Add(<span style="color: #a31515">&quot;Alternate&nbsp;name:&nbsp;&quot;</span>&nbsp;+&nbsp;ItemInfo.<b>mbsItemAlternativeName</b>);
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">IEdmVault11</span>&nbsp;vault2&nbsp;=&nbsp;(<span style="color: #2b91af">IEdmVault11</span>)vault;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ItemsListBox.Items.Add(<span style="color: #a31515">&quot;Status:&nbsp;&quot;</span>&nbsp;+&nbsp;vault2.<b>GetErrorMessage</b>(ItemInfo.mhResult));
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ItemsListBox.Items.Add(<span style="color: #a31515">&quot;&quot;</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color: #2b91af">COMException</span>&nbsp;ex)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(<span style="color: #a31515">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color: #a31515">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">catch</span>&nbsp;(<span style="color: #2b91af">Exception</span>&nbsp;ex)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(ex.Message);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;<span style="color: blue">void</span>&nbsp;AddItems_Load(System.<span style="color: #2b91af">Object</span>&nbsp;sender,&nbsp;System.<span style="color: #2b91af">EventArgs</span>&nbsp;e)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Obtain&nbsp;the&nbsp;only&nbsp;instance&nbsp;of&nbsp;the&nbsp;IEdmVault&nbsp;object</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">IEdmVault8</span>&nbsp;vault&nbsp;=&nbsp;(<span style="color: #2b91af">IEdmVault8</span>)<span style="color: #2b91af">EdmVaultSingleton</span>.Instance;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">EdmViewInfo</span>[]&nbsp;Views&nbsp;=&nbsp;<span style="color: blue">null</span>;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vault.<b>GetVaultViews</b>(<span style="color: blue">out</span>&nbsp;Views,&nbsp;<span style="color: blue">false</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Items.Clear();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">foreach</span>&nbsp;(<span style="color: #2b91af">EdmViewInfo</span>&nbsp;View&nbsp;<span style="color: blue">in</span>&nbsp;Views)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Items.Add(View.<b>mbsVaultName</b>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">if</span>&nbsp;(VaultsComboBox.Items.Count&nbsp;&gt;&nbsp;0)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VaultsComboBox.Text&nbsp;=&nbsp;(<span style="color: blue">string</span>)VaultsComboBox.Items[0];
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">catch</span>&nbsp;(System.Runtime.InteropServices.<span style="color: #2b91af">COMException</span>&nbsp;ex)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(<span style="color: #a31515">&quot;HRESULT&nbsp;=&nbsp;0x&quot;</span>&nbsp;+&nbsp;ex.ErrorCode.ToString(<span style="color: #a31515">&quot;X&quot;</span>)&nbsp;+&nbsp;<span style="color: #a31515">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;ex.Message);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">catch</span>&nbsp;(<span style="color: #2b91af">Exception</span>&nbsp;ex)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">MessageBox</span>.Show(ex.Message);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;}
+}</pre>
+<div align="center">
+	<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><a href="#Top">Back to top</a></pre>
+</div>
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><span style="color: green"><a name="Designer"></a>//Form1.Designer.cs</span>
+<span style="color: blue">namespace</span>&nbsp;AddItemsCSharp
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">partial</span>&nbsp;<span style="color: blue">class</span>&nbsp;<span style="color: #2b91af">Form1</span>
+&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;</span><span style="color: gray">&lt;summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;Required&nbsp;designer&nbsp;variable.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;</span><span style="color: gray">&lt;/summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;System.ComponentModel.<span style="color: #2b91af">IContainer</span>&nbsp;components&nbsp;=&nbsp;<span style="color: blue">null</span>;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;</span><span style="color: gray">&lt;summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;Clean&nbsp;up&nbsp;any&nbsp;resources&nbsp;being&nbsp;used.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;</span><span style="color: gray">&lt;/summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;</span><span style="color: gray">&lt;param&nbsp;name=&quot;disposing&quot;&gt;</span><span style="color: green">true&nbsp;if&nbsp;managed&nbsp;resources&nbsp;should&nbsp;be&nbsp;disposed;&nbsp;otherwise,&nbsp;false.</span><span style="color: gray">&lt;/param&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">protected</span>&nbsp;<span style="color: blue">override</span>&nbsp;<span style="color: blue">void</span>&nbsp;Dispose(<span style="color: blue">bool</span>&nbsp;disposing)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">if</span>&nbsp;(disposing&nbsp;&amp;&amp;&nbsp;(components&nbsp;!=&nbsp;<span style="color: blue">null</span>))
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;components.Dispose();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">base</span>.Dispose(disposing);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+<span style="color: blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#region</span>&nbsp;Windows&nbsp;Form&nbsp;Designer&nbsp;generated&nbsp;code
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;</span><span style="color: gray">&lt;summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;Required&nbsp;method&nbsp;for&nbsp;Designer&nbsp;support&nbsp;-&nbsp;do&nbsp;not&nbsp;modify</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;the&nbsp;contents&nbsp;of&nbsp;this&nbsp;method&nbsp;with&nbsp;the&nbsp;code&nbsp;editor.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: gray">///</span><span style="color: green">&nbsp;</span><span style="color: gray">&lt;/summary&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;<span style="color: blue">void</span>&nbsp;InitializeComponent()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsLabel&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Label</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsComboBox&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">ComboBox</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.XmlLabel&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Label</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.XmlTextBox&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">TextBox</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.BrowseButton&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Button</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.AddItemsButton&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Button</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.ItemsListBox&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">ListBox</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.XmlOpenFileDialog&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">OpenFileDialog</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.SuspendLayout();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//XmlOpenFileDialog</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.XmlOpenFileDialog.Filter&nbsp;=&nbsp;<span style="color: #a31515">&quot;XML&nbsp;files|*.XML&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;VaultsLabel</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsLabel.AutoSize&nbsp;=&nbsp;<span style="color: blue">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsLabel.Location&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(22,&nbsp;22);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsLabel.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;VaultsLabel&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsLabel.Size&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(91,&nbsp;13);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsLabel.TabIndex&nbsp;=&nbsp;0;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsLabel.Text&nbsp;=&nbsp;<span style="color: #a31515">&quot;Select&nbsp;vault&nbsp;view:&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;VaultsComboBox</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsComboBox.FormattingEnabled&nbsp;=&nbsp;<span style="color: blue">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsComboBox.Location&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(25,&nbsp;38);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsComboBox.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;VaultsComboBox&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsComboBox.Size&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(174,&nbsp;21);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.VaultsComboBox.TabIndex&nbsp;=&nbsp;1;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;XmlLabel</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.XmlLabel.AutoSize&nbsp;=&nbsp;<span style="color: blue">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.XmlLabel.Location&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(25,&nbsp;91);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.XmlLabel.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;XmlLabel&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.XmlLabel.Size&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(172,&nbsp;13);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.XmlLabel.TabIndex&nbsp;=&nbsp;2;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.XmlLabel.Text&nbsp;=&nbsp;<span style="color: #a31515">&quot;XML&nbsp;file&nbsp;from&nbsp;which&nbsp;to&nbsp;import&nbsp;items:&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;XmlTextBox</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.XmlTextBox.Location&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(28,&nbsp;107);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.XmlTextBox.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;XmlTextBox&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.XmlTextBox.Size&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(171,&nbsp;20);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.XmlTextBox.TabIndex&nbsp;=&nbsp;3;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;BrowseButton</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.BrowseButton.Location&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(216,&nbsp;107);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.BrowseButton.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;BrowseButton&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.BrowseButton.Size&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(75,&nbsp;23);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.BrowseButton.TabIndex&nbsp;=&nbsp;4;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.BrowseButton.Text&nbsp;=&nbsp;<span style="color: #a31515">&quot;Browse...&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.BrowseButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color: blue">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.BrowseButton.Click&nbsp;+=&nbsp;<span style="color: blue">new</span>&nbsp;System.<span style="color: #2b91af">EventHandler</span>(<span style="color: blue">this</span>.BrowseButton_Click);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;AddItemsButton</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.AddItemsButton.Location&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(28,&nbsp;149);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.AddItemsButton.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;AddItemsButton&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.AddItemsButton.Size&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(75,&nbsp;23);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.AddItemsButton.TabIndex&nbsp;=&nbsp;5;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.AddItemsButton.Text&nbsp;=&nbsp;<span style="color: #a31515">&quot;Add&nbsp;items&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.AddItemsButton.UseVisualStyleBackColor&nbsp;=&nbsp;<span style="color: blue">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.AddItemsButton.Click&nbsp;+=&nbsp;<span style="color: blue">new</span>&nbsp;System.<span style="color: #2b91af">EventHandler</span>(<span style="color: blue">this</span>.AddItemsButton_Click);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;ItemListBox</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.ItemsListBox.FormattingEnabled&nbsp;=&nbsp;<span style="color: blue">true</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.ItemsListBox.Location&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Point</span>(28,&nbsp;196);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.ItemsListBox.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;ItemsListBox&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.ItemsListBox.Size&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(263,&nbsp;95);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.ItemsListBox.TabIndex&nbsp;=&nbsp;6;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;Form1</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.AutoScaleDimensions&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">SizeF</span>(6F,&nbsp;13F);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.AutoScaleMode&nbsp;=&nbsp;System.Windows.Forms.<span style="color: #2b91af">AutoScaleMode</span>.Font;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.ClientSize&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;System.Drawing.<span style="color: #2b91af">Size</span>(334,&nbsp;311);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Controls.Add(<span style="color: blue">this</span>.ItemsListBox);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Controls.Add(<span style="color: blue">this</span>.AddItemsButton);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Controls.Add(<span style="color: blue">this</span>.BrowseButton);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Controls.Add(<span style="color: blue">this</span>.XmlTextBox);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Controls.Add(<span style="color: blue">this</span>.XmlLabel);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Controls.Add(<span style="color: blue">this</span>.VaultsComboBox);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Controls.Add(<span style="color: blue">this</span>.VaultsLabel);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Name&nbsp;=&nbsp;<span style="color: #a31515">&quot;Form1&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Text&nbsp;=&nbsp;<span style="color: #a31515">&quot;Add&nbsp;new&nbsp;items&quot;</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.Load&nbsp;&nbsp;+=&nbsp;<span style="color: blue">new</span>&nbsp;System.<span style="color: #2b91af">EventHandler</span>(<span style="color: blue">this</span>.AddItems_Load);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.ResumeLayout(<span style="color: blue">false</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">this</span>.PerformLayout();
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+<span style="color: blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#endregion</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Label</span>&nbsp;VaultsLabel;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">ComboBox</span>&nbsp;VaultsComboBox;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Label</span>&nbsp;XmlLabel;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">TextBox</span>&nbsp;XmlTextBox;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Button</span>&nbsp;BrowseButton;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">Button</span>&nbsp;AddItemsButton;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">ListBox</span>&nbsp;ItemsListBox;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;System.Windows.Forms.<span style="color: #2b91af">OpenFileDialog</span>&nbsp;XmlOpenFileDialog;
+&nbsp;&nbsp;&nbsp;&nbsp;}
+}</pre>
+<div align="center">
+	<pre style="font-family: Courier New; font-size: 13; color: black; background: white">
+<a href="#Top">Back to top</a></pre>
+</div>
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><span style="color: green"><a name="EdmVaultSingleton"></a>//EdmVaultSingleton.cs</span>
+<span style="color: blue">using</span>&nbsp;System;
+<span style="color: blue">using</span>&nbsp;System.Collections;
+<span style="color: blue">using</span>&nbsp;System.Diagnostics;
+<span style="color: blue">using</span>&nbsp;System.Threading;
+<span style="color: blue">using</span>&nbsp;EPDM.Interop.epdm;
+ 
+<span style="color: blue">namespace</span>&nbsp;AddItemsCSharp
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;<span style="color: blue">class</span>&nbsp;<span style="color: #2b91af">EdmVaultSingleton</span>
+&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;<span style="color: blue">static</span>&nbsp;<span style="color: #2b91af">EdmVault5</span>&nbsp;mInstance&nbsp;=&nbsp;<span style="color: blue">null</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;<span style="color: blue">static</span>&nbsp;<span style="color: blue">object</span>&nbsp;mLockObj&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;<span style="color: blue">object</span>();
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;EdmVaultSingleton()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;<span style="color: blue">static</span>&nbsp;<span style="color: #2b91af">EdmVault5</span>&nbsp;Instance
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">get</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">try</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">if</span>&nbsp;(mInstance&nbsp;==&nbsp;<span style="color: blue">null</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Monitor</span>.Enter(mLockObj);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">if</span>&nbsp;(mInstance&nbsp;==&nbsp;<span style="color: blue">null</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mInstance&nbsp;=&nbsp;<span style="color: blue">new</span>&nbsp;<span style="color: #2b91af">EdmVault5</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Monitor</span>.Exit(mLockObj);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">catch</span>&nbsp;(<span style="color: #2b91af">Exception</span>&nbsp;ex)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #2b91af">Monitor</span>.Exit(mLockObj);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">return</span>&nbsp;mInstance;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;}
+}</pre>
+<div align="center">
+	<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><a href="#Top">Back to top</a>
+</pre>
+</div>
+<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><span style="color: green"><a name="NewItem"></a>//NewItem.cs</span>
+<span style="color: blue">using</span>&nbsp;System;
+<span style="color: blue">using</span>&nbsp;System.Collections;
+<span style="color: blue">using</span>&nbsp;System.Diagnostics;
+ 
+<span style="color: blue">namespace</span>&nbsp;AddItemsCSharp
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;<span style="color: blue">class</span>&nbsp;<span style="color: #2b91af">NewItem</span>
+&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Value&nbsp;of&nbsp;&quot;Description&quot;&nbsp;variable</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;<span style="color: blue">string</span>&nbsp;mDescription;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Value&nbsp;of&nbsp;&quot;Project&nbsp;Name&quot;&nbsp;variable</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;<span style="color: blue">string</span>&nbsp;mProjectName;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Value&nbsp;of&nbsp;&quot;Project&nbsp;number&quot;&nbsp;variable</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;<span style="color: blue">string</span>&nbsp;mProjectNumber;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Value&nbsp;of&nbsp;&quot;Part&nbsp;Type&quot;&nbsp;variable</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;<span style="color: blue">string</span>&nbsp;mPartType;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green">//Item&nbsp;name</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">private</span>&nbsp;<span style="color: blue">string</span>&nbsp;mItemName;
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;NewItem()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;<span style="color: blue">string</span>&nbsp;Description
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">get</span>&nbsp;{&nbsp;<span style="color: blue">return</span>&nbsp;mDescription;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">set</span>&nbsp;{&nbsp;mDescription&nbsp;=&nbsp;<span style="color: blue">value</span>;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;<span style="color: blue">string</span>&nbsp;ProjectName
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">get</span>&nbsp;{&nbsp;<span style="color: blue">return</span>&nbsp;mProjectName;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">set</span>&nbsp;{&nbsp;mProjectName&nbsp;=&nbsp;<span style="color: blue">value</span>;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;<span style="color: blue">string</span>&nbsp;ProjectNumber
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">get</span>&nbsp;{&nbsp;<span style="color: blue">return</span>&nbsp;mProjectNumber;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">set</span>&nbsp;{&nbsp;mProjectNumber&nbsp;=&nbsp;<span style="color: blue">value</span>;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;<span style="color: blue">string</span>&nbsp;PartType
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">get</span>&nbsp;{&nbsp;<span style="color: blue">return</span>&nbsp;mPartType;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">set</span>&nbsp;{&nbsp;mPartType&nbsp;=&nbsp;<span style="color: blue">value</span>;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">public</span>&nbsp;<span style="color: blue">string</span>&nbsp;ItemName
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">get</span>&nbsp;{&nbsp;<span style="color: blue">return</span>&nbsp;mItemName;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue">set</span>&nbsp;{&nbsp;mItemName&nbsp;=&nbsp;<span style="color: blue">value</span>;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;}
+}</pre>
+<div align="center">
+	<pre style="font-family: Courier New; font-size: 13; color: black; background: white"><a href="#Top">Back to top</a>
+</pre>
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,98 @@
+<html>
+
+<head>
+<title>Insert Basic Dimension Example (C#)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="C# examples,distance-between dimension tolerance">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS API 
+ Help</span></h1>
+<h1>Insert Basic Dimension Example (C#)</h1>
+<p>This example shows how to insert a DimXpert distance-between dimension.</p>
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p style="font-family: Courier New; font-size: 13; color: black; background: white" class="APICODE">
+	<span style="color:green;">
+	//---------------------------------------------------------------------------</span><br>
+	<span style="color:green;">//&nbsp;Preconditions:</span><br>
+	<span style="color:green;">//&nbsp;1.&nbsp;Ensure&nbsp;that&nbsp;the&nbsp;part&nbsp;to&nbsp;open&nbsp;exists.</span><br>
+	<span style="color:green;">//&nbsp;2.&nbsp;Reference&nbsp;the&nbsp;SOLIDWORKS&nbsp;DimXpert&nbsp;interop&nbsp;assembly:</span><br>
+	<span style="color:green;">
+	//&nbsp;&nbsp;&nbsp;&nbsp;a.&nbsp;Right-click&nbsp;the&nbsp;project&nbsp;in&nbsp;Project&nbsp;Explorer.</span><br>
+	<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;b.&nbsp;Click&nbsp;<b>Add&nbsp;Reference</b>.</span><br>
+	<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;c.&nbsp;Click&nbsp;the&nbsp;Browse&nbsp;tab.</span><br>
+	<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;d.&nbsp;Select&nbsp;<i>install_dir</i><b>\api\redist\swdimxpert.dll</b>.</span><br>
+	<span style="color:green;">//</span><br>
+	<span style="color:green;">//&nbsp;Postconditions:&nbsp;Inspect&nbsp;the&nbsp;graphics&nbsp;view&nbsp;and&nbsp;the&nbsp;DimXpertManager&nbsp;pane.</span><br>
+	<span style="color:green;">//</span><br>
+	<span style="color:green;">
+	//&nbsp;NOTE:&nbsp;Because&nbsp;the&nbsp;part&nbsp;is&nbsp;used&nbsp;elsewhere,&nbsp;do&nbsp;not&nbsp;save&nbsp;any&nbsp;changes.</span><br>
+	<span style="color:green;">
+	//----------------------------------------------------------------------------</span><br>
+	<span style="color:blue;">using</span>&nbsp;Microsoft.VisualBasic;<br>
+	<span style="color:blue;">using</span>&nbsp;System;<br>
+	<span style="color:blue;">using</span>&nbsp;System.Collections;<br>
+	<span style="color:blue;">using</span>&nbsp;System.Collections.Generic;<br>
+	<span style="color:blue;">using</span>&nbsp;System.Data;<br>
+	<span style="color:blue;">using</span>&nbsp;System.Diagnostics;<br>
+	<span style="color:blue;">using</span>&nbsp;SolidWorks.Interop.sldworks;<br>
+	<span style="color:blue;">using</span>&nbsp;SolidWorks.Interop.swconst;<br>
+	<span style="color:blue;">using</span>&nbsp;SolidWorks.Interop.swdimxpert;<br>
+	<span style="color:blue;">using</span>&nbsp;System.Runtime.InteropServices;<br>
+	<span style="color:blue;">namespace</span>&nbsp;InsertBasicDimension_CSharp.csproj<br>
+	{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">partial</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">SolidWorksMacro</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ModelDoc2&nbsp;Part;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Configuration&nbsp;swConfig;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DimXpertManager&nbsp;swDimXPertMgr;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DimXpertPart&nbsp;swDimXPertPart;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DimXpertDimensionOption&nbsp;swDimXPertDimOpt;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">object</span>[]&nbsp;dblDimXPertTextPos&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:blue;">object</span>[3];<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">object</span>[]&nbsp;varDimXPertTextPos;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">bool</span>&nbsp;boolstatus;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;status;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">int</span>&nbsp;warnings;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;Main()<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Part&nbsp;=&nbsp;swApp.<b>OpenDoc6</b>(<span style="color:#a31515;">&quot;</span><font color="#A31515">C:\\Users\\Public\\Documents\\SOLIDWORKS\\SOLIDWORKS 
+	2017\\Simulation Examples\\actuator_casing.sldprt</font><span style="color:#a31515;">&quot;</span>,&nbsp;1,&nbsp;0,&nbsp;<span style="color:#a31515;">&quot;&quot;</span>,&nbsp;<span style="color:blue;">ref</span>&nbsp;status,&nbsp;<span style="color:blue;">ref</span>&nbsp;warnings);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swApp.<b>ActivateDoc2</b>(<span style="color:#a31515;">&quot;actuator_casing.sldprt&quot;</span>,&nbsp;<span style="color:blue;">false</span>,&nbsp;<span style="color:blue;">ref</span>&nbsp;longstatus);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Part&nbsp;=&nbsp;(ModelDoc2)swApp.<b>ActiveDoc</b>;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Part.<b>ShowNamedView2</b>(<span style="color:#a31515;">&quot;*Isometric&quot;</span>,&nbsp;7);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swConfig&nbsp;=&nbsp;Part.<b>ConfigurationManager</b>.<b>ActiveConfiguration</b>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDimXPertMgr&nbsp;=&nbsp;Part.<b>Extension</b>.<b>get_DimXpertManager(</b>swConfig.<b>Name</b>,&nbsp;<span style="color:blue;">true</span>);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDimXPertPart&nbsp;=&nbsp;(DimXpertPart)swDimXPertMgr.<b>DimXpertPart</b>;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDimXPertDimOpt&nbsp;=&nbsp;swDimXPertPart.<b>GetDimOption</b>();<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;boolstatus&nbsp;=&nbsp;Part.<b>Extension</b>.<b>SelectByID2</b>(<span style="color:#a31515;">&quot;&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;FACE&quot;</span>,&nbsp;0.0832566935649766,&nbsp;0.0141096473029049,&nbsp;0.0143449005094567,&nbsp;<span style="color:blue;">false</span>,&nbsp;0,&nbsp;<span style="color:blue;">null</span>,&nbsp;0);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;boolstatus&nbsp;=&nbsp;Part.<b>Extension</b>.<b>SelectByID2</b>(<span style="color:#a31515;">&quot;&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;FACE&quot;</span>,&nbsp;0.0751728497303361,&nbsp;0.000895850622406916,&nbsp;0.0190499999998792,&nbsp;<span style="color:blue;">true</span>,&nbsp;0,&nbsp;<span style="color:blue;">null</span>,&nbsp;0);<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dblDimXPertTextPos[0]&nbsp;=&nbsp;0.083208;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dblDimXPertTextPos[1]&nbsp;=&nbsp;0.045464;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dblDimXPertTextPos[2]&nbsp;=&nbsp;0.019052;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;varDimXPertTextPos&nbsp;=&nbsp;dblDimXPertTextPos;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDimXPertDimOpt.<b>TextPosition</b>&nbsp;=&nbsp;varDimXPertTextPos;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;boolstatus&nbsp;=&nbsp;swDimXPertPart.<b>InsertBasicDimension</b>(swDimXPertDimOpt);<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;summary&gt;</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;The&nbsp;SldWorks&nbsp;swApp&nbsp;variable&nbsp;is&nbsp;pre-assigned&nbsp;for&nbsp;you.</span><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/summary&gt;</span><br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;SldWorks&nbsp;swApp;<br>
+&nbsp;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;<br>
+	}</div>
+<p>&nbsp;</p>
+
+</body>
+
+</html>

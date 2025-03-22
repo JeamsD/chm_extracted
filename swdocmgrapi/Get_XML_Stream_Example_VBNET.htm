@@ -1,0 +1,143 @@
+<html>
+
+<head>
+<title>Get XML Stream Example (VB.NET)</title>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" type="text/css" href="ApiHelp.css">
+</head>
+<meta name=MS-HKWD content="VB.NET examples,XML stream">
+
+<body>
+<h1><span style="font-weight: normal; font-size: 7.5pt;">SOLIDWORKS Document 
+ Manager API Help</span></h1>
+<h1>Get XML Stream Example (VB.NET)</h1>
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+	<p>This example shows how to 
+	get an embedded XML stream in a SOLIDWORKS document using the SOLIDWORKS Document Manager API.<p class="APICODE">
+	<span style="color:Green">
+	<font face="Courier New">'</font><font face="Courier New" size="2">--------------------------------------------------------------------------- <br>
+	' Preconditions: <br>
+	'&nbsp;1. Read the SOLIDWORKS Document Manager API <br>
+	'&nbsp;&nbsp;&nbsp;&nbsp;<b>Getting Started </b>topic and ensure that the required 
+	<br>
+	'&nbsp;&nbsp;&nbsp;&nbsp;DLLs have been registered. <br>
+	'&nbsp;2. Copy and paste this module into a VB.NET console <br>
+	'&nbsp;&nbsp;&nbsp;&nbsp;application in Microsoft 
+	Visual Studio. <br>
+	'&nbsp;3. Ensure that the specified document exists <br>
+	'&nbsp;&nbsp;&nbsp; (or point to another 
+	document). <br>
+	'&nbsp;4. Add the <b>SolidWorks.Interop.swdocumentmgr.dll</b> <br>
+	'&nbsp;&nbsp;&nbsp;&nbsp;reference to the 
+	project: <br>
+	' &nbsp;&nbsp;&nbsp;a. Right-click the solution in Solution Explorer. <br>
+	' &nbsp;&nbsp;&nbsp;b. Click <b>Add Reference</b>. <br>
+	' &nbsp;&nbsp;&nbsp;c. Click <b>Browse</b>. <br>
+	' &nbsp;&nbsp;&nbsp;d. Click:<br>
+	'&nbsp;&nbsp; <i><b>&nbsp;&nbsp;&nbsp; </b>install_dir</i><b>\api\redist\SolidWorks.Interop.swdocumentmgr.dll</b>
+	<br>
+	'&nbsp;5. Substitute <i>your_license_code</i> with your <br>
+	'&nbsp;&nbsp;&nbsp;&nbsp;SOLIDWORKS 
+	Document Manager license key. <br>
+	'&nbsp; <br>
+	'&nbsp;Postconditions: Locate the XML stream in the current directory. <br>
+	'---------------------------------------------------------------------------- </font><br>
+	<br>
+	</span><span style="color:Blue">Imports</span><span style="color:Black"> 
+	SolidWorks.Interop.swdocumentmgr<br>
+	</span><span style="color:Blue">Module</span><span style="color:Black"> 
+	Module1<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Sub</span><span style="color:Black"> 
+	main()<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Const</span><span style="color:Black"> 
+	sLicenseKey </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black"> =
+	</span><span style="color:#a31515">&quot;</span><span style="color: Green"><i>your_license_code</i></span><span style="color:#a31515">&quot;</span><span style="color:Black">
+	</span><span style="color:Green">'Specify your license key<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Const</span><span style="color:Black"> 
+	sDocFileName </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String</span><span style="color:Black"> =
+	</span><span style="color:#a31515">&quot;C:\Users\Public\Documents\SOLIDWORKS\SOLIDWORKS 2018\samples\tutorial\EDraw\claw\claw-mechanism.sldasm&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swClassFact </span><span style="color:Blue">As</span><span style="color:Black"> 
+	SwDMClassFactory<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swDocMgr </span><span style="color:Blue">As</span><span style="color:Black"> 
+	SwDMApplication<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	swDoc </span><span style="color:Blue">As</span><span style="color:Black"> 
+	SwDMDocument<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	nDocType </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color: #0000FF">Integer</span><span style="color:Blue"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	sPathName </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color:Blue">String<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	nRetVal </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color: #0000FF">Integer</span><span style="color:Blue"><br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Dim</span><span style="color:Black"> 
+	nRetVal2 </span><span style="color:Blue">As</span><span style="color:Black">
+	</span><span style="color: #0000FF">Integer</span><span style="color:Blue"><br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+	Determine type of SOLIDWORKS file based on file extension<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">If</span><span style="color:Black"> 
+	InStr(LCase(sDocFileName), </span><span style="color:#a31515">&quot;sldprt&quot;</span><span style="color:Black">) 
+	&gt; 0 </span><span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType = 
+	SwDmDocumentType.swDmDocumentPart<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	InStr(LCase(sDocFileName), </span><span style="color:#a31515">&quot;sldasm&quot;</span><span style="color:Black">) 
+	&gt; 0 </span><span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType = 
+	SwDmDocumentType.swDmDocumentAssembly<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">ElseIf</span><span style="color:Black"> 
+	InStr(LCase(sDocFileName), </span><span style="color:#a31515">&quot;slddrw&quot;</span><span style="color:Black">) 
+	&gt; 0 </span><span style="color:Blue">Then<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType = 
+	SwDmDocumentType.swDmDocumentDrawing<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Else<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+	Probably not a SOLIDWORKS file<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nDocType = 
+	SwDmDocumentType.swDmDocumentUnknown<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' so cannot open<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">Exit</span><span style="color:Black">
+	</span><span style="color:Blue">Sub<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">If<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+	Strip off SOLIDWORKS file extension (sldxxx)<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">' 
+	and add XML extension (xml)<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sPathName = Left(sDocFileName, 
+	Len(sDocFileName) - 6)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sPathName = sPathName + </span><span style="color:#a31515">&quot;xml&quot;<br>
+	<br>
+	</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swClassFact = CreateObject(</span><span style="color:#a31515">&quot;SwDocumentMgr.SwDMClassFactory&quot;</span><span style="color:Black">)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDocMgr = swClassFact.GetApplication(sLicenseKey)<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDoc = swDocMgr.GetDocument(sDocFileName, nDocType, </span>
+	<span style="color:Blue">False</span><span style="color:Black">, nRetVal) <br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;swDoc.<b>GetXmlStream</b>(sPathName, nRetVal)<br>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">End</span><span style="color:Black">
+	</span><span style="color:Blue">Sub<br>
+	<br>
+	<br>
+	<br>
+	End</span><span style="color:Black"> </span><span style="color:Blue">Module</span>
+</div>
+
+</body>
+
+</html>
